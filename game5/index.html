@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><script src="../protect.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1050">
+<title>GAME5 | 推理ゲーム（Windows版）</title>
+<meta name="description" content="会話と証言から事件を推理する、全10章のオリジナル推理ゲーム（Windows PC向け・無料・exe 1つで起動）。">
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#1c2a8a,#0a1050 60%,#050830);color:#eef1ff;font-family:"Hiragino Kaku Gothic ProN","Meiryo",system-ui,sans-serif;line-height:1.75}
+main{max-width:760px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 16px 60px}
+h1{font-size:clamp(26px,6vw,38px);margin:.6em 0 .1em;color:#ffd24a;letter-spacing:.05em}
+h2{font-size:20px;margin:1.6em 0 .4em;border-left:6px solid #ffd24a;padding-left:10px}
+.sub{opacity:.85;margin:0 0 1em}
+.badge{display:inline-block;background:#ffd24a;color:#201400;font-weight:800;border-radius:999px;padding:2px 14px;font-size:14px}
+[hidden]{display:none!important}
+.card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:14px 16px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.grid .card{margin:0}.grid b{color:#ffd24a}
+table{border-collapse:collapse;width:100%;font-size:15px}td,th{border-bottom:1px solid rgba(255,255,255,.18);padding:6px 8px;text-align:left}th{width:9em;opacity:.8;font-weight:600}
+a.btn{display:inline-block;margin:6px 8px 6px 0;padding:10px 18px;border-radius:12px;border:2px solid #cfd8ff;color:#fff;text-decoration:none;background:linear-gradient(180deg,#2a46c8,#1a2c98);font-weight:700}
+a.btn.sub2{background:linear-gradient(180deg,#3a3f5a,#262a40)}
+a.btn[aria-disabled=true]{opacity:.5;pointer-events:none}
+.note{font-size:14px;opacity:.85}
+</style>
+</head>
+<body>
+<main>
+  <span class="badge">🌐 ブラウザ版 公開中</span> <span class="badge" id="winBadge">💻 Windows版 v0.2.0 公開中</span>
+  <h1>GAME5　推理ゲーム</h1>
+  <p class="sub">会話と証言を集めて、升目（マス目）パズルで事件を解き明かす　全10章のオリジナル推理ゲーム</p>
+
+  <div class="card" id="playBox">
+    <b>▶ ブラウザで、いますぐ あそべます（ダウンロード不要・無料）</b><br>
+    スマホ・パソコンのブラウザで あそべる <b>ブラウザ版</b> です。下のボタンを おすだけで はじまります。<span id="pcOnlyNote"><br>パソコンでは、下の「Windows版（exe）」を ダウンロードして あそぶことも できます。</span><span id="spOnlyNote" hidden><br>スマホでは、ブラウザ版のみ あそべます。</span><br>
+    <a class="btn" href="./play/index.html" style="margin-top:10px">▶ ブラウザで あそぶ</a>
+    <p class="note">セーブは この端末の ブラウザの中に 保存されます（ブラウザの「サイトデータ」を消すと、セーブも消えます）。Windows版（exe）とは、セーブは つながりません。</p>
+  </div>
+
+  <h2>どんなゲーム？</h2>
+  <div class="grid">
+    <div class="card"><b>🗣 会話・証言</b><br>登場人物の話を聞いて、手がかりを集めます。</div>
+    <div class="card"><b>🔲 升目パズル</b><br>2Dのマス目に 答えを入れて 推理します。マスをクリック、または選択肢で回答。</div>
+    <div class="card"><b>🧑 3Dキャラクター</b><br>会話・喜び・驚き・考えこむ表情など、場面に合わせて動きます。</div>
+    <div class="card"><b>📚 全10章</b><br>章ごとに事件と推理問題。クリアすると評価が出ます。やりなおしも可能。</div>
+    <div class="card"><b>💡 ヒント・難易度</b><br>こまったらヒント。難易度は自分で選べます。</div>
+    <div class="card"><b>💾 セーブ</b><br>オートセーブ1枠 ＋ 手動セーブ5枠。</div>
+  </div>
+
+  <h2>ゲーム情報</h2>
+  <div class="card"><table>
+    <tr><th>ジャンル</th><td>推理ゲーム／論理パズル</td></tr>
+    <tr><th>あそぶ場所</th><td>Windows PC（キーボード・マウス）</td></tr>
+    <tr><th>ファイル</th><td>exe ファイル（1ファイルで起動・ダウンロードページで選びます）</td></tr>
+    <tr><th>章の数</th><td>全10章</td></tr>
+    <tr><th>料金</th><td>無料の予定</td></tr>
+    <tr><th>状態</th><td>v0.2.0 公開中（セーブは あそんだ PC の中に 保存されます）</td></tr>
+  </table></div>
+
+  <div id="exeSection">
+  <h2>Windows版（exe）のダウンロード</h2>
+  <div class="card">
+    <a class="btn" href="https://github.com/arechat/ARE/releases" target="_blank" rel="noopener">⬇ ダウンロードはこちら</a>
+    <p class="note"><b>はじめて起動するとき：</b>署名が ないため、Windows が「PCを保護しました」と 出すことがあります。そのときは <b>「詳細情報」→「実行」</b> を 押すと 起動します。</p>
+    <p class="note">インストールは いりません。ダウンロードした exe を ダブルクリック するだけです。やめるときは、ゲームの 画面を 閉じてください。</p>
+  </div>
+  </div>
+
+  <h2>ほかの ゲーム（ブラウザで あそべます）</h2>
+  <p>
+    <a class="btn sub2" href="../game/index.html">🗡 ARE QUEST</a>
+    <a class="btn sub2" href="../game2/index.html">📖 ARE QUEST 2</a>
+    <a class="btn sub2" href="../game3/index.html">🌙 ARE QUEST 3</a>
+    <a class="btn sub2" href="../game4/index.html">🃏 ARE CARD</a>
+    <a class="btn sub2" href="../game6/index.html">⭐ GAME6</a>
+    <a class="btn sub2" href="../game7/index.html">🧱 ARE BLOCKS</a>
+    <a class="btn sub2" href="../dream-frontier/index.html">🎡 ドリームフロンティア</a>
+  </p>
+  <p>
+    <a class="btn sub2" href="../login.html">⬅ ログイン画面へもどる</a>
+    <a class="btn sub2" href="../chat.html">💬 チャットへ</a>
+    <a class="btn sub2" href="../guide.html">📖 あそびかた</a>
+    <a class="btn sub2" href="../faq.html">❓ よくある質問</a>
+  </p>
+</main>
+<script>
+/* スマホ（タッチ中心の小さい画面・モバイルUA）では exe の案内を隠し、ブラウザ版だけを出す */
+(function(){
+  var ua = navigator.userAgent || "";
+  var phone = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua));
+  if(!phone) return;
+  var ids = ["exeSection","winBadge","pcOnlyNote"];
+  ids.forEach(function(id){ var e = document.getElementById(id); if(e) e.hidden = true; });
+  var sp = document.getElementById("spOnlyNote"); if(sp) sp.hidden = false;
+})();
+</script>
+<a href="https://arechat.github.io/LearnLab124/" target="_blank" rel="noopener" tabindex="-1" id="areStudyLink" style="position:fixed;right:6px;bottom:2px;z-index:5;font-size:10px;line-height:1.2;color:#888;opacity:.55;text-decoration:none;background:transparent">study124（学習サイト）</a>
+<script src="../shared/are-pad.js"></script>
+</body>
+</html>
