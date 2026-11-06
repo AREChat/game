@@ -2,7 +2,7 @@
 // ===== 「おわる」ボタン：exe（パソコン用アプリ）と web（サーバーに公開したページ）で動きを分ける =====
 // 見分けは ../shared/are-mode.js（window.AREMode）。ここは「おわる」の動きと、ボタンの表示だけ。
 //  ・exe（アプリ／Go 版 exe）… セーブして 画面（アプリ）を終了する。終了できないときは ゲーム一覧へ。
-//  ・file（直接開いた）………… 画面を閉じる。閉じられなければ ゲーム一覧へ。
+//  ・file（直接開いた）………… 画面を閉じる。閉じられなければ「おつかれさま」の画面を出す（このリポジトリのいちばん上には ゲーム一覧が無く、移るとエラー画面になるため）。
 //  ・web（https のブラウザ）…… チャット画面にもどる。
 (function(){
     var M = window.AREMode || {mode:"web", isApp:false, chatUrl:"https://arechat.github.io/AREDA/login.html", listUrl:"../index.html"};
@@ -24,7 +24,7 @@
         try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(_e){}
         if(M.mode === "web"){ try{ location.href = M.chatUrl; }catch(_e){} return; }          // web：チャット画面にもどる
         if(window.areDesktop && window.areDesktop.quit){ try{ window.areDesktop.quit(); return; }catch(_e){} }   // Electron のアプリ
-        if(M.mode === "file"){ try{ window.close(); }catch(_e){} setTimeout(toList, 350); return; }          // 直接開いた版
+        if(M.mode === "file"){ try{ window.close(); }catch(_e){} setTimeout(bye, 350); return; }          // 直接開いた版（閉じられなければ「おつかれさま」の画面）
         // Go 版 exe（127.0.0.1）：サーバーを終了する。できなければ ゲーム一覧へ
         var done = false;
         try{
