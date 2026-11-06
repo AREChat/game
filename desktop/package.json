@@ -1,0 +1,26 @@
+{
+  "name": "are-quest-desktop",
+  "version": "1.0.0",
+  "description": "ARE QUEST（パソコン用アプリ／exe）",
+  "main": "main.js",
+  "private": true,
+  "author": "AREChat",
+  "scripts": {
+    "prepare-app": "node build-app.js",
+    "start": "node build-app.js && electron .",
+    "dist": "node build-app.js && electron-builder --win portable --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "io.github.arechat.arequest",
+    "productName": "ARE QUEST",
+    "artifactName": "ARE-QUEST-${version}.${ext}",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "preload.js", "package.json", "app/**"],
+    "win": { "target": [{ "target": "portable", "arch": ["x64"] }] },
+    "portable": { "artifactName": "ARE-QUEST.exe" }
+  }
+}

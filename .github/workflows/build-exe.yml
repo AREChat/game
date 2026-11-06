@@ -1,0 +1,37 @@
+name: exe を作る（ARE QUEST）
+
+# 手動（Actions タブ →「exe を作る」→ Run workflow）か、exe-v1.0.0 のようなタグを付けたときに動きます。
+on:
+  workflow_dispatch:
+  push:
+    tags: ["exe-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 部品を入れる
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+      - name: exe を作る
+        working-directory: desktop
+        run: npm run dist
+      - name: 作った exe を保存する（Actions の Artifacts からダウンロードできます）
+        uses: actions/upload-artifact@v4
+        with:
+          name: ARE-QUEST-exe
+          path: desktop/dist/ARE-QUEST.exe
+          if-no-files-found: error
+      - name: タグのときは Releases にも置く
+        if: startsWith(github.ref, 'refs/tags/exe-v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" desktop/dist/ARE-QUEST.exe --title "ARE QUEST ${{ github.ref_name }}（Windows 用 exe）" --notes "ダウンロードして ARE-QUEST.exe をダブルクリックすると遊べます。インストールは不要です。"

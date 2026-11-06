@@ -1,18 +1,16 @@
 "use strict";
 // ===== ゲームを おわる ボタン ＋ コントローラー対応（Switch Proコントローラー／Xbox／PS 等。ブラウザの Gamepad API）=====
 (function(){
-    // ---- おわる：自動セーブ → BGM停止 → タブを閉じる（閉じられない時は ホームへ）
+    // ---- おわる：自動セーブ → BGM停止 →（exe：アプリを終了／web：チャット画面にもどる）。切り分けは mode.js
     function quitNow(){
+        if(window.areQuit){ window.areQuit(); return; }
         try{ if(G.S && window.tqAutoSave) tqAutoSave(); }catch(_e){}
         try{ if(window.tqBgmStop) tqBgmStop(); if(window.tqSpeakStop) tqSpeakStop(); }catch(_e){}
-        try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(_e){}
-        try{ window.close(); }catch(_e){}
-        // ブラウザの決まりで 閉じられない場合は、ホーム（ログイン画面）へ もどる
-        setTimeout(() => { try{ location.href = "../login.html"; }catch(_e){} }, 350);
+        try{ location.href = "https://arechat.github.io/ARE/chat.html"; }catch(_e){}
     }
     ACT.tQuit = ACT.quit = () => {
         const inGame = !!(G.S && G.mode !== "title");
-        askYes((inGame ? "ここまでの 冒険を 自動で 記録して、\n" : "") + "ゲームを おわりますか？\n（ブラウザの タブが とじます。とじないときは ホームへ もどります）", quitNow);
+        askYes(window.areQuitText ? window.areQuitText(inGame) : (inGame ? "ここまでの 冒険を 自動で 記録して、\n" : "") + "ゲームを おわりますか？", quitNow);
     };
     const bq = document.getElementById("btnQuit");
     if(bq) bq.addEventListener("click", () => { if(!G.dlg) ACT.quit(); });
