@@ -97,8 +97,13 @@
     r.onerror = () => done("ファイルを 読めませんでした。"); r.readAsText(file);
   }
 
-  const base = () => location.pathname.replace(/\/(game|game2|game3|game4|game6)\/.*$/, "/");
-  let VER = ""; try{ fetch(location.pathname.replace(/\/(game|game2|game3|game4|game6)\/.*$/, "/") + "version.json", {cache:"no-cache"}).then((r) => r.ok ? r.json() : null).then((v) => { if(v) VER = v.version; }).catch(() => {}); }catch(_e){}
+  // 「あそびかた」「よくある質問」「版」の行き先。game サイト（arechat.github.io/game/…）は、リポジトリ名も game なので
+  // 下の置きかえでは「/」になって 404 になる。game サイトでは ARE のページ(guide.html・faq.html・version.json)を使う。
+  const base = () => {
+    try{ if(/(^|\.)github\.io$/.test(location.hostname) && /^\/game\/(game|game2|game3|game4|game6|dream-frontier)\//.test(location.pathname)) return "https://arechat.github.io/ARE/"; }catch(_e){}
+    return location.pathname.replace(/\/(game|game2|game3|game4|game6)\/.*$/, "/");
+  };
+  let VER = ""; try{ fetch(base() + "version.json", {cache:"no-cache"}).then((r) => r.ok ? r.json() : null).then((v) => { if(v) VER = v.version; }).catch(() => {}); }catch(_e){}
   // ---- 画面 ----
   function build(){
     if(!document.body || document.getElementById("areGear")) return;
