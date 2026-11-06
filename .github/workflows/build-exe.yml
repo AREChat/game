@@ -1,7 +1,11 @@
 name: exe を作る（ARE QUEST）
 
-# 手動（Actions タブ →「exe を作る」→ Run workflow）か、exe-v1.0.0 のようなタグを付けたときに動きます。
+# 自動：毎週 金曜 20:00（日本時間）。手動（Actions タブ →「exe を作る」→ Run workflow）や、exe-v1.0.0 のようなタグでも動きます。
+# ※ cron は UTC で書くため、日本時間の 20:00 ＝ UTC の 11:00。GitHub の混み具合で数分〜数十分おくれることがあります。
+# ※ このリポジトリに 60 日間 何も変更がないと、GitHub が自動実行を止めます（Actions タブで「Enable workflow」を押すと再開）。
 on:
+  schedule:
+    - cron: "0 11 * * 5"
   workflow_dispatch:
   push:
     tags: ["exe-v*"]
@@ -29,7 +33,7 @@ jobs:
           name: ARE-QUEST-exe
           path: desktop/dist/ARE-QUEST.exe
           if-no-files-found: error
-      - name: タグのときは Releases にも置く
+      - name: タグのときは Releases にも置く（自動実行では置かない）
         if: startsWith(github.ref, 'refs/tags/exe-v')
         shell: bash
         env:

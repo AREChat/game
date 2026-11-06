@@ -13,12 +13,15 @@ AREChat のゲーム置き場です。チャットアプリは `AREChat/AREDA`�
 |---|---|---|
 | 「おわる」 | アプリ（画面）を終了する | チャット画面にもどる |
 | ボタンの表示 | ✖ おわる | ← チャットへ |
-| 見分け方 | `window.areDesktop`（`desktop/preload.js` が用意） | それが無いとき |
+| 見分け方 | `shared/are-mode.js`：`window.areDesktop`（Electron）／アドレスが `127.0.0.1`・`localhost`（Go 版 exe）／`?mode=exe` | それ以外（https） |
+| file:// で直接開いた版 | 画面を閉じる（閉じられなければゲーム一覧へ） | — |
 
-- Web で「もどる」先は、`?back=https://arechat.github.io/AREDA/chat.html` で指定できます（ARE / AREDA のチャットだけ有効）。指定が無ければ、チャットから来たページ（referrer）、それも無ければ `https://arechat.github.io/ARE/chat.html` です。
+- Web で「もどる」先は、`?back=https://arechat.github.io/AREDA/chat.html` で指定できます（ARE / AREDA のチャット・ログインだけ有効）。指定が無ければ、チャットから来たページ（referrer）、それも無ければ AREDA のログイン画面（`https://arechat.github.io/AREDA/login.html`。ログイン済みなら、そのままチャットに入ります）です。
+- exe・file では、チャットなど外のアドレスへのリンクは隠し、ゲーム内の「もどる」はゲーム一覧に向けます。
 - 動作確認用に、ブラウザで `…/game/index.html?mode=exe` と開くと、exe 側の表示になります。
 
 ### exe の作り方
+**毎週 金曜 20:00（日本時間）に自動で作られます**（Actions →「exe を作る」の Artifacts に出ます。タグのときだけ Releases にも置きます）。手動で作るときは：
 1. GitHub の **Actions** タブ →「exe を作る（ARE QUEST）」→ **Run workflow**。
 2. 終わったら、その実行の **Artifacts**（`ARE-QUEST-exe`）から `ARE-QUEST.exe` をダウンロード（インストール不要・ダブルクリックで起動）。
 3. `exe-v1.0.0` のようなタグを付けて push すると、**Releases** にも自動で置かれます。
