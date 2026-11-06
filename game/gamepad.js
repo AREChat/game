@@ -8,7 +8,7 @@
         try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(_e){}
         try{ window.close(); }catch(_e){}
         // ブラウザの決まりで 閉じられない場合は、ホーム（ログイン画面）へ もどる
-        setTimeout(() => { try{ location.href = "../login.html"; }catch(_e){} }, 350);
+        setTimeout(() => { try{ location.href = (location.protocol === "file:" ? "./index.html" : "https://arechat.github.io/AREDA/login.html"); }catch(_e){} }, 350);
     }
     ACT.tQuit = ACT.quit = () => {
         const inGame = !!(G.S && G.mode !== "title");
