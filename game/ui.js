@@ -112,10 +112,11 @@ ACT.dlgok = () => { const v = ($("dlgIn") || {}).value || "", f = G.dlg.fn; G.dl
 // ---------------------------------------------------------------- タイトル
 function viewTitle(){
     G.draft = null;
-    return '<div id="tm" class="win"><button class="opt" data-a="tNew">はじめから</button><button class="opt" data-a="tLoad">つづきから</button><button class="opt" data-a="tHelp">あそびかた</button><button class="opt" data-a="tSet">せってい</button><button class="opt" data-a="tMovie">🎬 しょうかい映像</button>' + (window.AREGameNav && AREGameNav.canShow() ? '<button class="opt" data-a="tGames">🎮 ほかのゲーム</button>' : "") + (G.installEv ? '<button class="opt" data-a="tInstall">📲 アプリとして インストール</button>' : "") + '<button class="opt" data-a="tCheat">🔑 チート</button></div>' +
+    return '<div id="tm" class="win"><button class="opt" data-a="tNew">はじめから</button><button class="opt" data-a="tLoad">つづきから</button><button class="opt" data-a="tHelp">あそびかた</button><button class="opt" data-a="tSet">せってい</button><button class="opt" data-a="tMovie">🎬 しょうかい映像</button>' + '<button class="opt" data-a="tPad">🎮 ボタン設定</button>' + (window.AREGameNav && AREGameNav.canShow() ? '<button class="opt" data-a="tGames">🎮 ほかのゲーム</button>' : "") + (G.installEv ? '<button class="opt" data-a="tInstall">📲 アプリとして インストール</button>' : "") + '<button class="opt" data-a="tCheat">🔑 チート</button></div>' +
         '<div class="foot">ARE QUEST 〜そういうときは、AREだ！〜　／　タップ・矢印キー+Enter・コントローラー（A=けってい B=もどる）で えらべます</div>';
 }
 ACT.tGames = () => { if(window.AREGameNav) AREGameNav.open({before: () => { try{ if(window.tqAutoSave && G.S) tqAutoSave(); }catch(_e){} }}); };
+ACT.tPad = () => { if(window.AREPadMap) AREPadMap.open(); };
 ACT.tInstall = () => { const ev = G.installEv; if(!ev) return; try{ ev.prompt(); if(ev.userChoice) ev.userChoice.then(() => { G.installEv = null; if(G.mode === "title") render(); }); }catch(_e){} };
 ACT.tNew = () => { G.slotCtx = "new"; G.slotFrom = "title"; G.slotPick = null; G.mode = "slots"; render(); };
 ACT.tLoad = () => { if(!tqHasSaves()){ toast("まだ 冒険の書が ありません。『はじめから』で 冒険を はじめよう！"); return; } G.slotCtx = "load"; G.slotFrom = "title"; G.slotPick = null; G.mode = "slots"; render(); };
