@@ -4,7 +4,7 @@ AREChat のゲーム置き場です。チャットアプリは `AREChat/AREDA`�
 
 - 2026-11-05：旧 `AREChat/ARE` から、game・game2〜game7（と、それらが使う shared/・dream-frontier/・protect.js・apple-touch-icon.png）をそのまま移しました。
 - 2026-11-08：パッド（プロコン）のボタン配置を、ボタン1つ1つ好きに変えられる『🎮 ボタン設定』を追加（`shared/are-padmap.js`。各ゲームのタイトルから開く。マウス不要。設定はこの端末に保存）。
-- 2026-11-08：ゲームは **game（ARE QUEST）・game2・game3・game4（ARE CARD）・game5（推理ゲーム）** の5つにそろえました。game6（星紡ぎの旅人）と game7（ARE BLOCKS）は廃止して、消しました。5つのゲームは、タイトル画面から お互いに行き来できます（一覧は `shared/game-nav.js` の1か所だけ。ブラウザ版のみ。exe には ARE QUEST だけが入っているので出しません）。
+- 2026-11-08：ゲームを **4つのフォルダ** に統合しました：`game`（ARE QUEST）／`game2`（`quest2`＝ARE QUEST 2、`quest3`＝ARE QUEST 3）／`game4`（`card`＝ARE CARD、`starweaver`＝星紡ぎの旅人。旧 game6）／`game5`（`play`＝推理ゲーム、`blocks`＝ARE BLOCKS。旧 game7）。`game2`・`game4`・`game5` の `index.html` は、中の ゲームを えらぶ入口ページです。タイトル画面から お互いに行き来できます（一覧は `shared/game-nav.js` の1か所だけ。ブラウザ版のみ。exe には ARE QUEST だけが入っているので出しません）。保存データは同じ場所（同一オリジン）なので引き継がれます。
 
 ## exe（パソコン用アプリ）と Web（サーバー公開）の区別
 
