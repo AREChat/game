@@ -170,6 +170,7 @@ function tqLoadFrom(i){
     const r = tqReadSlot(i); if(!r || r.corrupted) return {ok:false, msg:"読み込める 冒険の書が ありません。"};
     const base = tqNewState({name:"主人公", sex:"m"});
     const S = Object.assign(base, r.data); S.cx = Object.assign({}, r.data.cx || {}); S.f = Object.assign({}, r.data.f || {});
+    try{ if(window.tqSubMigrate) tqSubMigrate(S); }catch(_e){}
     G.S = S; G.slot = i; G.saveName = r.name; G.scripts = []; G.b = null; G.auto = false; G.grind = null; try{ tqTempSync(S.map, true); }catch(_e){} tqClamp();
     return {ok:true, msg:"冒険の書 " + i + " を 読み込みました。"};
 }

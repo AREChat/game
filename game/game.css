@@ -16,8 +16,9 @@ body[data-mode=map] #cv,body[data-mode=talk] #cv,body[data-mode=choice] #cv,body
 .meta{font-size:1.7cqw;color:#cbd7ff}
 .opt,.btn{display:block;width:100%;text-align:left;font:inherit;color:#fff;background:transparent;border:0;border-radius:.6cqw;padding:.5cqw 1.2cqw .5cqw 2.4cqw;cursor:pointer;position:relative}
 .opt::before{content:"";position:absolute;left:.9cqw;top:50%;width:0;height:0;margin-top:-.7cqw;border-left:1.1cqw solid transparent;border-top:.7cqw solid transparent;border-bottom:.7cqw solid transparent;opacity:0}
-.opt.on::before,.opt:hover::before{border-left-color:#fff;opacity:1}
-.opt.on,.opt:hover{background:rgba(255,255,255,.12)}
+/* 「▶」のカーソルは、つねに 1つだけ（.on）。マウスを 動かしたときだけ、JS が .on を うつす（止まっている マウスの :hover で 2つ目の カーソルが 出ないように） */
+.opt.on::before{border-left-color:#fff;opacity:1}
+.opt.on{background:rgba(255,255,255,.12)}
 .opt[disabled]{opacity:.45;cursor:default}
 .row{display:flex;flex-wrap:wrap;gap:.8cqw;align-items:center}
 .btn{display:inline-block;width:auto;text-align:center;padding:.5cqw 1.8cqw;background:linear-gradient(180deg,#2c45d6,#1a2fa8);border:.22cqw solid var(--line)}

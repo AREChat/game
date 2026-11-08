@@ -357,6 +357,14 @@ document.addEventListener("keydown", (e) => {
     if(e.ctrlKey || e.metaKey || e.altKey) return;
     e.preventDefault(); handleKey(k, e);
 });
+// マウスを「動かしたとき」だけ、その選択肢にカーソル（▶）をうつす。
+// 止まっているマウスの下に 選択肢が 出ても、カーソルは さいしょの 選択肢のまま（3つの 真ん中に カーソルが 出る 不具合の 直し）
+document.addEventListener("mousemove", (e) => {
+    if(!e.movementX && !e.movementY) return;
+    const b = e.target && e.target.closest && e.target.closest(".opt[data-a]"); if(!b || b.disabled || b.classList.contains("on")) return;
+    const l = navList(); if(l.indexOf(b) < 0) return;
+    l.forEach((x) => x.classList.remove("on")); b.classList.add("on");
+});
 document.addEventListener("click", (e) => {
     const a = e.target.closest("[data-a]");
     if(a && !a.disabled){ const f = ACT[a.dataset.a]; if(f){ e.preventDefault(); f(a.dataset.v, a); } return; }

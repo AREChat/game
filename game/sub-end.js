@@ -34,7 +34,7 @@
     const _rf = window.tqReplayFlags;
     window.tqReplayFlags = function(){ return _rf.apply(this, arguments).filter((k) => !isSubFlag(k)); };
     // リプレイ：話数の 区切り
-    const RP = {ssa:[1, 6, 11, 16], ssb:[1, 6, 11, 16], ssc:[1, 6, 11, 16], sse:[1, 6], ssf:[1, 6], ssg:[1, 6], ssh:[1, 6], ssi:[1, 6], ssj:[1, 6]};
+    const RP = {ssa:[1, 6], ssb:[1, 6], ssc:[1, 6], sse:[1, 6], ssf:[1, 6], ssg:[1, 6], ssh:[1, 6], ssi:[1, 6], ssj:[1, 6]};
     window.SUB_RP = RP;
     SUB_MAPS.forEach((s, i) => { RP[s[0]].forEach((n) => TQ_REPLAYS.push({id:"rp_" + s[0] + String(n).padStart(2, "0"), n:"🗺️ Map" + (MAIN_ORDER.indexOf(s[1]) + 1) + "サブ『" + s[4] + "』第" + n + "話から", era:s[0] + n, lv:(LD_EPS[s[0]][n - 1] || {}).lv || 30})); });
     // ワープ：72〜
@@ -60,7 +60,7 @@
         if(!f || !/^y_c(2[2-7])$/.test(f.id) || !G.S) return _ac.apply(this, arguments);
         const S = G.S; let msg = "";
         switch(f.id){
-            case "y_c22": { openMain(S, 10); SUB_MAPS.forEach((s) => setSub(S, s[0], s[3])); msg = "Map1〜10の サブストーリー 120話を ぜんぶ クリア扱いに した。"; break; }
+            case "y_c22": { openMain(S, 10); SUB_MAPS.forEach((s) => setSub(S, s[0], s[3])); msg = "Map1〜10の サブストーリー 90話を ぜんぶ クリア扱いに した。"; break; }
             case "y_c23": { openMain(S, 10); msg = "Map1〜10の サブストーリーが ぜんぶ ひらいた！（ゲートへ）"; break; }
             case "y_c24": { const n = f.nums[0]; if(!(n >= 0 && n <= 10)) return {ok:false, msg:"0〜10 を 指定してね。"}; openMain(S, n); msg = "Map" + n + "まで クリア扱いに した。サブストーリーが ひらいたよ。"; break; }
             case "y_c25": { const v = f.nums[0], mi = Math.floor(v / 100), ep = v % 100, s = SUB_MAPS.find((x) => x[1] === MAIN_ORDER[mi - 1]); if(!s || ep < 0 || ep > s[3]) return {ok:false, msg:"例：subskip0105 ＝ Map1の 5話まで。（Map2桁＋話数2桁）"}; openMain(S, mi); setSub(S, s[0], ep); msg = "Map" + mi + "サブ『" + s[4] + "』を " + ep + "話まで クリア扱いに した。"; break; }

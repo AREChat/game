@@ -11,7 +11,7 @@ Object.assign(Y_PEOPLE, {
 
 // land: kn / wn / us ,  n: 1〜10 ,  c: DKE と おなじ ＋ lv（推奨レベル）, mobs:[[emo,name]×3]
 function LDX(land, n, c){
-    const m = land + n, L = "abcde", flags = c.steps.map((_s, i) => m + "s" + (i + 1)), area = LD_AREA[land];
+    const m = land + n, L = "abcdefghij", flags = c.steps.map((_s, i) => m + "s" + (i + 1)), area = LD_AREA[land];
     LD_EPS[land].push({n, title:c.title, sub:c.sub, lv:c.lv, learn:c.learn});
     c.steps.forEach((s, i) => dkScene(m + "_" + L[i], i ? flags[i - 1] : "", i ? c.steps[i - 1].label : "", Object.assign({flag:flags[i]}, s)));
     (c.talks || []).forEach((t, i) => { RPG_EV[m + "_t" + (i + 1)] = YKL(t[1]); });
