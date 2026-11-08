@@ -3,7 +3,7 @@
 AREChat のゲーム置き場です。チャットアプリは `AREChat/AREDA`、学習アプリは `AREChat/LearnLab124` にあります。
 
 - 2026-11-05：旧 `AREChat/ARE` から、game・game2〜game7（と、それらが使う shared/・dream-frontier/・protect.js・apple-touch-icon.png）をそのまま移しました。
-- このあと、ゲームは game1〜game5 に再編成する予定です（旧 `game` は新 game1 に相当）。
+- 2026-11-08：ゲームは **game（ARE QUEST）・game2・game3・game4（ARE CARD）・game5（推理ゲーム）** の5つにそろえました。game6（星紡ぎの旅人）と game7（ARE BLOCKS）は廃止して、消しました。5つのゲームは、タイトル画面から お互いに行き来できます（一覧は `shared/game-nav.js` の1か所だけ。ブラウザ版のみ。exe には ARE QUEST だけが入っているので出しません）。
 
 ## exe（パソコン用アプリ）と Web（サーバー公開）の区別
 

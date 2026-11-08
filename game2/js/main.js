@@ -256,6 +256,9 @@ async function showTitle(){
     mk("そうさの せつめい", () => showHelp());
     const fb = mk("🔄 がめんの むき：" + FLIP[cfg.flip || "none"] + "（絵がさかさまなら押す）", () => { fb.textContent = "🔄 がめんの むき：" + nextFlip() + "（絵がさかさまなら押す）"; });
     mk("🗡️ ARE QUEST（1）へ", () => { location.href = "../game/index.html"; });
+    mk("🌙 ARE QUEST 3 へ", () => { location.href = "../game3/index.html"; });
+    mk("🃏 ARE CARD へ", () => { location.href = "../game4/index.html"; });
+    mk("🔎 推理ゲームへ", () => { location.href = "../game5/index.html"; });
     mk("🎡 ドリームフロンティアへ", () => { location.href = "../dream-frontier/index.html"; });
     $("titleFoot").textContent = "移動 WASD/矢印　決定 Space/Enter　メニュー Esc　走る Shift　カメラ Q/E　オート V　／　Proコン・タッチ操作にも対応";
     if(qs.get("name")) $("nameIn").value = qs.get("name");
