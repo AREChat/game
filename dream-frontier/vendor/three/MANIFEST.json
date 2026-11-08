@@ -8,14 +8,15 @@
   "fetchedAt": "2026-10-26T09:49:39.514Z",
   "files": [
     {
-      "path": "build/three.module.js",
-      "sha256": "76dea8151bc9352aef3528b4262e249b2604f62543828328db978d060d61a495",
-      "bytes": 1272972
+      "path": "build/three.module.min.js",
+      "sha256": "3e690ac7d180b0aadf0891bea39eec643e29e2d3e75c99b18689518665f69ba6",
+      "bytes": 670681
     },
     {
       "path": "LICENSE",
       "sha256": "852e0e8699169bf9f6fdc6bda3e682d078dcbc738b5d33e74df594721bff271d",
       "bytes": 1081
     }
-  ]
+  ],
+  "note": "公式 three@0.160.0 の build/three.module.min.js（同じ版の圧縮版。読みこみが軽い）"
 }

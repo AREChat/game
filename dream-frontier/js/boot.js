@@ -13,7 +13,7 @@
     var errs = []; window.__bootErrors = errs;
     addEventListener("error", function(e){ var t = e.target; if(t && t !== window && (t.src || t.href)) errs.push("読みこみ失敗: " + (t.src || t.href)); else errs.push((e.message || "error") + "  @" + String(e.filename || "").split("/").slice(-2).join("/") + ":" + (e.lineno || "")); }, true);
     addEventListener("unhandledrejection", function(e){ errs.push("promise: " + ((e.reason && e.reason.message) || e.reason)); });
-    var FILES = ["js/main.js", "js/config.js", "js/engine.js", "js/gl.js", "js/textures.js", "js/backend-gl2.js", "js/backend-three.js", "js/df-data.js", "js/df-path.js", "js/df-world.js", "js/df-game.js", "js/ui.js", "js/controls.js", "js/audio.js", "css/style.css", "vendor/three/MANIFEST.json", "vendor/three/build/three.module.js"];
+    var FILES = ["js/main.js", "js/config.js", "js/engine.js", "js/gl.js", "js/textures.js", "js/backend-gl2.js", "js/backend-three.js", "js/df-data.js", "js/df-path.js", "js/df-world.js", "js/df-game.js", "js/ui.js", "js/controls.js", "js/audio.js", "css/style.css", "vendor/three/MANIFEST.json", "vendor/three/build/three.module.min.js"];
     window.__dfDiagFiles = FILES;
     function show(extra){
         if(window.__dfStarted && !extra) return; var old = document.getElementById("bootDiag"); if(old) old.remove();

@@ -29,3 +29,9 @@ AREChat のゲーム置き場です。チャットアプリは `AREChat/AREDA`�
 
 パソコン（Windows）で自分で作る場合：`cd desktop && npm install && npm run dist`（`desktop/dist/` に出ます）。試しに動かすだけなら `npm start`。
 アプリの中身は `desktop/build-app.js` が `game/`・`shared/`・`protect.js` を `desktop/app/` にコピーして作るので、ゲームを直したら、exe を作り直すだけで反映されます。
+
+## 軽量化メモ（2026-11-08）
+- BGM(mp3)は すべて 96kbps に圧縮（137MB → 約72MB。長さ・ループはそのまま）。
+- 大きかった画像（game/img/title.webp、game2/quest2/img/icon.webp・thumb.webp、game5/play/img/title_bg.jpg）を縮小。
+- Three.js は 同じ版(0.160.0)の公式 `three.module.min.js` に差しかえ（1.27MB → 0.67MB）。
+- ARE QUEST の sw.js は 毎回の再確認をやめ、ブラウザの短い控えを使う（2回目から速い。更新の反映は最大でも数分）。

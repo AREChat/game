@@ -1,4 +1,4 @@
-import * as T from "../dream-frontier/vendor/three/build/three.module.js";
+import * as T from "../dream-frontier/vendor/three/build/three.module.min.js";
 
 const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 const srgbToLinear = (v) => v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4);
