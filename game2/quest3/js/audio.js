@@ -19,7 +19,7 @@ export const Audio2 = {
     el(key){
         if(this.bad[key] && Date.now() - this.bad[key] < 20000) return null;
         let a = this.map[key];
-        if(!a){ a = new Audio(new URL("../../game2/bgm/" + key + ".mp3", import.meta.url).href); a.loop = !ONESHOT[key]; a.preload = "auto"; a.addEventListener("error", () => { this.bad[key] = Date.now(); delete this.map[key]; }); this.map[key] = a; }
+        if(!a){ a = new Audio(new URL("../../quest2/bgm/" + key + ".mp3", import.meta.url).href); a.loop = !ONESHOT[key]; a.preload = "auto"; a.addEventListener("error", () => { this.bad[key] = Date.now(); delete this.map[key]; }); this.map[key] = a; }
         return a;
     },
     // 鳴らしたい曲を指定（同じ曲なら何もしない）
@@ -56,7 +56,7 @@ export const Audio2 = {
         try{
             if(!this.on || !this.unlocked) return;
             if(this.mode === "synth" && this.ac && this.ac.state === "running"){ [[784, 0], [988, .12], [1319, .24], [1568, .4]].forEach(([f, d]) => Synth.tone(this.ac.currentTime + d, f, .25, {w: "triangle", v: .16, r: .6, echo: .5})); return; } if(this.one){ try{ this.one.pause(); }catch(_e){} }
-            const a = new Audio(new URL("../../game2/bgm/" + key + ".mp3", import.meta.url).href); a.volume = Math.min(1, this.vol + .2); this.one = a; const p = a.play(); if(p && p.catch) p.catch(() => {});
+            const a = new Audio(new URL("../../quest2/bgm/" + key + ".mp3", import.meta.url).href); a.volume = Math.min(1, this.vol + .2); this.one = a; const p = a.play(); if(p && p.catch) p.catch(() => {});
             const t0 = Date.now(); const tick = () => { if(this.one !== a) return; const left = 5000 - (Date.now() - t0); if(left <= 0 || a.ended){ try{ a.pause(); }catch(_e){} this.one = null; return; } if(left < 1200) try{ a.volume *= .9; }catch(_e){} setTimeout(tick, 100); }; tick();
         }catch(_e){}
     },

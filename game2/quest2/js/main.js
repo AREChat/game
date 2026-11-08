@@ -1,5 +1,5 @@
 "use strict";
-// ===== ARE QUEST 3：メインループ（タイトル→フィールド→会話→メニュー→戦闘）=====
+// ===== ARE QUEST 2：メインループ（タイトル→フィールド→会話→メニュー→戦闘）=====
 import {createRenderer, M4, Geo, canvasTex} from "./gl.js";
 import {Input} from "./input.js";
 import {UI} from "./ui.js";
@@ -14,8 +14,7 @@ import {newMember, statsOf, expNeed, setGameData, setEquip, fixMember, learnChec
 import {makeRanch} from "./ranch.js";
 import {Places} from "./places.js";
 import {Park} from "./park.js";
-import {createExtra} from "../../shared/q23-extra.js";
-import {Cheats, applyFx, openCodeBox, watchKonami} from "./cheats.js";
+import {createExtra} from "../../../shared/q23-extra.js";
 
 const $ = UI.$;
 const qs = new URLSearchParams(location.search);
@@ -26,7 +25,7 @@ const mulberry = (a) => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imu
 const rnd = qs.get("seed") ? mulberry(+qs.get("seed")) : Math.random;
 
 // ---------- 設定 ----------
-const CFG_KEY = "areq3_cfg";
+const CFG_KEY = "areq2_cfg";
 const cfg = Object.assign({flip: "none", quality: "auto", touch: "auto", speed: 2, auto: false, sound: true, bgmVol: .5, seVol: .6}, (() => { try{ return JSON.parse(localStorage.getItem(CFG_KEY) || "{}"); }catch(_e){ return {}; } })());
 const saveCfg = () => { try{ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }catch(_e){} };
 UI.textSpeed = cfg.speed;
@@ -55,7 +54,7 @@ function refreshNpcs(){
 }
 // ---------- 原っぱのボス（いつでも戦える・何度でも挑戦できる）----------
 let bossSpots = [], bossFx = null;
-const EX = createExtra({ctx, cfg, saveCfg, prefix: "areq3_x_", getState: () => state, getMap: () => mapDef, getP: () => P, getNpcs: () => npcs, getBossSpots: () => bossSpots});
+const EX = createExtra({ctx, cfg, saveCfg, prefix: "areq2_x_", getState: () => state, getMap: () => mapDef, getP: () => P, getNpcs: () => npcs, getBossSpots: () => bossSpots});
 EX.patchBattle(Battle);
 const fbDone = (id) => !!(ctx.S && ctx.S.flags && ctx.S.flags["fb_" + id]);
 function fbOpen(b){ return !b.secret || ctx.data.maps.field.bosses.filter((o) => !o.secret).every((o) => fbDone(o.id)); }
@@ -158,10 +157,9 @@ async function rest(){
     healAll(); ctx.A.se("heal"); autosave(); ctx.A.jingle("save"); await UI.card("ぐっすり ねむった…", "HPが ぜんかいふくした！（オートセーブ）", 1700);
 }
 function rollEncounter(){
-    if(Cheats.flags.noenc) return;
     const S = ctx.S; const enc = encFor(); if(!enc) return;
     const z = enc.zone; if(P.x < z[0] || P.x > z[2] || P.z < z[1] || P.z > z[3]) return;
-    if(world && world.dangerAt && !world.dangerAt(P.x, P.z)) return;
+    if(world && world.dangerAt && !world.dangerAt(P.x, P.z)) return;   // 安全地帯（道・町のそば）では出ない
     if(rnd() > enc.rate * EX.encMul()) return;
     const n = 1 + Math.floor(rnd() * Math.min(3, 1 + S.party.length)); const foes = []; const pool = (mapDef.id === "field" && ctx.data.encpool) ? ctx.data.encpool[story.ch] : null;
     for(let i = 0; i < n; i++){ if(pool && pool.length && rnd() < .7) foes.push(pool[Math.floor(rnd() * pool.length)]); else foes.push(enc.table[Math.floor(rnd() * enc.table.length)]); }
@@ -181,11 +179,10 @@ async function talkTo(n){
 async function openMenu(){
     state = "menu"; const S = ctx.S, D = ctx.data;
     for(;;){
-        const r = await UI.menu("メニュー　" + S.gold + "G　コイン" + (S.coins || 0), [{label: "つよさ"}, {label: "じゅもん"}, {label: "どうぐ"}, {label: "ずかん"}, {label: "もくてき", meta: S.obj}, {label: "セーブ"}, {label: "せってい"}, {label: "タイトルへ"}, {label: "ひみつのコード"}].concat(world.interior ? [{label: "そとへ でる（こまったとき）"}] : [], [{label: "おまけ・きろく"}]), {cancel: true});
+        const r = await UI.menu("メニュー　" + S.gold + "G　コイン" + (S.coins || 0), [{label: "つよさ"}, {label: "じゅもん"}, {label: "どうぐ"}, {label: "ずかん"}, {label: "もくてき", meta: S.obj}, {label: "セーブ"}, {label: "せってい"}, {label: "タイトルへ"}].concat(world.interior ? [{label: "そとへ でる（こまったとき）"}] : [], [{label: "おまけ・きろく"}]), {cancel: true});
         if(r < 0) break;
-        if(r === 9 + (world.interior ? 1 : 0)){ await EX.menu(); continue; }
-        if(r === 8){ await codeBox(); continue; }
-        if(r === 9 && world.interior){ const rr = S.ret || {map: "town", x: 0, z: 18}; await warpMap(rr.map, rr.x, rr.z, Math.PI); break; }
+        if(r === 8 + (world.interior ? 1 : 0)){ await EX.menu(); continue; }
+        if(r === 8 && world.interior){ const rr = S.ret || {map: "town", x: 0, z: 18}; await warpMap(rr.map, rr.x, rr.z, Math.PI); break; }
         if(r === 0) await ctx.places.status();
         else if(r === 1){ const w = await ctx.places.fieldSpells(); if(w === "warp") break; }
         else if(r === 2) await itemMenu();
@@ -259,9 +256,11 @@ async function showTitle(){
     mk("そうさの せつめい", () => showHelp());
     mk("🎮 ボタン設定（プロコン）", () => { if(window.AREPadMap) AREPadMap.open(); });
     const fb = mk("🔄 がめんの むき：" + FLIP[cfg.flip || "none"] + "（絵がさかさまなら押す）", () => { fb.textContent = "🔄 がめんの むき：" + nextFlip() + "（絵がさかさまなら押す）"; });
-    mk("🗝️ ひみつのコード", () => codeBox());
-    mk("🗡️ ARE QUEST（1）へ", () => { location.href = "../game/index.html"; });
-    mk("🎡 ドリームフロンティアへ", () => { location.href = "../dream-frontier/index.html"; });
+    mk("🗡️ ARE QUEST（1）へ", () => { location.href = "../../game/index.html"; });
+    mk("🌙 ARE QUEST 3 へ", () => { location.href = "../quest3/index.html"; });
+    mk("🃏 ARE CARD へ", () => { location.href = "../../game4/index.html"; });
+    mk("🔎 推理ゲームへ", () => { location.href = "../../game5/index.html"; });
+    mk("🎡 ドリームフロンティアへ", () => { location.href = "../../dream-frontier/index.html"; });
     $("titleFoot").textContent = "移動 WASD/矢印　決定 Space/Enter　メニュー Esc　走る Shift　カメラ Q/E　オート V　／　Proコン・タッチ操作にも対応";
     if(qs.get("name")) $("nameIn").value = qs.get("name");
     window.__bootDone = true;
@@ -287,11 +286,11 @@ async function prepareAt(n){
 async function subMenu(){
     const t = $("title"); t.hidden = true; const ord = story.subOrder();
     const sv = (() => { const w = Save.ns; Save.ns = "sub"; const any = Save.slots.some((s) => Save.read(s)); Save.ns = w; return any; })();
-    const r = await UI.menu("📖 サブストーリー「月かげの 波倉」（全" + ord.length + "話）", [{label: "はじめから（第1話）"}, {label: "つづきから", meta: "サブストーリー用の セーブ", disabled: !sv}, {label: "話を えらぶ"}], {cancel: true}); t.hidden = false;
+    const r = await UI.menu("📖 サブストーリー（全" + ord.length + "話）", [{label: "はじめから（第1話）"}, {label: "つづきから", meta: "サブストーリー用の セーブ", disabled: !sv}, {label: "話を えらぶ"}], {cancel: true}); t.hidden = false;
     if(r === 0) await startNew(ord[0]);
     else if(r === 1) await continueGame("sub");
     else if(r === 2){
-        t.hidden = true; const list = ord.map((i) => ({label: story.label(i), meta: ctx.data.chapters.chapters[i - 1].title}));
+        t.hidden = true; const list = ord.map((i) => ({label: story.label(i), meta: story.meta(i).title}));
         const q = await UI.menu("どの話から はじめますか？", list, {cancel: true}); t.hidden = false; if(q >= 0) await startNew(ord[q]);
     }
 }
@@ -326,7 +325,7 @@ function movePlayer(dt){
     const f = [Math.sin(camYaw), Math.cos(camYaw)], r = [-f[1], f[0]];
     let dx = f[0] * Input.my + r[0] * Input.mx, dz = f[1] * Input.my + r[1] * Input.mx; const l = Math.hypot(dx, dz);
     if(l > .08){
-        const k = Math.min(1, l); const sp = SPEED * (Input.held.dash ? DASH : 1) * (Cheats.flags.mega ? 4 : Cheats.flags.fast ? 2 : 1); dx = dx / l * sp * k * dt; dz = dz / l * sp * k * dt;
+        const k = Math.min(1, l); const sp = SPEED * (Input.held.dash ? DASH : 1); dx = dx / l * sp * k * dt; dz = dz / l * sp * k * dt;
         let [nx, nz] = world.move(P.x, P.z, dx, dz, .38);
         for(const n of npcs){ const dn = Math.hypot(nx - n.x, nz - n.z); if(dn < .85 && dn < Math.hypot(P.x - n.x, P.z - n.z)){ nx = P.x; nz = P.z; break; } }
         for(const sp of bossSpots){ if(!fbOpen(sp.b)) continue; const dn = Math.hypot(nx - sp.x, nz - sp.z); if(dn < 1.7 && dn < Math.hypot(P.x - sp.x, P.z - sp.z)){ nx = P.x; nz = P.z; break; } }
@@ -423,6 +422,7 @@ function drawField(dt){
 
 // ---------- BGM ----------
 function bgmFor(){
+    if(ctx.bgmOverride) return ctx.bgmOverride;   // カジノのパズル中は casino.mp3
     if(state === "title" || state === "boot" || !ctx.S) return "opening";
     if(state === "park") return ctx.park.bgm();
     if(ctx.S.ending) return "ending";
@@ -443,54 +443,17 @@ function adapt(){
     else if(ema < .0185 && scale < maxScale && frames % 360 === 0){ scale = Math.min(maxScale, scale * 1.1); ctx.R.resize(ctx.cssW, ctx.cssH, scale); }
 }
 let last = 0;
-
-// ---------- ひみつのコード・もどし機能・フリーズ対策 ----------
-function cheatCtx(){
-    return Object.assign(ctx, {startBossRush: async () => { if(state !== "field" || !ctx.S) return; const ids = Object.keys(ctx.data.monsters).filter((i) => /^MON\d+$/.test(i) && +i.slice(3) < 500 && +i.slice(3) > 10).sort((a, b) => ctx.data.monsters[a].hp - ctx.data.monsters[b].hp); const top = ids.slice(Math.floor(ids.length * .5)); const pick = [0, .25, .5, .75, 1].map((q) => top[Math.floor(q * (top.length - 1))]).filter((v, i, a) => v && a.indexOf(v) === i); for(const id of pick){ healAll(); const res = await fight([id], {boss: true}); if(res !== "win") return; } ctx.UI.toast("ボスラッシュ ぜんぶ たおした！"); healAll(); }, gainExp, expNeed, statsOf, setEquip, story, autosave, rescue, jumpChapter: (n) => { if(!story.has(+n) || !ctx.S) return false; Save.ns = story.isSub(+n) ? "sub" : ""; state = "busy"; enterGame(+n, true).then(() => { if(state === "busy") state = "field"; }).catch((e) => { console.error(e); rescue("話へ ジャンプ"); }); return true; }});
-}
-async function codeBox(){ const was = state; await openCodeBox(cheatCtx()); applyFx(); if(state === "menu" || state === "title") { /* そのまま */ } else state = was; }
-let rescues = 0;
-function rescue(why){
-    rescues++; console.warn("[rescue]", why);
-    try{ if(battle){ battle.active = false; battle.autoAll = false; battle._idle = 0; } }catch(_e){}
-    try{ for(const id of ["codeBox"]){ const e = document.getElementById(id); if(e) e.remove(); } document.querySelectorAll("body > div[style*='z-index:99']").forEach((e) => e.remove()); }catch(_e){}
-    try{ UI.hideDlg(); }catch(_e){}
-    if(ctx.S && world){ state = "field"; hold = .3; try{ autosave(); }catch(_e){} UI.toast && UI.toast("うごかなく なったので もとに もどしました（セーブ済み）", 3500); }
-    else state = "title";
-}
-// 連続エラー → じどうで もどす。 ひと休みの 自動セーブ。 Escを 3びょう 長おし／右上の ⚠ ボタンで もどす
-let errRun = 0, escHold = 0, lastAuto = 0, stallT = 0;
-addEventListener("error", () => { errRun++; if(errRun >= 4){ errRun = 0; rescue("エラーが つづいた"); } });
-addEventListener("unhandledrejection", () => { errRun++; if(errRun >= 4){ errRun = 0; rescue("エラーが つづいた"); } });
-addEventListener("keydown", (e) => { if(e.key === "p" || e.key === "P"){ if(Cheats.flags.photo && !(e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) document.body.classList.toggle("photo"); } });
-document.addEventListener("visibilitychange", () => { if(document.hidden && ctx.S && state === "field"){ try{ autosave(); }catch(_e){} } });
-function watchdog(dt){
-    if(ctx.S && state === "field"){ lastAuto += dt; if(lastAuto > 60){ lastAuto = 0; try{ autosave(); }catch(_e){} } }
-    // Esc を ずっと おす → もどす
-    if(Input.held && (Input.held.cancel || Input.held.menu) && state !== "title"){ escHold += dt; } else escHold = 0;
-    if(escHold > 3){ escHold = 0; rescue("Escの ながおし"); }
-    // 「はなしかけ中・メニュー中・ビジー」のまま ぜんぜん うごかない ときの ボタン
-    const stuck = (state === "busy" || state === "talk" || state === "menu") && !document.getElementById("dlg")?.offsetParent && !document.querySelector("#menu:not([hidden])");
-    stallT = stuck ? stallT + dt : 0;
-    const b = document.getElementById("rescueBtn"); if(b) b.hidden = !(stallT > 8 || (state === "battle" && battle && (battle._idle || 0) > 40));
-    if(state === "battle" && battle){ battle._idle = (battle._idle || 0) + dt; if(battle._idle > 120){ battle._idle = 0; rescue("せんとうが すすまない"); } }
-    if(Cheats.flags.clock && ctx.S){ let c = document.getElementById("clockHud"); if(!c){ c = document.createElement("div"); c.id = "clockHud"; c.style.cssText = "position:fixed;right:8px;top:8px;z-index:30;background:#000a;color:#fff;padding:2px 8px;border-radius:8px;font:12px monospace"; document.body.appendChild(c); } ctx.S.play = (ctx.S.play || 0) + dt; const t = Math.floor(ctx.S.play); c.textContent = String(Math.floor(t / 3600)).padStart(2, "0") + ":" + String(Math.floor(t / 60) % 60).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0"); } else { const c = document.getElementById("clockHud"); if(c) c.remove(); }
-}
 function frame(ts){
     requestAnimationFrame(frame);
-    try{ frameBody(ts); errRun = 0; }catch(err){ console.error(err); if(++errRun >= 4){ errRun = 0; rescue("がめん更新で エラー"); } }
-}
-function frameBody(ts){
     const dt = Math.min(.05, (ts - last) / 1000 || .016); last = ts; tNow = ts / 1000; ema += (dt - ema) * .05; fps = fps * .9 + (1 / Math.max(dt, .001)) * .1; adapt();
-    if(qs.get("dbg") || Cheats.flags.fps) $("hudDbg").textContent = Math.round(fps) + "fps " + ctx.R.w + "x" + ctx.R.h + " d" + ctx.R.stats.draws;
-    Input.poll(); const e = Input.edge; watchdog(dt);
-    if(battle && battle._idle && (e.ok || e.cancel || e.menu)) battle._idle = 0;
+    if(qs.get("dbg")) $("hudDbg").textContent = Math.round(fps) + "fps " + ctx.R.w + "x" + ctx.R.h + " d" + ctx.R.stats.draws;
+    Input.poll(); const e = Input.edge;
     { const k = bgmFor(); if(k !== ctx.A.want) ctx.A.play(k); if(!UI.fast){ if(e.ok) ctx.A.se("ok"); else if(e.cancel) ctx.A.se("cancel"); } }
     if(state === "title"){ UI.route(e); if(world) { /* タイトル背景は町を回す */ } drawTitleBg(dt); return; }
     if(state === "boot" || !world) return;
     const routed = UI.route(e);
     if(state === "park"){ ctx.park.update(dt, e, routed); return; }
-    if(state === "battle"){ if(!battle){ state = "field"; return; } battle.update(dt); battle.render(); return; }
+    if(state === "battle"){ battle.update(dt); battle.render(); return; }
     if(state === "field" && !routed) fieldTick(dt, e);
     else { updateNpcs(dt); P.walk = Math.max(0, P.walk - dt * 10); if(state === "talk" || state === "menu" || state === "busy"){ $("prompt").hidden = true; } }
     if(state === "battle") return;
@@ -506,7 +469,7 @@ async function boot(){
     try{
         let canvas = $("gl"), R = null;
         if(qs.get("engine") !== "webgl2"){
-            try{ const three = await import("../../shared/three-renderer.js"); R = three.createThreeRenderer(canvas, {keep: qs.get("keep") === "1"}); }
+            try{ const three = await import("../../../shared/three-renderer.js"); R = three.createThreeRenderer(canvas, {keep: qs.get("keep") === "1"}); }
             catch(err){ console.warn("Three.js を起動できないため、互換描画へ切り替えます。", err); }
         }
         if(!R){ const replacement = canvas.cloneNode(false); canvas.replaceWith(replacement); canvas = replacement; R = createRenderer(canvas, {keep: qs.get("keep") === "1"}); if(R) R.name = "webgl2"; }
@@ -516,7 +479,7 @@ async function boot(){
         for(const b of ((maps.field || {}).bosses || [])){ const base = monsters[b.from]; if(!base) continue; monsters[b.id] = Object.assign({}, base, {name: b.name, boss: true, hp: Math.round(base.hp * (b.hp || 1)), atk: Math.round(base.atk * (b.atk || 1)), exp: Math.round(base.exp * (b.exp || 1)), gold: Math.round(base.gold * (b.gold || 1)), size: Math.max(base.size || 3, 3.6), bgm: b.bgm || base.bgm, drop: undefined}); }
         ctx.data = {maps, monsters, items, members, chapters, abilities, jobs, mons, casino, encpool}; setGameData(ctx.data); ctx.ranch = makeRanch(ctx); ctx.places = new Places(ctx); ctx.park = new Park(ctx); ctx.setState = (v) => { state = v; }; ctx.getState = () => state;
         story = new Story(ctx); ctx.story = story; battle = new Battle(ctx); ctx.shop = shop; ctx.rest = rest; ctx.refreshNpcs = refreshNpcs; ctx.warpMap = warpMap; ctx.fight = fight; ctx.healAll = healAll; ctx.autosave = autosave;
-        UI.init(); UI.heroName = () => (ctx.S && ctx.S.name) || ""; applyFlip(); watchKonami(() => { if(state === "title" || state === "field") codeBox(); }); applyFx(); $("rescueBtn").addEventListener("click", () => rescue("ボタン")); Audio2.init(cfg); Input.init($("app")); applyTouch(); if(cfg.auto) UI.toggleAuto();
+        UI.init(); UI.heroName = () => (ctx.S && ctx.S.name) || ""; applyFlip(); Audio2.init(cfg); Input.init($("app")); applyTouch(); if(cfg.auto) UI.toggleAuto();
         addEventListener("resize", resize); addEventListener("orientationchange", () => setTimeout(resize, 200)); resize();
         P.P = charMeshes(R, members.hero.look); setWorld("town");
         canvas.addEventListener("webglcontextlost", (ev) => { ev.preventDefault(); UI.toast("画面の描画が中断されました。ページを再読み込みしてください。", 8000); });
@@ -529,7 +492,7 @@ async function boot(){
 
 // ---------- テスト用API（本番のコードをそのまま通す）----------
 window.__q2 = {
-    ctx, warpMap: (...a) => warpMap(...a), fight: (...a) => fight(...a), cheatCtx, rescue, codeBox, applyFx, get state(){ return state; }, get S(){ return ctx.S; }, get story(){ return story; }, get npcs(){ return npcs; }, get world(){ return world; }, P: () => P,
+    ctx, get state(){ return state; }, get S(){ return ctx.S; }, get story(){ return story; }, get npcs(){ return npcs; }, get world(){ return world; }, P: () => P,
     fast(on){ UI.fast = !!on; }, bosses: () => bossSpots, challengeBoss, setAutoBattle(v){ ctx.autoBattle = !!v; }, zoneAt: (x, z) => world && world.dangerAt ? world.dangerAt(x, z) : null, press: (n) => Input.press(n), startNew, showTitle, continueGame, autosave, Save, UI,
     async begin(name, chapter){ $("nameIn").value = name || "主人公"; await startNew(chapter); },
     fps: () => ({fps, scale, w: ctx.R.w, h: ctx.R.h, ema}),

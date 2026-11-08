@@ -5,17 +5,26 @@
 //  ・exe・file …… アプリに入っているのは ARE QUEST だけなので、出さない（開けずにエラーになるため）。
 (function(){
     if(window.AREGameNav) return;
+    // path は ゲームの サイト（リポジトリ）の いちばん上から見た 場所。ゲームが 増えたら ここに 足す
+    // 2026-11-08 統合：game2＝ARE QUEST 2＋3／game4＝ARE CARD＋星紡ぎの旅人／game5＝推理ゲーム＋ARE BLOCKS
     var GAMES = [
-        {id: "game",  icon: "🗡", name: "ARE QUEST"},
-        {id: "game2", icon: "📖", name: "ARE QUEST 2"},
-        {id: "game3", icon: "🌙", name: "ARE QUEST 3"},
-        {id: "game4", icon: "🃏", name: "ARE CARD"},
-        {id: "game5", icon: "🔎", name: "推理ゲーム"}
+        {id: "game",             icon: "🗡", name: "ARE QUEST"},
+        {id: "game2/quest2",     icon: "📖", name: "ARE QUEST 2"},
+        {id: "game2/quest3",     icon: "🌙", name: "ARE QUEST 3"},
+        {id: "game4/card",       icon: "🃏", name: "ARE CARD"},
+        {id: "game4/starweaver", icon: "⭐", name: "星紡ぎの旅人"},
+        {id: "game5",            icon: "🔎", name: "推理ゲーム"},
+        {id: "game5/blocks",     icon: "🧱", name: "ARE BLOCKS"}
     ];
-
+    function dirOf(){ try{ return location.pathname.replace(/[^\/]*$/, "").replace(/\/play\/$/, "/").replace(/\/manual\/$/, "/"); }catch(_e){ return ""; } }
+    // いまの ゲーム（id）。見つからなければ ""
     function here(){
-        try{ var m = location.pathname.match(/\/(game[2-5]?)\/[^\/]*$/); return m ? m[1] : ""; }catch(_e){ return ""; }
+        var d = dirOf(), best = "";
+        GAMES.forEach(function(g){ if(d.length >= g.id.length + 2 && d.slice(-(g.id.length + 2)) === "/" + g.id + "/" && g.id.length > best.length) best = g.id; });
+        return best;
     }
+    // サイトの いちばん上（ゲームの フォルダの 1つ上まで）
+    function root(){ var d = dirOf(), h = here(); return h ? d.slice(0, d.length - h.length - 1) : "/"; }
     function isWeb(){
         try{
             if(window.AREMode) return window.AREMode.mode === "web";
@@ -49,7 +58,7 @@
         win.appendChild(h); win.appendChild(note);
         others().forEach(function(g){
             var a = document.createElement("a");
-            a.href = "../" + g.id + "/index.html";
+            a.href = root() + g.id + "/index.html";
             a.textContent = g.icon + " " + g.name;
             a.style.cssText = "display:block;margin:8px 0;padding:12px;border-radius:10px;background:#243064;color:#fff;font-weight:bold;font-size:18px;text-decoration:none";
             a.addEventListener("click", function(){ try{ if(opts.before) opts.before(); }catch(_e){} });
@@ -71,7 +80,7 @@
 
     // 文字のリンク一覧（ARE QUEST 2 などのタイトルに並べる用）
     function links(style){
-        return others().map(function(g){ return '<a href="../' + g.id + '/index.html"' + (style ? ' style="' + style + '"' : "") + ">" + g.name + "</a>"; }).join("　");
+        return others().map(function(g){ return '<a href="' + root() + g.id + '/index.html"' + (style ? ' style="' + style + '"' : "") + ">" + g.name + "</a>"; }).join("　");
     }
     window.AREGameNav = {games: GAMES, here: here, others: others, canShow: isWeb, open: open, close: close, links: links};
 })();

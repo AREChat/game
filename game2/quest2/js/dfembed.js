@@ -1,6 +1,6 @@
 // ===== ドリーム・フロンティア（別フォルダの 3D テーマパーク）を ARE QUEST 2 の 中に ひらく =====
 //  dream-frontier/ が 見つからない時は null を かえす → よびだしもとが 内蔵の ミニパーク（park.js）に きりかえる
-const CANDS = ["../dream-frontier/index.html", "dream-frontier/index.html"];
+const CANDS = ["../../dream-frontier/index.html", "dream-frontier/index.html"];
 async function find(){ for(const c of CANDS){ try{ const r = await fetch(c, {method: "HEAD", cache: "no-store"}); if(r.ok) return c; }catch(_e){} } return null; }
 export async function openDreamFrontier(ctx){
     const url = await find(); if(!url) return null;

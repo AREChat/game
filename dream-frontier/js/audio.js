@@ -47,7 +47,7 @@ function getTrack(name){
     if(failedTracks[name]) return null;
     if(tracks[name]) return tracks[name];
     try{
-        const audio = new Audio(new URL("../../game2/bgm/" + name + ".mp3", import.meta.url).href);
+        const audio = new Audio(new URL("../../game2/quest2/bgm/" + name + ".mp3", import.meta.url).href);
         audio.loop = true; audio.preload = "auto"; audio.volume = 0;
         audio.addEventListener("error", () => { failedTracks[name] = true; if(key === name){ activeAudio = null; activeKey = ""; startSynthBgm(); } });
         tracks[name] = audio;

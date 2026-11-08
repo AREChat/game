@@ -69,7 +69,7 @@
   // ---- セーブの 書き出し / 読み込み（ファイル）----
   function savePrefix(){
     const p = location.pathname;
-    if(/\/game2\//.test(p)) return ["areq2_"]; if(/\/game3\//.test(p)) return ["areq3_"]; if(/\/game4\//.test(p)) return ["areq4_"]; if(/\/game6\//.test(p)) return ["game6-"]; if(/\/game\//.test(p)) return ["tq_save_", "tq_settings"];
+    if(/\/game2\/quest3\//.test(p)) return ["areq3_"]; if(/\/game2\/quest2\//.test(p)) return ["areq2_"]; if(/\/game4\/starweaver\//.test(p)) return ["game6-"]; if(/\/game4\/card\//.test(p)) return ["areq4_"]; if(/\/game\/game\/|^\/game\/(index\.html)?$/.test(p)) return ["tq_save_", "tq_settings"];
     return [];
   }
   function exportSave(){
@@ -100,8 +100,8 @@
   // 「あそびかた」「よくある質問」「版」の行き先。game サイト（arechat.github.io/game/…）は、リポジトリ名も game なので
   // 下の置きかえでは「/」になって 404 になる。game サイトでは ARE のページ(guide.html・faq.html・version.json)を使う。
   const base = () => {
-    try{ if(/(^|\.)github\.io$/.test(location.hostname) && /^\/game\/(game|game2|game3|game4|game6|dream-frontier)\//.test(location.pathname)) return "https://arechat.github.io/ARE/"; }catch(_e){}
-    return location.pathname.replace(/\/(game|game2|game3|game4|game6)\/.*$/, "/");
+    try{ if(/(^|\.)github\.io$/.test(location.hostname) && /^\/game\/(game|game2|game4|game5|dream-frontier)\//.test(location.pathname)) return "https://arechat.github.io/ARE/"; }catch(_e){}
+    return location.pathname.replace(/\/(game|game2|game4|game5)\/.*$/, "/");
   };
   let VER = ""; try{ fetch(base() + "version.json", {cache:"no-cache"}).then((r) => r.ok ? r.json() : null).then((v) => { if(v) VER = v.version; }).catch(() => {}); }catch(_e){}
   // ---- 画面 ----
