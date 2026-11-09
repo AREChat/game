@@ -90,3 +90,16 @@ table.g thead th.rh{z-index:3}
 .pz{grid-template-columns:minmax(0,1fr)}
 @media(min-width:960px){.pz{grid-template-columns:minmax(300px,380px) minmax(0,1fr)}}
 html,body{overflow-x:hidden}
+/* マトリックス表 */
+table.mx{border-collapse:separate;border-spacing:0}
+table.mx th.grp{background:var(--card2);color:var(--ink);font-size:12px;padding:3px 4px;border-left:2px solid var(--ink);border-bottom:2px solid var(--ink)}
+table.mx th.vh{height:78px;min-width:var(--cell);width:var(--cell);vertical-align:bottom;padding:2px 0}
+table.mx th.vh span{writing-mode:vertical-rl;display:inline-block;font-size:11px;line-height:1.1;letter-spacing:.05em;padding-bottom:3px;white-space:nowrap}
+table.mx th.corner{background:var(--bg2);position:sticky;left:0;z-index:4;min-width:92px}
+table.mx th.rg{position:sticky;left:0;z-index:2;background:var(--card2);width:24px;min-width:24px;padding:2px;border-top:2px solid var(--ink);color:var(--ink)}
+table.mx th.rg span{writing-mode:vertical-rl;display:inline-block;font-size:11px;font-weight:700;letter-spacing:.1em}
+table.mx th.rh{position:sticky;left:24px;z-index:2;min-width:68px;max-width:92px;font-size:12px;white-space:nowrap;padding:2px 6px;text-align:left}
+table.mx td.gs,table.mx th.gs{border-left:2px solid var(--ink)}
+table.mx tr.gsr td,table.mx tr.gsr th.rh{border-top:2px solid var(--ink)}
+table.mx td.void{background:repeating-linear-gradient(135deg,#0c1438,#0c1438 4px,#101a46 4px,#101a46 8px)}
+table.mx td{width:var(--cell)}
