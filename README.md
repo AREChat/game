@@ -35,3 +35,12 @@ AREChat のゲーム置き場です。チャットアプリは `AREChat/AREDA`�
 - 大きかった画像（game/img/title.webp、game2/quest2/img/icon.webp・thumb.webp、game5/play/img/title_bg.jpg）を縮小。
 - Three.js は 同じ版(0.160.0)の公式 `three.module.min.js` に差しかえ（1.27MB → 0.67MB）。
 - ARE QUEST の sw.js は 毎回の再確認をやめ、ブラウザの短い控えを使う（2回目から速い。更新の反映は最大でも数分）。
+
+## ARE QUEST の JS は「まとめて」配信している（2026-11-09）
+- `game/index.html` が読む JS 66本は、`game/game.bundle-1.js`〜`4.js` の 4本の束にまとめてある（リクエスト 93 → 32）。
+- **`game/*.js` を直したら、かならず `node tools/build-game.js` を実行して、できた `game.bundle-*.js` と `index.html` も一緒にコミットする。**
+  忘れても GitHub Actions「ARE QUEST のまとめファイルを自動で最新にする」が 1〜2分後に作り直してコミットしてくれる（それまでの間だけ 古い内容が出る）。
+  確認だけなら `node tools/build-game.js --check`。ローカルで `git pull` するときは、そのコミットも取りこむこと。
+- 新しい JS を足す／順番をかえる時は `tools/game-bundle-sources.txt` を直す（`---` は束の区切り）。
+- ビルドは中身を 1文字もかえない（つなげるだけ）。次のどれかだと失敗して教えてくれる：先頭が `"use strict"` でない／同じ束に同名の関数・const がある／構文エラー。
+- 束が読めない時は、`game.bundle-fb.js` が まだ動いていないファイルを元のファイルで 1本ずつ読み直す（今までと同じ動き）。

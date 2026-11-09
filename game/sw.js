@@ -3,7 +3,7 @@
 // ・このゲームの フォルダ（/ARE/game/）の中だけを 担当する。チャット側の控え（キャッシュ）とは まざらない。
 // ・GET 以外／ほかのサイト／Range（音楽のとちゅう再生）／mp3 などの 大きな音声は さわらない → 止まったり 古いままに ならない。
 // ・自分のファイルは「ネット優先（ただしブラウザの短い控えは つかう＝2回目から速い）」。つながらない ときだけ 控えを つかう。新しい版が 入ったら 古い控えは すべて 消す。
-const CACHE = "tq-game-v25-20261108";
+const CACHE = "tq-game-v26-20261109";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {

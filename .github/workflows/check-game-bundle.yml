@@ -1,0 +1,43 @@
+name: ARE QUEST のまとめファイルを自動で最新にする
+
+# game/*.js を直したのに  node tools/build-game.js  を忘れても、ここで自動で作り直して コミットします
+# （構文エラーなど、作り直せない時は 赤くなって知らせます）。
+on:
+  push:
+    branches: [main]
+    paths: ["game/**", "tools/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: game-bundle
+  cancel-in-progress: false
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: JavaScript の構文チェック
+        run: |
+          fail=0
+          for f in game/*.js shared/*.js; do case "$f" in game/game.bundle-*) continue;; esac; node --check "$f" || { echo "::error file=$f::構文エラー"; fail=1; }; done
+          exit $fail
+      - name: まとめファイルを作り直す
+        run: node tools/build-game.js
+      - name: ちがいがあれば 自動でコミットする
+        run: |
+          if [ -n "$(git status --porcelain game)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add game
+            git commit -m "自動: ARE QUEST のまとめファイル（game.bundle-*.js）を作り直し"
+            for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break || sleep 5; done
+          else
+            echo "まとめファイルは すでに最新です"
+          fi

@@ -1,0 +1,7 @@
+/* 自動生成: node tools/build-game.js （直接編集しない）。まだ実行が始まっていないファイルだけ、もとのファイルで 1本ずつ読み直す */
+(function(){
+var S=[[[0,"hash.js"],[1,"cheat-table.js"],[2,"data.js"]],[[3,"data2.js"],[4,"maps.js"],[5,"story.js"],[6,"maps2.js"],[7,"story2.js"],[8,"world2.js"],[9,"data3.js"],[10,"core.js"],[11,"ui.js"],[12,"field.js"],[13,"battle.js"],[14,"pack.js"],[15,"pack-mon.js"],[16,"pack-meta.js"],[17,"pack-codes.js"],[18,"pack-ui.js"]],[[19,"extra.js"],[20,"job.js"],[21,"titles.js"],[22,"replay-codes.js"],[23,"extra2.js"],[24,"episodes.js"],[25,"karasu.js"],[26,"gamepad.js"],[27,"lucky.js"],[28,"pack-casino.js"],[29,"typing2.js"]],[[30,"shooter2.js"],[31,"bgm.js"],[32,"yarisugi.js"],[33,"yh1.js"],[34,"yh2.js"],[35,"yh3.js"],[36,"yh4.js"],[37,"yh5.js"],[38,"yh6.js"],[39,"yh-end.js"],[40,"dk.js"],[41,"dk1.js"],[42,"dk2.js"],[43,"dk3.js"],[44,"dk-end.js"],[45,"ld.js"],[46,"kn.js"],[47,"wn.js"],[48,"us.js"],[49,"ld-end.js"],[50,"sub.js"],[51,"ssa.js"],[52,"ssb.js"],[53,"ssc.js"],[54,"sse.js"],[55,"ssf.js"],[56,"ssg.js"],[57,"ssh.js"],[58,"ssi.js"],[59,"ssj.js"],[60,"sub-end.js"],[61,"yarisugi-codes.js"],[62,"yh-codes.js"],[63,"cheat-reset.js"],[64,"qol.js"],[65,"boot.js"]]];
+var me=document.currentScript, n=me&&me.getAttribute('data-seg')|0, d=window.__AREB_S||[], list=S[n-1]||[], h='';
+for(var i=0;i<list.length;i++){ if(!d[list[i][0]]) h+='<script src="./'+list[i][1]+'?fb='+(me.getAttribute('data-v')||'')+'"></'+'script>'; }
+if(h){ try{ console.warn('[ARE QUEST] 束で動かなかったファイルを、1本ずつ読み直します（束 '+n+'）'); }catch(e){} document.write(h); }
+})();
