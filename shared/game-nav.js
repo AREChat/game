@@ -14,7 +14,8 @@
         {id: "game4/card",       icon: "🃏", name: "ARE CARD"},
         {id: "game4/starweaver", icon: "⭐", name: "星紡ぎの旅人"},
         {id: "game5",            icon: "🔎", name: "推理ゲーム"},
-        {id: "game5/blocks",     icon: "🧱", name: "ARE BLOCKS"}
+        {id: "game5/blocks",     icon: "🧱", name: "ARE BLOCKS"},
+        {id: "game6",            icon: "🕵", name: "推理ゲーム2"}
     ];
     function dirOf(){ try{ return location.pathname.replace(/[^\/]*$/, "").replace(/\/play\/$/, "/").replace(/\/manual\/$/, "/"); }catch(_e){ return ""; } }
     // いまの ゲーム（id）。見つからなければ ""

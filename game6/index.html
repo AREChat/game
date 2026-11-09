@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>推理ゲーム2</title>
+<meta name="theme-color" content="#0d1530">
+<script src="../protect.js"></script>
+<link rel="stylesheet" href="./style.css">
+<script src="../shared/are-offline.js" defer></script>
+</head>
+<body>
+<header id="bar">
+  <button id="btnBack" class="barbtn" type="button" aria-label="もどる">◀ もどる</button>
+  <div id="barTitle">推理ゲーム2</div>
+  <label id="diffWrap">難しさ
+    <select id="diff" aria-label="難しさ">
+      <option value="easy">かんたん</option>
+      <option value="normal" selected>ふつう</option>
+      <option value="hard">むずかしい</option>
+    </select>
+  </label>
+  <button id="btnSnd" class="barbtn" type="button" aria-label="音の入り切り">🔊</button>
+</header>
+<main id="app"></main>
+<div id="toast" role="status" aria-live="polite"></div>
+<a href="../" id="homeLink" tabindex="-1">ほかのゲームへ</a>
+<script src="../shared/game-nav.js"></script>
+<script src="./js/story.js"></script>
+<script src="./js/gen.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>
