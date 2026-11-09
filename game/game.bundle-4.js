@@ -231,7 +231,7 @@ const TQ_BGM_MAP = {lab:"town", sendai:"town", tokyo:"town", aprt:"town", xmas:"
     labn:"cave", base:"cave", n8:"field", n9:"sea", n11:"demoncastle", xr:"field", ep10:"field", ep11:"town", ep11b:"town", ep12:"castle", ep01:"field", ks1:"field", ks2:"town", ks3:"castle", ks4:"town", ks5:"field"};
 const TQ_BGM_LAST = ["teddy", "king", "omega"], TQ_BGM_SECRET = ["s_akuma"];
 
-const tqBgm = {cur:"", audios:{}, bad:{}, want:""};
+const tqBgm = {cur:"", audios:{}, bad:{}, want:"", touched:false};   // touched: 画面を さわる まで 曲を 読み込まない（さわる まえは どうせ 鳴らない・読み込みが かるくなる）
 function tqBgmWant(){
     if(G.mode === "end") return "ending";
     const fromMenu = (G.mode === "help" && G.helpFrom === "menu") || (G.mode === "settings" && G.setFrom === "menu") || (G.mode === "cheat" && G.cheatFrom === "menu") || (G.mode === "slots" && G.slotFrom === "menu");
@@ -246,6 +246,7 @@ function tqBgmWant(){
     return TQ_BGM_MAP[G.S.map] || "field";
 }
 function tqBgmAudio(key){
+    if(!tqBgm.touched) return null;
     if(tqBgm.bad[key]){
         // 通信が とぎれて 読めなかった曲は、20秒 あとに もう一度 ためす（ずっと 無音に ならない）
         if(Date.now() - tqBgm.bad[key] < 20000) return null;
@@ -253,7 +254,7 @@ function tqBgmAudio(key){
     }
     let a = tqBgm.audios[key];
     if(!a){
-        a = new Audio("./bgm/" + TQ_BGM[key].file); a.loop = key !== "ending"; a.preload = "auto";
+        a = new Audio("./bgm/" + TQ_BGM[key].file); a.loop = key !== "ending"; a.preload = "metadata";
         a.addEventListener("error", () => { tqBgm.bad[key] = Date.now(); });
         tqBgm.audios[key] = a;
     }
@@ -278,7 +279,7 @@ function tqBgmSync(){
     }catch(_e){ /* 音が 出せなくても ゲームは つづける */ }
 }
 setInterval(tqBgmSync, 500);
-["pointerdown", "keydown", "touchstart"].forEach((ev) => document.addEventListener(ev, tqBgmSync, {passive:true}));
+["pointerdown", "keydown", "touchstart"].forEach((ev) => document.addEventListener(ev, () => { tqBgm.touched = true; tqBgmSync(); }, {passive:true}));
 document.addEventListener("visibilitychange", tqBgmSync);
 
 // 効果音（1回だけ）：セーブ音など。BGMは止めません
@@ -4462,7 +4463,7 @@ function tqResetAllCheats(){
     try{
         fetch("./announce.json", {cache:"no-cache"}).then((r) => r.ok ? r.json() : null).then((a) => {
             if(!a || !a.id || lsGet("tq_announce_seen", "") === a.id) return;
-            lsSet("tq_announce_seen", a.id); setTimeout(() => toast("📢 " + a.text, 7000), 1500);
+            lsSet("tq_announce_seen", a.id); setTimeout(() => toast("📢 " + a.text, 7000, true), 1500);
         }).catch(() => {});
     }catch(_e){}
 

@@ -286,7 +286,7 @@
     try{
         fetch("./announce.json", {cache:"no-cache"}).then((r) => r.ok ? r.json() : null).then((a) => {
             if(!a || !a.id || lsGet("tq_announce_seen", "") === a.id) return;
-            lsSet("tq_announce_seen", a.id); setTimeout(() => toast("📢 " + a.text, 7000), 1500);
+            lsSet("tq_announce_seen", a.id); setTimeout(() => toast("📢 " + a.text, 7000, true), 1500);
         }).catch(() => {});
     }catch(_e){}
 

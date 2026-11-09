@@ -132,3 +132,5 @@ body.bangshake #app{animation:bshake .62s linear}
 #foeCard{position:fixed;right:2%;top:12%;width:min(36vw,320px);aspect-ratio:3/2;object-fit:cover;border:3px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.55);pointer-events:none;z-index:7;animation:picIn .35s ease}
 #foeCard[hidden]{display:none}
 #title.screen{background:linear-gradient(180deg,rgba(7,12,29,.35),rgba(7,12,29,.7)),url(img/title.webp) center/cover,#0a0f3a}
+body:has(#dlg:not([hidden])) #touch{display:none}
+body.touch #hudL{margin-left:5.8em}

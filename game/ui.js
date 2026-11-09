@@ -4,8 +4,8 @@ const ACT = {};
 const TQ_SPR = {};
 const BGS = {title:"title", sendai_st:"sendai_st", aer:"aer"};
 
-function toast(text, ms){
-    const t = $("toast"); t.textContent = text; t.classList.add("on");
+function toast(text, ms, low){
+    const t = $("toast"); t.textContent = text; t.classList.toggle("low", !!low); t.classList.add("on");   // low: 下に出す（名前の入力欄などに かぶらない）
     clearTimeout(G.toastT); G.toastT = setTimeout(() => t.classList.remove("on"), ms || 2600);
 }
 function flash(){ const f = $("flash"); f.style.opacity = "0.9"; setTimeout(() => { f.style.opacity = "0"; }, 90); }
@@ -47,7 +47,7 @@ function tqAtArm(){
         tqSpeakStop(); pump();
     }, 900 + len * 70);
 }
-function tqAutoBtnHtml(){ return '<button class="btn sub' + (G.autoTalk ? " on" : "") + '" id="autoBtn" data-a="autoTalk" style="position:absolute;right:15cqw;top:6.8cqw;z-index:5">' + (G.autoTalk ? "▶▶ オート ON" : "▶ オート") + '</button>'; }
+function tqAutoBtnHtml(){ return '<button class="btn sub' + (G.autoTalk ? " on" : "") + '" id="autoBtn" data-a="autoTalk" style="position:absolute;right:17.5cqw;top:6.8cqw;z-index:5">' + (G.autoTalk ? "▶▶ オート ON" : "▶ オート") + '</button>'; }
 ACT.autoTalk = () => {
     G.autoTalk = !G.autoTalk; clearTimeout(G.atT);
     const bt = document.getElementById("autoBtn"); if(bt){ bt.className = "btn sub" + (G.autoTalk ? " on" : ""); bt.textContent = G.autoTalk ? "▶▶ オート ON" : "▶ オート"; }

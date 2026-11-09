@@ -103,6 +103,7 @@ body:not([data-mode=map]):not([data-mode=talk]):not([data-mode=script]) #pad{dis
 body[data-mode=map] #top,body[data-mode=battle] #top{bottom:auto;top:6.2cqw;right:1cqw;display:flex}
 #toast{position:absolute;left:50%;top:7cqw;transform:translateX(-50%);max-width:70cqw;padding:.8cqw 2cqw;font-size:2cqw;display:none;z-index:9;text-align:center;white-space:pre-wrap}
 #toast.on{display:block}
+#toast.low{top:auto;bottom:.6cqw;max-width:92cqw;font-size:1.5cqw;padding:.4cqw 1.6cqw;opacity:.9;pointer-events:none}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .25s}
 #rot{display:none;position:fixed;inset:0;z-index:99;background:#000d;color:#fff;align-items:center;justify-content:center;text-align:center;font-size:5vw;padding:6vw;flex-direction:column;gap:3vw}
 #rot button{font:inherit;font-size:4vw;padding:1.5vw 5vw;border-radius:2vw;border:2px solid #fff;background:#1a2fa8;color:#fff}

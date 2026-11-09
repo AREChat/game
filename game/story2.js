@@ -1,10 +1,10 @@
 "use strict";
 // ===== ストーリーの追加：背景つき場面・海斗の仲間入り・おまけ章（XRアドベンチャー体験会）=====
-// 背景の画像：sendai_st（ホシミ台駅）／aer（AER展望台）。['bg', 'キー'] で表示、['bg', ''] で消す。
+// 背景の画像：sendai_st（ホシミ台駅）／aer（ARE展望台）。['bg', 'キー'] で表示、['bg', ''] で消す。
 (function(){
     // ホシミ台駅の場面
     const sn = RPG_EV.sn_enter[0][2]; sn.unshift(["bg", "sendai_st"]); sn.push(["bg", ""]);
-    // AER展望台の場面（玲也との対決）／海斗が 仲間になる
+    // ARE展望台の場面（玲也との対決）／海斗が 仲間になる
     const rei = RPG_EV.sn_reiya[0][3];
     rei.unshift(["bg", "aer"]);
     const bi = rei.findIndex((o) => o[0] === "battle");

@@ -163,7 +163,7 @@ function recapSteps(){
 function tqObjective(){
     const f = G.S.f;
     if(!f.intro_done) return "ラボの アキトと ハルキに 話しかけよう";
-    if(!f.e_sendai) return f.sn_ready ? "AER展望台（北の階段の先）で 玲也の ノイズを おとなしくさせよう" : "2026年9月の ホシミ台で 手がかりを あつめよう（駅員さん・牛タン屋さん・亜理紗）";
+    if(!f.e_sendai) return f.sn_ready ? "ARE展望台（北の階段の先）で 玲也の ノイズを おとなしくさせよう" : "2026年9月の ホシミ台で 手がかりを あつめよう（駅員さん・牛タン屋さん・亜理紗）";
     if(!f.e_tokyo) return "ゲートから 2025年12月の 夜のアカリ市へ。蒼太さんを たずねよう";
     if(!f.e_white) return "『まっしろルーム』へ。透明ボタンを 3つ さがそう";
     if(!f.e_xmas) return "2028年12月25日の クリスマスのアカリ市へ。紘に 会おう";

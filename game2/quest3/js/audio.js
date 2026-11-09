@@ -17,9 +17,10 @@ export const Audio2 = {
         setInterval(() => this.sync(), 700);
     },
     el(key){
+        if(!this.unlocked) return null;   // 画面を さわる まで 読み込まない（さわる まえは 鳴らせない）
         if(this.bad[key] && Date.now() - this.bad[key] < 20000) return null;
         let a = this.map[key];
-        if(!a){ a = new Audio(new URL("../../quest2/bgm/" + key + ".mp3", import.meta.url).href); a.loop = !ONESHOT[key]; a.preload = "auto"; a.addEventListener("error", () => { this.bad[key] = Date.now(); delete this.map[key]; }); this.map[key] = a; }
+        if(!a){ a = new Audio(new URL("../../quest2/bgm/" + key + ".mp3", import.meta.url).href); a.loop = !ONESHOT[key]; a.preload = "metadata"; a.addEventListener("error", () => { this.bad[key] = Date.now(); delete this.map[key]; }); this.map[key] = a; }
         return a;
     },
     // 鳴らしたい曲を指定（同じ曲なら何もしない）

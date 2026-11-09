@@ -282,7 +282,7 @@ const RPG_EV = {
         ["e_white", "次は 2028年の クリスマスの アカリ市。探偵の 紘と、サンタに 変装した 蒼太が いる はずだ。"],
         ["e_tokyo", "次は『まっしろルーム』。ルールを かきかえる ノイズが いるらしい。気を つけろ。"],
         ["e_sendai", "次は 2025年の アカリ市だ。『運命開発株式会社』…聞いた ことが ない 名前だな。"]
-    ], "まずは ホシミ台だ。駅の まわりで 聞きこみを しよう。メモリの 反応は『AER展望テラス』の ほうに ある。"),
+    ], "まずは ホシミ台だ。駅の まわりで 聞きこみを しよう。メモリの 反応は『ARE展望台』の ほうに ある。"),
     shop:[rpgS("ミナ", "いらっしゃいませ〜！ ARE コンビニへ ようこそ！ きょうの おすすめは おにぎり です♪"), ["shop"]],
     pc:[rpgN("ラボの パソコンだ。"), ["choice", [["なまえを かえる", [["rename"]]], ["ここまでの おはなし", [["recap"]]], ["やめる", []]]]],
     shelf:[["pick", [
@@ -320,7 +320,7 @@ const RPG_EV = {
     sn_enter:[["if", "!sn_in", [["set", "sn_in"],
         rpgN("2026年9月19日（土）。ホシミ台駅前。"),
         rpgM("[[ここが 過去の ホシミ台…！ 本当に 来られたんだ。|ここが 過去の ホシミ台…！ 本当に 来られたんだね。]]"),
-        rpgS("ハルキ", "メモリの 反応は『AER展望テラス』の ほうだ。でも 手がかりが 少ない。まわりの 人に 話を 聞いてみよう。"),
+        rpgS("ハルキ", "メモリの 反応は『ARE展望台』の ほうだ。でも 手がかりが 少ない。まわりの 人に 話を 聞いてみよう。"),
         rpgS("ハルキ", "…その前に、あの XRグラスの 青年が こっちを じっと 見ているぞ。")], []]],
     sn_kaito:[["if", "!sn_k", [["set", "sn_k"],
         rpgS("海斗", "あれ？ 見かけない 顔だね。…って、その 服、なんか 未来っぽい！"),
@@ -351,7 +351,7 @@ const RPG_EV = {
         rpgS("亜理紗", "みんなは『とんでもない 迷惑ボーイ』って 言うけど、ほんとは さびしがりやな だけ なんだよ。おねがい、たすけてあげて！"),
         ["if", "c1&c2&c3", [["set", "sn_ready"]], []],
         rpgM("[[まかせて！ ちゃんと 連れもどすよ。|まかせて！ ちゃんと 連れて もどりますね。]]")],
-    sn_tourist:[rpgS("観光客", "AER展望テラス…エーイー…アーレ…？ あれ？ なんで ARE じゃなくて AER なんだろ！笑")],
+    sn_tourist:[rpgS("観光客", "ARE展望台…「あれ」展望台…？ あれ、あれ、あれ！ って言いたくなる名前だよね！笑")],
     sn_door:[rpgN("とびらには『準備中』の ふだが かかっている。")],
     sn_gate:[["if", "sn_ready", [], [rpgN("まだ 手がかりが たりない…。駅員さん・牛タン屋さん・亜理紗さんに 話を 聞いてから 行こう。"), ["back"]]]],
     sn_reiya:[["if", "!sn_ready", [rpgS("玲也", "ひひひ…ちかづくな〜！")],
@@ -640,11 +640,11 @@ RPG_ERAS.push({id:"xr", n:"おまけ：XRアドベンチャー体験会", map:"x
 ;(window.__AREB_S||(window.__AREB_S=[]))[7]=1;
 "use strict";
 // ===== ストーリーの追加：背景つき場面・海斗の仲間入り・おまけ章（XRアドベンチャー体験会）=====
-// 背景の画像：sendai_st（ホシミ台駅）／aer（AER展望台）。['bg', 'キー'] で表示、['bg', ''] で消す。
+// 背景の画像：sendai_st（ホシミ台駅）／aer（ARE展望台）。['bg', 'キー'] で表示、['bg', ''] で消す。
 (function(){
     // ホシミ台駅の場面
     const sn = RPG_EV.sn_enter[0][2]; sn.unshift(["bg", "sendai_st"]); sn.push(["bg", ""]);
-    // AER展望台の場面（玲也との対決）／海斗が 仲間になる
+    // ARE展望台の場面（玲也との対決）／海斗が 仲間になる
     const rei = RPG_EV.sn_reiya[0][3];
     rei.unshift(["bg", "aer"]);
     const bi = rei.findIndex((o) => o[0] === "battle");
@@ -1328,8 +1328,8 @@ const ACT = {};
 const TQ_SPR = {};
 const BGS = {title:"title", sendai_st:"sendai_st", aer:"aer"};
 
-function toast(text, ms){
-    const t = $("toast"); t.textContent = text; t.classList.add("on");
+function toast(text, ms, low){
+    const t = $("toast"); t.textContent = text; t.classList.toggle("low", !!low); t.classList.add("on");   // low: 下に出す（名前の入力欄などに かぶらない）
     clearTimeout(G.toastT); G.toastT = setTimeout(() => t.classList.remove("on"), ms || 2600);
 }
 function flash(){ const f = $("flash"); f.style.opacity = "0.9"; setTimeout(() => { f.style.opacity = "0"; }, 90); }
@@ -1371,7 +1371,7 @@ function tqAtArm(){
         tqSpeakStop(); pump();
     }, 900 + len * 70);
 }
-function tqAutoBtnHtml(){ return '<button class="btn sub' + (G.autoTalk ? " on" : "") + '" id="autoBtn" data-a="autoTalk" style="position:absolute;right:15cqw;top:6.8cqw;z-index:5">' + (G.autoTalk ? "▶▶ オート ON" : "▶ オート") + '</button>'; }
+function tqAutoBtnHtml(){ return '<button class="btn sub' + (G.autoTalk ? " on" : "") + '" id="autoBtn" data-a="autoTalk" style="position:absolute;right:17.5cqw;top:6.8cqw;z-index:5">' + (G.autoTalk ? "▶▶ オート ON" : "▶ オート") + '</button>'; }
 ACT.autoTalk = () => {
     G.autoTalk = !G.autoTalk; clearTimeout(G.atT);
     const bt = document.getElementById("autoBtn"); if(bt){ bt.className = "btn sub" + (G.autoTalk ? " on" : ""); bt.textContent = G.autoTalk ? "▶▶ オート ON" : "▶ オート"; }
@@ -1886,7 +1886,7 @@ function recapSteps(){
 function tqObjective(){
     const f = G.S.f;
     if(!f.intro_done) return "ラボの アキトと ハルキに 話しかけよう";
-    if(!f.e_sendai) return f.sn_ready ? "AER展望台（北の階段の先）で 玲也の ノイズを おとなしくさせよう" : "2026年9月の ホシミ台で 手がかりを あつめよう（駅員さん・牛タン屋さん・亜理紗）";
+    if(!f.e_sendai) return f.sn_ready ? "ARE展望台（北の階段の先）で 玲也の ノイズを おとなしくさせよう" : "2026年9月の ホシミ台で 手がかりを あつめよう（駅員さん・牛タン屋さん・亜理紗）";
     if(!f.e_tokyo) return "ゲートから 2025年12月の 夜のアカリ市へ。蒼太さんを たずねよう";
     if(!f.e_white) return "『まっしろルーム』へ。透明ボタンを 3つ さがそう";
     if(!f.e_xmas) return "2028年12月25日の クリスマスのアカリ市へ。紘に 会おう";
