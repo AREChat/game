@@ -1,0 +1,22 @@
+name: オフライン用の一覧が最新か
+
+# ファイルを足す・消す・変えたら  node tools/gen-precache.js  を実行して precache.json / precache-manifest.js もコミットする
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  precache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          node tools/gen-precache.js
+          git diff --exit-code -- precache.json precache-manifest.js
