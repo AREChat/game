@@ -263,7 +263,6 @@ async function showTitle(){
     mk("🗡️ ARE QUEST（1）へ", () => { location.href = "../../game/index.html"; });
     mk("🎡 ドリームフロンティアへ", () => { location.href = "../../dream-frontier/index.html"; });
     $("titleFoot").textContent = "移動 WASD/矢印　決定 Space/Enter　メニュー Esc　走る Shift　カメラ Q/E　オート V　／　Proコン・タッチ操作にも対応";
-    if(qs.get("name")) $("nameIn").value = qs.get("name");
     window.__bootDone = true;
 }
 function hideTitle(){ $("title").hidden = true; $("hud").hidden = false; document.body.dataset.mode = "field"; }
