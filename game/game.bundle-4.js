@@ -4473,6 +4473,7 @@ function tqResetAllCheats(){
     // ---------- ローディング画面を 消す（T071）----------
     const ld = document.getElementById("qolLoad"); if(ld){ const rm = () => { ld.style.opacity = 0; setTimeout(() => ld.remove(), 450); }; if(document.readyState === "complete") setTimeout(rm, 200); else window.addEventListener("load", () => setTimeout(rm, 200)); setTimeout(rm, 6000); }
 })();
+// bundle自動作り直しテスト（あとで消す）
 
 
 /* ==== game/boot.js ==== */
