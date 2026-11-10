@@ -297,7 +297,7 @@
     var pool = G.shuffle(rr, S.NOISE);
     var tv = P.attrs[0].vals, bv = P.attrs[1].vals;
     for(var i = 0; i < nn; i++){
-      var tx = pool[i % pool.length].replace("{t}", tv[Math.floor(rr() * P.n)]).replace("{b}", bv[Math.floor(rr() * P.n)]);
+      var tx = (i === 0 ? S.CASUAL[Math.floor(rr() * S.CASUAL.length)] : pool[i % pool.length]).replace("{t}", tv[Math.floor(rr() * P.n)]).replace("{b}", bv[Math.floor(rr() * P.n)]);
       out.splice(Math.floor(rr() * (out.length + 1)), 0, {who: "島田", role: "", gi: -1, text: tx, noise: true});
     }
     return out;
@@ -342,11 +342,18 @@
   // 表がスクロールなしで入るように、マスの大きさを画面の高さに合わせる（広い画面のみ）
   function fitCell(){
     try{
-      var rows = 0, t = app.querySelector("table.mx"); if(!t) return;
-      rows = t.querySelectorAll("tbody tr").length;
-      var px = Math.floor((window.innerHeight - 330) / (rows + 2));
-      var w = window.innerWidth;
-      document.documentElement.style.setProperty("--cell", Math.max(24, Math.min(40, w < 700 ? Math.round(w * .072) : px)) + "px");
+      var t = app.querySelector("table.mx"); if(!t) return;
+      var w = window.innerWidth, root = document.documentElement;
+      var c = Math.max(24, Math.min(40, w < 700 ? Math.round(w * .072) : 40));
+      root.style.setProperty("--cell", c + "px");
+      // 画面の高さに入るまで、マスを小さくする（スクロールなしが理想。最小は 20px）
+      var guard = 0;
+      while(c > 20 && guard++ < 30){
+        var r = t.getBoundingClientRect(), foot = app.querySelector(".pz .panel:last-child");
+        var bottom = r.bottom + window.scrollY + 84;       // 表の下の「答える」ボタンぶん
+        if(bottom <= window.innerHeight + window.scrollY - 8 + 0 && bottom - window.scrollY <= window.innerHeight) break;
+        c -= 2; root.style.setProperty("--cell", c + "px");
+      }
     }catch(_e){}
   }
   window.addEventListener("resize", function(){ if(inGame) fitCell(); });

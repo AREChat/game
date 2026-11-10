@@ -62,6 +62,12 @@
   ];
 
   // 島田さん（天然ボケ）の「関係ない話」。{t}=時間、{b}=好きなもの
+  // 天然発言・集中力が切れる一言（どの話にも、かならず1つは入る）
+  var CASUAL = [
+    "おなかすいた〜。", "ひまだな〜。まだ終わらんのかのう。", "ねむいのう〜、ふぁあ。", "あー、おやつ食べたいのう〜。",
+    "なんか、のどかわいたのう〜。", "もう帰ってお風呂入りたいのう〜。", "今日の晩ごはん、なんじゃろな〜。", "ひまだな〜。しりとりでもせんか？",
+    "足がしびれてきたのう〜。", "あくびが止まらんわい〜。"
+  ];
   var NOISE = [
     "ふむ…今日は3月30日じゃったかのう？",
     "早く寝たいのう…ふぁあ。",
@@ -109,5 +115,5 @@
     ["島田", "ほっほっ、解決したのかの？ …ところで、何の事件じゃったかの？"]
 
   ];
-  root.SuiriStory = {CH: CH, NOISE: NOISE, QUESTIONS: QUESTIONS, UNK: UNK, ENDINGS: ENDINGS, stepLabel: stepLabel};
+  root.SuiriStory = {CH: CH, NOISE: NOISE, CASUAL: CASUAL, QUESTIONS: QUESTIONS, UNK: UNK, ENDINGS: ENDINGS, stepLabel: stepLabel};
 })(window);
