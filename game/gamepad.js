@@ -6,7 +6,7 @@
         if(window.areQuit){ window.areQuit(); return; }
         try{ if(G.S && window.tqAutoSave) tqAutoSave(); }catch(_e){}
         try{ if(window.tqBgmStop) tqBgmStop(); if(window.tqSpeakStop) tqSpeakStop(); }catch(_e){}
-        try{ location.href = "https://arechat.github.io/ARE/chat.html"; }catch(_e){}
+        try{ location.href = "https://arechat.github.io/AREDA/chat.html"; }catch(_e){}
     }
     ACT.tQuit = ACT.quit = () => {
         const inGame = !!(G.S && G.mode !== "title");
