@@ -155,7 +155,7 @@
   function runScene(c, e, lines, q){
     playBgm("bgm_story");
     var ch = S.CH[c], i = 0;
-    app.innerHTML = '<section class="stage" style="' + bgStyle(c) + '"><div class="shade"></div><button class="btn sub skip" type="button" id="skipBtn">▶ 先へ</button>' +
+    app.innerHTML = '<section class="stage" style="' + bgStyle(c) + '"><div class="shade"></div><div class="scctl"><button class="btn sub" type="button" id="autoBtn">▶ オート</button><button class="btn sub" type="button" id="fastBtn">⏩ 早送り</button><button class="btn sub" type="button" id="skipBtn">⏭ スキップ</button></div>' +
       '<img class="portrait" id="por" alt="" style="opacity:0"><div id="below"></div></section>';
     var por = app.querySelector("#por"), below = app.querySelector("#below");
     por.onerror = function(){ por.style.display = "none"; };
@@ -166,7 +166,15 @@
       below.innerHTML = '<div class="msgbox" id="mb" tabindex="0">' + (ln[0] ? '<span class="who">' + esc(ln[0]) + '</span>' : "") + '<p>' + esc(ln[1]) + '</p><span class="next">▼</span></div>';
       below.firstChild.onclick = adv;
     }
-    function adv(){ i++; if(i < lines.length) show(); else choose(); }
+    var auto = false, fast = false, timer = 0, alive = true;
+    function sched(){
+      clearTimeout(timer);
+      if(!alive || !(auto || fast) || !document.body.contains(below)) return;
+      var ln = lines[i]; if(!ln || i >= lines.length) return;
+      var d = Math.min(5200, 900 + String(ln[1]).length * 90); if(fast) d = 260 + String(ln[1]).length * 12;
+      timer = setTimeout(function(){ if(alive && (auto || fast)) adv(); }, d);
+    }
+    function adv(){ i++; if(i < lines.length){ show(); sched(); } else { clearTimeout(timer); choose(); } }
     function choose(){
       por.src = IMG + CAST["相田"].img; por.style.opacity = 1;
       var three = c >= 4;
@@ -183,7 +191,10 @@
       below.innerHTML = '<div class="msgbox"><span class="who">勝</span><p>' + esc(r.r + tag) + '</p><span class="next">▼</span></div>';
       below.firstChild.onclick = function(){ startPuzzle(c, e, k, r); };
     }
-    document.getElementById("skipBtn").onclick = function(){ i = lines.length; choose(); };
+    function ctl(){ var a = document.getElementById("autoBtn"), f = document.getElementById("fastBtn"); a.classList.toggle("on", auto); f.classList.toggle("on", fast); a.textContent = auto ? "⏸ オート中" : "▶ オート"; f.textContent = fast ? "⏩ 早送り中" : "⏩ 早送り"; }
+    document.getElementById("autoBtn").onclick = function(){ auto = !auto; if(auto) fast = false; ctl(); sched(); };
+    document.getElementById("fastBtn").onclick = function(){ fast = !fast; if(fast) auto = false; ctl(); sched(); };
+    document.getElementById("skipBtn").onclick = function(){ alive = false; clearTimeout(timer); i = lines.length; choose(); };
     show();
   }
 
@@ -293,6 +304,15 @@
   }
 
   // マトリックス表（画像のような L 字の表）。行グループ=[0, m, m-1, …, 2]、列グループ=[1..m]
+  // たて書きの見出しで 数字が横向きになるので、漢字の数字にする（14時 → 十四時）
+  function kanjiNum(t){
+    var D = "〇一二三四五六七八九";
+    return String(t).replace(/\d+/g, function(x){
+      var n = parseInt(x, 10); if(!(n >= 0 && n < 100) || x.length > 2) return x.split("").map(function(c){ return D[+c]; }).join("");
+      if(n < 10) return D[n];
+      return (n >= 20 ? D[Math.floor(n / 10)] : "") + "十" + (n % 10 ? D[n % 10] : "");
+    });
+  }
   function matrixHtml(){
     var m = P.m, n = P.n, rows = [0], cols = [], R, C;
     for(R = m; R >= 2; R--) rows.push(R);
@@ -300,7 +320,7 @@
     var h = '<table class="g mx"><thead><tr><th class="corner" colspan="2" rowspan="2"></th>';
     cols.forEach(function(C){ h += '<th class="grp" colspan="' + n + '">' + esc(P.cat[C].name) + '</th>'; });
     h += '</tr><tr>';
-    cols.forEach(function(C){ P.cat[C].items.forEach(function(v, i){ h += '<th class="vh' + (i === 0 ? " gs" : "") + '"><span>' + esc(v) + '</span></th>'; }); });
+    cols.forEach(function(C){ P.cat[C].items.forEach(function(v, i){ h += '<th class="vh' + (i === 0 ? " gs" : "") + '"><span>' + esc(kanjiNum(v)) + '</span></th>'; }); });
     h += '</tr></thead><tbody>';
     rows.forEach(function(R){
       for(var i = 0; i < n; i++){
@@ -319,11 +339,22 @@
     return h + '</tbody></table>';
   }
 
+  // 表がスクロールなしで入るように、マスの大きさを画面の高さに合わせる（広い画面のみ）
+  function fitCell(){
+    try{
+      var rows = 0, t = app.querySelector("table.mx"); if(!t) return;
+      rows = t.querySelectorAll("tbody tr").length;
+      var px = Math.floor((window.innerHeight - 330) / (rows + 2));
+      var w = window.innerWidth;
+      document.documentElement.style.setProperty("--cell", Math.max(24, Math.min(40, w < 700 ? Math.round(w * .072) : px)) + "px");
+    }catch(_e){}
+  }
+  window.addEventListener("resize", function(){ if(inGame) fitCell(); });
   function screenPuzzle(){
     inGame = true; btnBack.style.visibility = "visible";
     playBgm(P.lvl >= 3 ? "bgm_puzzle_hard" : P.lvl >= 1 ? "bgm_puzzle_normal" : "bgm_puzzle_easy");
     var n = P.n;
-    var h = '<div class="pz"><div class="cluecol"><div class="panel"><div class="badges"><span class="chip">第' + (P.c + 1) + '章 第' + (P.e + 1) + '話</span><span class="chip">表 ' + n + '×' + n + '（人＋' + P.m + '項目）</span><span class="chip">難しさ：' + LEVELNAME[P.lvl] + '</span></div>' +
+    var h = '<div class="pz"><div class="cluecol"><div class="panel"><div class="badges"><span class="chip">第' + (P.c + 1) + '章 第' + (P.e + 1) + '話</span><span class="chip">表 ' + n + '×' + n + '（人＋' + P.m + '項目）</span><span class="chip">難しさ：' + (LEVELNAME[BASE[save.diff] || 2] === LEVELNAME[P.lvl] ? LEVELNAME[P.lvl] : '設定 ' + LEVELNAME[BASE[save.diff] || 2] + ' → 今回 ' + LEVELNAME[P.lvl] + '（はい／いいえの流れで変化）') + '</span></div>' +
       '<h3>みんなの話</h3><div class="log">';
     P.lines.forEach(function(l){
       h += '<div class="line' + (l.noise ? " noise" : "") + '">' + avHtml(l.who, l.gi >= 0 ? l.gi : 0) + '<div class="bub"><b>' + esc(l.who) + (l.role ? "（" + esc(l.role) + "）" : "") + '</b>' + esc(l.text) + '</div></div>';
@@ -331,12 +362,13 @@
     h += '</div><p class="note">※ 話の中には、事件と関係のないものもまじっているよ。手がかりだけで、答えは必ず1つに決まるよ。</p></div></div>';
     h += '<div class="tabcol"><div class="panel"><div class="tools"><div class="mode"><button type="button" data-mode="chk" class="on">○ × をつける</button><button type="button" data-mode="dr">✎ 下書き</button></div>' +
       '<button class="btn sub" type="button" id="bClearDr">下書きを消す</button><button class="btn sub" type="button" id="bHint">ヒント</button></div>' +
-      '<p class="note" id="modeNote">マスをタップするたびに ○ → × → なし と変わるよ。迷ったら「✎ 下書き」で2つ以上に印をつけてもOK（答える前に1つにしてね）。</p>' +
-      '<p class="note">表の見かた：いちばん上の段が「人 × 各項目」。その下の段は「項目どうし」の表で、考えるときのメモに使えるよ。答えるときに見るのは、いちばん上の段（人の行）だけ。</p></div>' +
+      '<p class="note hidenote" id="modeNote">マスをタップするたびに ○ → × → なし と変わるよ。迷ったら「✎ 下書き」で2つ以上に印をつけてもOK（答える前に1つにしてね）。</p>' +
+      '<p class="note hidenote">表の見かた：いちばん上の段が「人 × 各項目」。その下の段は「項目どうし」の表で、考えるときのメモに使えるよ。答えるときに見るのは、いちばん上の段（人の行）だけ。</p></div>' +
       '<div class="panel"><div class="tblwrap">' + matrixHtml() + '</div></div>';
     h += '<div class="panel"><div class="tools"><button class="btn big" type="button" id="bAns">答える</button><button class="btn sub" type="button" id="bReset">ぜんぶ消す</button></div>' +
-      '<p class="note">答える前に：「人」の行で、1人に ○ は1つだけ、同じ列にも ○ は1つだけ。下書き（✎）が残っていると答えられないよ。</p></div></div></div>';
+      '<p class="note hidenote">答える前に：「人」の行で、1人に ○ は1つだけ、同じ列にも ○ は1つだけ。下書き（✎）が残っていると答えられないよ。</p></div></div></div>';
     app.innerHTML = h;
+    fitCell();
     app.querySelectorAll(".mode button").forEach(function(b){ b.onclick = function(){ P.mode = b.dataset.mode; app.querySelectorAll(".mode button").forEach(function(x){ x.classList.toggle("on", x === b); });
       document.getElementById("modeNote").textContent = P.mode === "dr" ? "下書きモード：タップで ✎ をつけ外し。1行に何個でもつけられるよ。答えるときは、必ず1つにしてね。" : "マスをタップするたびに ○ → × → なし と変わるよ。"; }; });
     app.addEventListener("click", cellClick);

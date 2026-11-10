@@ -48,7 +48,9 @@ h2{margin:6px 0 10px;font-size:20px}
 @keyframes bl{50%{opacity:.2}}
 .choices{display:flex;gap:10px;flex-wrap:wrap;margin:0 10px 12px;position:relative}
 .choices .btn{flex:1;min-width:110px}
-.skip{position:absolute;top:8px;right:8px;z-index:2;font-size:12px;padding:4px 10px}
+.scctl{position:absolute;top:8px;right:8px;z-index:2;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.scctl .btn{font-size:12px;padding:4px 10px}
+.scctl .btn.on{background:var(--acc);color:#2b1c00}
 /* パズル */
 .pz{display:grid;gap:12px}
 @media(min-width:960px){.pz{grid-template-columns:minmax(300px,380px) 1fr;align-items:start}.cluecol{position:sticky;top:56px;max-height:calc(100dvh - 70px);overflow:auto}}
@@ -101,5 +103,8 @@ table.mx th.rg span{writing-mode:vertical-rl;display:inline-block;font-size:11px
 table.mx th.rh{position:sticky;left:24px;z-index:2;min-width:68px;max-width:92px;font-size:12px;white-space:nowrap;padding:2px 6px;text-align:left}
 table.mx td.gs,table.mx th.gs{border-left:2px solid var(--ink)}
 table.mx tr.gsr td,table.mx tr.gsr th.rh{border-top:2px solid var(--ink)}
-table.mx td.void{background:repeating-linear-gradient(135deg,#0c1438,#0c1438 4px,#101a46 4px,#101a46 8px)}
+table.mx td.void{background:transparent;border-right:0;border-bottom:0;border-left-color:transparent}
+table.mx td.void.gs{border-left:0}
 table.mx td{width:var(--cell)}
+
+.hidenote{display:none}
