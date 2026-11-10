@@ -1,6 +1,6 @@
 # game（ゲーム）
 
-AREChat のゲーム置き場です。チャットアプリは `AREChat/AREDA`、学習アプリは `AREChat/LearnLab124` にあります。
+AREChat のゲーム置き場です。チャットアプリは `AREChat/ARE`、学習アプリは `AREChat/LearnLab124` にあります。
 
 - 2026-11-05：旧 `AREChat/ARE` から、game・game2〜game7（と、それらが使う shared/・dream-frontier/・protect.js・apple-touch-icon.png）をそのまま移しました。
 - 2026-11-08：パッド（プロコン）のボタン配置を、ボタン1つ1つ好きに変えられる『🎮 ボタン設定』を追加（`shared/are-padmap.js`。各ゲームのタイトルから開く。マウス不要。設定はこの端末に保存）。
@@ -17,7 +17,7 @@ AREChat のゲーム置き場です。チャットアプリは `AREChat/AREDA`�
 | 見分け方 | `shared/are-mode.js`：`window.areDesktop`（Electron）／アドレスが `127.0.0.1`・`localhost`（Go 版 exe）／`?mode=exe` | それ以外（https） |
 | file:// で直接開いた版 | 画面を閉じる（閉じられなければ「おつかれさま」の画面） | — |
 
-- Web で「もどる」先は、`?back=https://arechat.github.io/ARE/chat.html` で指定できます（ARE / AREDA のチャット・ログインだけ有効）。指定が無ければ、チャットから来たページ（referrer）、それも無ければ AREDA のログイン画面（`https://arechat.github.io/ARE/login.html`。ログイン済みなら、そのままチャットに入ります）です。
+- Web で「もどる」先は、`?back=https://arechat.github.io/ARE/chat.html` で指定できます（ARE のチャット・ログインだけ有効）。指定が無ければ、チャットから来たページ（referrer）、それも無ければ AREDA のログイン画面（`https://arechat.github.io/ARE/login.html`。ログイン済みなら、そのままチャットに入ります）です。
 - exe・file では、チャットなど外のアドレスへのリンクは隠し、ゲーム内の「もどる」はゲーム一覧に向けます。
 - 動作確認用に、ブラウザで `…/game/index.html?mode=exe` と開くと、exe 側の表示になります。
 
