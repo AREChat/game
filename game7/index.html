@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>OFFLINE PARADISE</title>
+<meta name="theme-color" content="#0a0420">
+<script src="../protect.js"></script>
+<link rel="stylesheet" href="./style.css">
+<script src="../shared/are-offline.js" defer></script>
+</head>
+<body>
+<div id="net"></div>
+<button id="snd" type="button" aria-label="音の入り切り">🔊</button>
+<main id="stage">
+  <section id="s-title" class="scr on">
+    <div class="logo">OFFLINE<br>PARADISE</div>
+    <p class="sub">電波がなくても、いつでも あそべる ミニゲーム</p>
+    <div class="wallet">🪙 <b id="coinN">0</b>　<span id="equipped"></span></div>
+    <button class="big" id="bRoulette" type="button">🎰 ルーレットで はじめる</button>
+    <div class="row"><button id="bPick" type="button">えらんで あそぶ</button><button id="bColl" type="button">🏆 図鑑・ショップ</button></div>
+    <p class="hint">どれも タップとスワイプだけ・1回 30秒〜1分。<br>あそんだ分は 🪙 になって、ぜんぶのゲームで共通だよ。</p>
+  </section>
+  <section id="s-roul" class="scr">
+    <div class="slot"><div id="reel">？</div></div>
+    <p id="roulMsg" class="sub">ルーレット スタート！</p>
+  </section>
+  <section id="s-pick" class="scr">
+    <h2>ゲームをえらぶ</h2><div id="pickList" class="list"></div><button id="pickBack" type="button">もどる</button>
+  </section>
+  <section id="s-coll" class="scr">
+    <h2>図鑑・ショップ</h2><div class="wallet">🪙 <b id="coinN2">0</b></div><div id="collList" class="grid"></div><p class="hint">買ったものは、タイトルでかざられるよ。タップで つけかえ。</p><button id="collBack" type="button">もどる</button>
+  </section>
+  <section id="s-play" class="scr">
+    <canvas id="cv" width="360" height="640"></canvas>
+    <div id="hud"><span id="hTime">45</span><span id="hName"></span><span id="hScore">0</span></div>
+    <div id="cutin" class="cutin"></div>
+    <div id="help" class="help"></div>
+  </section>
+  <section id="s-res" class="scr">
+    <h2 id="rTitle">けっか</h2>
+    <div id="rScore" class="bigscore">0</div>
+    <p id="rInfo"></p>
+    <div id="rCoin" class="wallet"></div>
+    <div class="row"><button class="big" id="rAgain" type="button">🎰 もういちど</button><button id="rTitleBtn" type="button">タイトルへ</button></div>
+  </section>
+</main>
+<script src="../shared/game-nav.js"></script>
+<script src="./js/core.js"></script>
+<script src="./js/games.js"></script>
+</body>
+</html>

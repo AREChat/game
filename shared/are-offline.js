@@ -7,7 +7,7 @@
   // ネットが ないと 動かない ページ（アカウント・チャット・管理・ウイルス図鑑など）
   var NEED = /^(chat|login|register|recovery|admin|virus)\.html$/.test(base) && path.indexOf(ROOT.replace(location.origin, "")) === 0 && path.replace(ROOT.replace(location.origin, ""), "").indexOf("/") < 0;
   var rootPath = ROOT.replace(location.origin, ""), rel = path.indexOf(rootPath) === 0 ? path.slice(rootPath.length) : path.replace(/^\//, "");
-  var HUB = rel === "" || rel === "index.html" || rel === "login.html" || /^(game|game2|game3|game4|game5|game6|dream-frontier|daifugo)\/(index\.html)?$/.test(rel);   // 入口・ゲームのタイトルだけ（ブロックなど あそぶ画面には 出さない）
+  var HUB = rel === "" || rel === "index.html" || rel === "login.html" || /^(game|game2|game3|game4|game5|game6|game7|dream-frontier|daifugo)\/(index\.html)?$/.test(rel);   // 入口・ゲームのタイトルだけ（ブロックなど あそぶ画面には 出さない）
   function ls(k, v){ try{ if(v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(_e){} return null; }
 
   // ---- サービスワーカー ----

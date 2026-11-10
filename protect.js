@@ -82,7 +82,7 @@
         var path = location.pathname;
         var isInfo = /\/(terms|privacy|faq|guide|help|credits|changelog|404|manual)(\.html)?$/.test(path);   // 読みものページ（印刷・コピーはOK）
         var isChat = /\/chat(\.html)?$/.test(path);                                                          // チャット：コピー・貼り付け・「印刷」ボタンは必要
-        var isGame = (/\/(game|game2|game4|game6|dream-frontier|daifugo)\//.test(path) && !/\/game2\/quest2\/manual/.test(path)) || /\/game5\/(play|blocks)\//.test(path);
+        var isGame = (/\/(game|game2|game4|game6|game7|dream-frontier|daifugo)\//.test(path) && !/\/game2\/quest2\/manual/.test(path)) || /\/game5\/(play|blocks)\//.test(path);
         function isField(t) { return !!(t && t.nodeType === 1 && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)); }
 
         // 1) ほかの開発者向けキー（F7 キャレット閲覧／名前をつけて保存の別の形）。Ctrl+P（印刷）は、チャット・読みものページ以外で止める
