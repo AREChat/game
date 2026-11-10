@@ -16,7 +16,7 @@
         else if(location.protocol === "file:") kind = "file";
     }catch(_e){}
 
-    var LOGIN = "https://arechat.github.io/AREDA/login.html";            // ブラウザ版の もどる先（ログイン済みなら、そのままチャットへ入る）
+    var LOGIN = "https://arechat.github.io/ARE/login.html";            // ブラウザ版の もどる先（ログイン済みなら、そのままチャットへ入る）
     var OK_BACK = /^https:\/\/arechat\.github\.io\/(ARE|AREDA)\/(chat|login)(\.html)?(\?[^#]*)?$/;
     var OK_REF = /^(https:\/\/arechat\.github\.io\/(ARE|AREDA)\/)/;
     var chat = LOGIN;
@@ -25,7 +25,7 @@
     var list = "../index.html";                                           // ゲーム一覧（exe の中の index.html）
     try{ list = new URL("../index.html", location.href).href; }catch(_e){}
 
-    var A = { mode: kind, isApp: kind !== "web", chatUrl: chat, listUrl: list, helpBase: "https://arechat.github.io/AREDA/" };
+    var A = { mode: kind, isApp: kind !== "web", chatUrl: chat, listUrl: list, helpBase: "https://arechat.github.io/ARE/" };
     window.AREMode = A;
     window.ARE_MODE = kind === "web" ? "web" : "exe";                     // 古い呼び方（game/mode.js が使う）
     window.areChatUrl = chat;

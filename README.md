@@ -17,7 +17,7 @@ AREChat のゲーム置き場です。チャットアプリは `AREChat/AREDA`�
 | 見分け方 | `shared/are-mode.js`：`window.areDesktop`（Electron）／アドレスが `127.0.0.1`・`localhost`（Go 版 exe）／`?mode=exe` | それ以外（https） |
 | file:// で直接開いた版 | 画面を閉じる（閉じられなければ「おつかれさま」の画面） | — |
 
-- Web で「もどる」先は、`?back=https://arechat.github.io/AREDA/chat.html` で指定できます（ARE / AREDA のチャット・ログインだけ有効）。指定が無ければ、チャットから来たページ（referrer）、それも無ければ AREDA のログイン画面（`https://arechat.github.io/AREDA/login.html`。ログイン済みなら、そのままチャットに入ります）です。
+- Web で「もどる」先は、`?back=https://arechat.github.io/ARE/chat.html` で指定できます（ARE / AREDA のチャット・ログインだけ有効）。指定が無ければ、チャットから来たページ（referrer）、それも無ければ AREDA のログイン画面（`https://arechat.github.io/ARE/login.html`。ログイン済みなら、そのままチャットに入ります）です。
 - exe・file では、チャットなど外のアドレスへのリンクは隠し、ゲーム内の「もどる」はゲーム一覧に向けます。
 - 動作確認用に、ブラウザで `…/game/index.html?mode=exe` と開くと、exe 側の表示になります。
 

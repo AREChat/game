@@ -22,7 +22,7 @@
     // もどる先：ブラウザ版では、チャット（ARE／AREDA）。are-mode.js が決めた行き先をそのまま使う
     function chatTarget(){
         try{ if(window.AREMode && window.AREMode.chatUrl) return window.AREMode.chatUrl; }catch(_e){}
-        return "https://arechat.github.io/AREDA/login.html";
+        return "https://arechat.github.io/ARE/login.html";
     }
     var armedAt = 0, leaving = false, btn = null, toastEl = null, toastTimer = 0;
     var CLOSE_RE = /^(閉じる|とじる|キャンセル|やめる|✕|✖ ?閉じる|×)$/;

@@ -3,7 +3,7 @@
 // 見分けは are-mode.js（AREMode）。game/mode.js の window.areQuit があれば それを使い、なければ ここで終了する。
 (function(){
     if(window.AREExit) return;
-    function M(){ return window.AREMode || {mode: /^https?:$/.test(location.protocol) && location.hostname !== "127.0.0.1" && location.hostname !== "localhost" ? "web" : "exe", chatUrl: "https://arechat.github.io/AREDA/login.html", listUrl: "../index.html"}; }
+    function M(){ return window.AREMode || {mode: /^https?:$/.test(location.protocol) && location.hostname !== "127.0.0.1" && location.hostname !== "localhost" ? "web" : "exe", chatUrl: "https://arechat.github.io/ARE/login.html", listUrl: "../index.html"}; }
     function isWeb(){ return M().mode === "web"; }
     function quit(){
         try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(_e){}

@@ -712,7 +712,7 @@ function tqGuideView(){
         '<div class="card"><b>📖 ここまでの ものがたり</b><div class="meta" style="white-space:pre-wrap">' + esc(story) + '</div></div>' +
         '<div class="card"><b>🎮 そうさ</b><div class="meta">いどう：矢印キー／WASD／十字ボタン　はなす・しらべる：Enter／Z／Aボタン　メニュー：X／M　もどる：Esc／X</div></div>';
     faq.forEach((q) => { h += '<div class="card"><b>Q. ' + esc(q[0]) + '</b><div class="meta">' + esc(q[1]) + '</div></div>'; });
-    h += '<div class="card meta">くわしい てじゅんしょは <a href="https://arechat.github.io/AREDA/help.html#rpg" target="_blank" rel="noopener noreferrer" style="color:#9fd0ff">help.html の「RPG 手順書」</a> に あります。</div>';
+    h += '<div class="card meta">くわしい てじゅんしょは <a href="https://arechat.github.io/ARE/help.html#rpg" target="_blank" rel="noopener noreferrer" style="color:#9fd0ff">help.html の「RPG 手順書」</a> に あります。</div>';
     return h;
 }
 (function(){
@@ -1509,7 +1509,7 @@ RPG_ERAS.push(
         if(window.areQuit){ window.areQuit(); return; }
         try{ if(G.S && window.tqAutoSave) tqAutoSave(); }catch(_e){}
         try{ if(window.tqBgmStop) tqBgmStop(); if(window.tqSpeakStop) tqSpeakStop(); }catch(_e){}
-        try{ location.href = "https://arechat.github.io/AREDA/chat.html"; }catch(_e){}
+        try{ location.href = "https://arechat.github.io/ARE/chat.html"; }catch(_e){}
     }
     ACT.tQuit = ACT.quit = () => {
         const inGame = !!(G.S && G.mode !== "title");

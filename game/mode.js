@@ -5,7 +5,7 @@
 //  ・file（直接開いた）………… 画面を閉じる。閉じられなければ「おつかれさま」の画面を出す（このリポジトリのいちばん上には ゲーム一覧が無く、移るとエラー画面になるため）。
 //  ・web（https のブラウザ）…… チャット画面にもどる。
 (function(){
-    var M = window.AREMode || {mode:"web", isApp:false, chatUrl:"https://arechat.github.io/AREDA/login.html", listUrl:"../index.html"};
+    var M = window.AREMode || {mode:"web", isApp:false, chatUrl:"https://arechat.github.io/ARE/login.html", listUrl:"../index.html"};
     if(!window.ARE_MODE) window.ARE_MODE = M.mode === "web" ? "web" : "exe";
     if(!window.areChatUrl) window.areChatUrl = M.chatUrl;
 
