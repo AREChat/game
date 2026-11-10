@@ -11,6 +11,7 @@
 </head>
 <body>
 <div id="net"></div>
+<button id="exitBtn" type="button" aria-label="出口"></button>
 <button id="snd" type="button" aria-label="音の入り切り">🔊</button>
 <main id="stage">
   <section id="s-title" class="scr on">
@@ -45,8 +46,11 @@
     <div class="row"><button class="big" id="rAgain" type="button">🎰 もういちど</button><button id="rTitleBtn" type="button">タイトルへ</button></div>
   </section>
 </main>
+<script src="../shared/are-mode.js"></script>
 <script src="../shared/game-nav.js"></script>
+<script src="../shared/game-exit.js"></script>
 <script src="./js/core.js"></script>
 <script src="./js/games.js"></script>
+<script>(function(){var b=document.getElementById("exitBtn");if(!b||!window.AREExit)return;b.textContent=AREExit.label();b.addEventListener("click",function(){AREExit.open();});})();</script>
 </body>
 </html>

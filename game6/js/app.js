@@ -72,6 +72,8 @@
     var p = stack.pop(); if(p){ cur = null; go(p.fn, p.title, false); } else { cur = null; go(screenTitle, "推理ゲーム2", false); }
   });
   var inGame = false;
+  var btnExit = document.getElementById("btnExit");
+  if(btnExit){ btnExit.textContent = window.AREExit ? AREExit.label() : "終了"; btnExit.addEventListener("click", function(){ if(window.AREExit) AREExit.open(); }); }
 
   // ---------- タイトル ----------
   function screenTitle(){

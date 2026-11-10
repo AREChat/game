@@ -34,3 +34,5 @@ button.big{font-size:19px;font-weight:800;padding:15px 26px;background:linear-gr
 .help{position:absolute;left:0;right:0;bottom:8%;text-align:center;font-size:15px;color:#fff;text-shadow:0 2px 6px #000;pointer-events:none;transition:opacity .6s}
 .bigscore{font-size:64px;font-weight:900;color:#ffe27a;text-shadow:0 0 22px #ffb03a}
 #hName{max-width:52vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+
+#exitBtn{position:fixed;left:8px;top:calc(36px + env(safe-area-inset-top));z-index:30;padding:4px 10px;font-size:13px;border-radius:999px}

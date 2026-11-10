@@ -12,6 +12,7 @@
 <body>
 <header id="bar">
   <button id="btnBack" class="barbtn" type="button" aria-label="もどる">◀ もどる</button>
+  <button id="btnExit" class="barbtn" type="button" aria-label="出口"></button>
   <div id="barTitle">推理ゲーム2</div>
   <label id="diffWrap">難しさ
     <select id="diff" aria-label="難しさ">
@@ -25,7 +26,9 @@
 <main id="app"></main>
 <div id="toast" role="status" aria-live="polite"></div>
 <a href="../" id="homeLink" tabindex="-1">ほかのゲームへ</a>
+<script src="../shared/are-mode.js"></script>
 <script src="../shared/game-nav.js"></script>
+<script src="../shared/game-exit.js"></script>
 <script src="./js/story.js"></script>
 <script src="./js/cast.js"></script>
 <script src="./js/gen.js"></script>
