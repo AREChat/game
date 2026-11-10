@@ -427,9 +427,10 @@
 
   // ---------- 運試し（4択・1問だけ） ----------
   function luck(){
-    var names = G.shuffle(Math.random, P.people.map(function(_, i){ return i; })).slice(0, 4);
-    var culprit = names[Math.floor(Math.random() * 4)];
-    app.innerHTML = '<section class="panel" style="text-align:center;padding:18px"><div class="big-star">🎲</div><h2>運試しクイズ！</h2><p>表は完成！ …さて、おまけの1問。\nこの事件の「いちばん怪しいと思う人」は、ヒントなしの<b>運だめし</b>だよ。\n4人のうち、だれ？</p><div class="choices" id="lk" style="margin:12px 0"></div><p class="note">あたってもはずれても、事件は解決。当たると★ボーナス！</p></section>';
+    var cnt = Math.min(4, P.n);                       // 第1章は3人だけ。4人に満たないときは、いる人数ぶんだけ出す
+    var names = G.shuffle(Math.random, P.people.map(function(_, i){ return i; })).slice(0, cnt);
+    var culprit = names[Math.floor(Math.random() * names.length)];
+    app.innerHTML = '<section class="panel" style="text-align:center;padding:18px"><div class="big-star">🎲</div><h2>運試しクイズ！</h2><p>表は完成！ …さて、おまけの1問。\nこの事件の「いちばん怪しいと思う人」は、ヒントなしの<b>運だめし</b>だよ。\n' + cnt + '人のうち、だれ？</p><div class="choices" id="lk" style="margin:12px 0"></div><p class="note">あたってもはずれても、事件は解決。当たると★ボーナス！</p></section>';
     var box = document.getElementById("lk"); box.className = "tools"; box.style.justifyContent = "center";
     names.forEach(function(p){ var b = document.createElement("button"); b.className = "btn"; b.textContent = P.people[p]; b.onclick = function(){ finish(p === culprit, P.people[culprit]); }; box.appendChild(b); });
   }
