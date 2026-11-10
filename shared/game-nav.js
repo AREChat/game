@@ -13,9 +13,8 @@
         {id: "game2/quest3",     icon: "🌙", name: "ARE QUEST 3"},
         {id: "game4/card",       icon: "🃏", name: "ARE CARD"},
         {id: "game4/starweaver", icon: "⭐", name: "星紡ぎの旅人"},
-        {id: "game5",            icon: "🔎", name: "推理ゲーム"},
+        {id: "game5",            icon: "🔎", name: "推理ゲーム（表・裏）"},
         {id: "game5/blocks",     icon: "🧱", name: "ARE BLOCKS"},
-        {id: "game6",            icon: "🕵", name: "推理ゲーム2"},
         {id: "game7",            icon: "🎰", name: "OFFLINE PARADISE"}
     ];
     function dirOf(){ try{ return location.pathname.replace(/[^\/]*$/, "").replace(/\/play\/$/, "/").replace(/\/manual\/$/, "/"); }catch(_e){ return ""; } }

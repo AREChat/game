@@ -24,14 +24,18 @@ a.btn{display:inline-block;margin:6px 8px 6px 0;padding:10px 18px;border-radius:
 a.btn.sub2{background:linear-gradient(180deg,#3a3f5a,#262a40)}
 a.btn[aria-disabled=true]{opacity:.5;pointer-events:none}
 .note{font-size:14px;opacity:.85}
+.tabb{flex:1;padding:12px 8px;border-radius:12px;border:2px solid #cfd8ff;background:#262a40;color:#fff;font:700 16px inherit;cursor:pointer}
+.tabb.on{background:linear-gradient(180deg,#ffd24a,#e0a010);color:#201400;border-color:#ffd24a}
 </style>
 <script src="../shared/are-offline.js" defer></script></head>
 <body>
 <main>
   <span class="badge">🌐 ブラウザ版 公開中</span> <span class="badge" id="winBadge">💻 Windows版 v0.2.0 公開中</span>
   <h1>GAME5　推理ゲーム</h1>
+  <div id="uraTabs" role="tablist" style="display:flex;gap:8px;margin:6px 0 4px"><button type="button" role="tab" id="tabOmote" class="tabb on">表：推理ゲーム1</button><button type="button" role="tab" id="tabUra" class="tabb">裏：推理ゲーム2</button></div>
   <p class="sub">会話と証言を集めて、升目（マス目）パズルで事件を解き明かす　全10章のオリジナル推理ゲーム</p>
 
+  <div id="omote">
   <div class="card" id="playBox">
     <b>▶ ブラウザで、いますぐ あそべます（ダウンロード不要・無料）</b><br>
     スマホ・パソコンのブラウザで あそべる <b>ブラウザ版</b> です。下のボタンを おすだけで はじまります。<span id="pcOnlyNote"><br>パソコンでは、下の「Windows版（exe）」を ダウンロードして あそぶことも できます。</span><span id="spOnlyNote" hidden><br>スマホでは、ブラウザ版のみ あそべます。</span><br>
@@ -87,6 +91,21 @@ a.btn[aria-disabled=true]{opacity:.5;pointer-events:none}
     <a class="btn sub2" href="../guide.html">📖 あそびかた</a>
     <a class="btn sub2" href="../faq.html">❓ よくある質問</a>
   </p>
+</div>
+  <div id="ura" hidden>
+    <div class="card"><b>🕵 裏ステージ：推理ゲーム2（マトリックス）</b><br>人・時間・好きなものの表に ○ と × をつけて、事件の犯人を推理します。全10章×10話・100人の登場人物。ブラウザですぐ あそべます（無料）。<br>
+      <a class="btn" href="../game6/index.html" style="margin-top:10px">▶ 裏ステージを あそぶ</a>
+      <p class="note">第1〜3章は、はじめから選べます。セーブは 表（推理ゲーム1）とは別です。</p></div>
+  </div>
+  <script>
+  (function(){
+    var o=document.getElementById("omote"),u=document.getElementById("ura"),to=document.getElementById("tabOmote"),tu=document.getElementById("tabUra");
+    function set(k){ o.hidden=k!=="ura"?false:true; u.hidden=k==="ura"?false:true; to.classList.toggle("on",k!=="ura"); tu.classList.toggle("on",k==="ura"); try{ history.replaceState(null,"",k==="ura"?"#ura":location.pathname+location.search); }catch(_e){} try{ localStorage.setItem("game5_hub_tab",k); }catch(_e){} }
+    to.onclick=function(){ set("omote"); }; tu.onclick=function(){ set("ura"); };
+    var k="omote"; if(/#ura/.test(location.hash)) k="ura";
+    set(k);
+  })();
+  </script>
 </main>
 <script>
 /* スマホ（タッチ中心の小さい画面・モバイルUA）では exe の案内を隠し、ブラウザ版だけを出す */

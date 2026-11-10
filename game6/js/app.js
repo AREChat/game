@@ -82,7 +82,7 @@
     app.innerHTML = '<section class="hero">' + imgTag("logo.webp") + '<h1>推理ゲーム2</h1>' +
       '<p>人の話から「いつ」「なにが好き」を推理して、表を完成させよう。<br>第1章〜第10章・各10話。第1〜3章は、はじめから選べるよ。</p>' +
       '<button class="btn big" id="goStart" type="button">' + (done ? "つづきから" : "はじめる") + '</button>' +
-      '<p class="note">クリアした話：' + done + ' / 100</p></section>';
+      '<p class="note">クリアした話：' + done + ' / 100</p><p class="note"><a href="../game5/index.html">⬅ 表ステージ（推理ゲーム1）へ</a></p></section>';
     document.getElementById("goStart").onclick = function(){ unlocked = true; go(screenChapters, "章をえらぶ"); btnBack.style.visibility = "visible"; };
   }
 
