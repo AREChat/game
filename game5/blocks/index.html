@@ -280,7 +280,7 @@ bgm.loop=true; bgm.volume=.55;
 bgm.addEventListener("ended",function(){ if(bgmOn){bgm.currentTime=0;var p=bgm.play();if(p&&p.catch)p.catch(function(){});} });
 function bgmApply(){ $("bgmBtn").textContent=bgmOn?"♪ BGM ON":"♪ BGM OFF"; if(bgmOn){ var p=bgm.play(); if(p&&p.catch)p.catch(function(){}); } else bgm.pause(); }
 function bgmStartOnce(){ if(bgmOn&&bgm.paused){var p=bgm.play();if(p&&p.catch)p.catch(function(){});} }
-["pointerdown","keydown","touchstart"].forEach(function(ev){ window.addEventListener(ev,bgmStartOnce,{passive:true}); });
+["pointerdown","keydown","touchstart","pointerup","touchend","click"].forEach(function(ev){ window.addEventListener(ev,bgmStartOnce,{passive:true}); });   /* iPhone・iPad・Androidは、ゆびを はなした時（pointerup／touchend／click）でないと 音の許可が出ない */
 $("bgmBtn").addEventListener("click",function(){ bgmOn=!bgmOn; try{localStorage.setItem("are7_bgm",bgmOn?"1":"0");}catch(e){} bgmApply(); });
 document.addEventListener("visibilitychange",function(){ if(!document.hidden&&bgmOn)bgmStartOnce(); });
 bgmApply();

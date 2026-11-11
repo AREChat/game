@@ -23,19 +23,33 @@
 
   // ---------- 音 ----------
   var bgm = null, bgmName = "", unlocked = false;
+  // 音が出ない不具合の直し：スマホ・タブレット（iPhone／iPad／Android）では、「ゆびで さわった しゅんかん（pointerdown）」では
+  // 音を鳴らす許可が出ない。ゆびを はなした時（pointerup／touchend）か click／keydown の中で play() を呼ぶ必要がある。
+  // 拒否されたら「解除ずみ」にせず、次の タッチ・キーで もういちど ためす。
+  function ensureBgm(){
+    if(!bgm){ bgm = new Audio(); bgm.loop = true; bgm.volume = .35; bgm.preload = "auto"; try{ bgm.setAttribute("playsinline", ""); }catch(_e){} }
+    return bgm;
+  }
+  function startBgm(){
+    if(save.mute || !bgmName) return;
+    try{
+      var a = ensureBgm(), src = AUD + bgmName + ".mp3";
+      if(a.getAttribute("data-n") !== bgmName){ a.setAttribute("data-n", bgmName); a.src = src; }
+      var p = a.play();
+      if(p && p.then) p.then(function(){ unlocked = true; }, function(){ unlocked = false; });   // 拒否されたら あとで もういちど
+      else unlocked = true;
+    }catch(_e){ unlocked = false; }
+  }
   function playBgm(name){
     bgmName = name;
-    if(save.mute || !unlocked) return;
-    try{
-      if(!bgm){ bgm = new Audio(); bgm.loop = true; bgm.volume = .35; bgm.preload = "none"; }
-      var src = AUD + name + ".mp3";
-      if(bgm.getAttribute("data-n") !== name){ bgm.setAttribute("data-n", name); bgm.src = src; }
-      var p = bgm.play(); if(p && p.catch) p.catch(function(){});
-    }catch(_e){}
+    if(save.mute) return;
+    startBgm();      // まだ許可がなければ拒否されるだけ。つぎの タッチ・キーで startBgm が呼ばれる
   }
   function stopBgm(){ try{ if(bgm) bgm.pause(); }catch(_e){} }
   function sndIcon(){ btnSnd.textContent = save.mute ? "🔇" : "🔊"; }
-  document.addEventListener("pointerdown", function(){ if(!unlocked){ unlocked = true; if(bgmName) playBgm(bgmName); } }, {once: false, passive: true});
+  function gestureBgm(){ if(!save.mute && bgmName && (!bgm || bgm.paused)) startBgm(); }
+  ["pointerup", "touchend", "click", "keydown"].forEach(function(t){ document.addEventListener(t, gestureBgm, {capture: true, passive: true}); });
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) gestureBgm(); });
   btnSnd.addEventListener("click", function(){ save.mute = !save.mute; persist(); sndIcon(); if(save.mute) stopBgm(); else playBgm(bgmName || "bgm_title"); });
   sndIcon();
   selDiff.value = save.diff;

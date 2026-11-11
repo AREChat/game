@@ -279,7 +279,7 @@ function tqBgmSync(){
     }catch(_e){ /* 音が 出せなくても ゲームは つづける */ }
 }
 setInterval(tqBgmSync, 500);
-["pointerdown", "keydown", "touchstart"].forEach((ev) => document.addEventListener(ev, () => { tqBgm.touched = true; tqBgmSync(); }, {passive:true}));
+["pointerdown", "keydown", "touchstart", "pointerup", "touchend", "click"].forEach((ev) => document.addEventListener(ev, () => { tqBgm.touched = true; tqBgmSync(); }, {passive:true}));   // iPhone・iPad・Androidは、ゆびを はなした時でないと 音の許可が出ない
 document.addEventListener("visibilitychange", tqBgmSync);
 
 // 効果音（1回だけ）：セーブ音など。BGMは止めません
