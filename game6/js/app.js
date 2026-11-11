@@ -111,7 +111,7 @@
         '<small>表の大きさ ' + ch.n + '×' + ch.n + '　' + cnt + '/10話クリア' + (open ? "" : "　🔒 前の章をクリアすると開くよ") + '</small></button>';
     });
     app.innerHTML = h + '</div>';
-    app.querySelectorAll(".chcard").forEach(function(b){ b.onclick = function(){ var c = +b.dataset.c; go(function(){ screenEpisodes(c); }, "第" + (c + 1) + "章"); }; });
+    app.querySelectorAll(".chcard").forEach(function(b){ b.onclick = function(){ var c = +b.dataset.c; if(!chOpen(c)){ toast("前の章をクリアすると開くよ"); return; } go(function(){ screenEpisodes(c); }, "第" + (c + 1) + "章"); }; });
   }
 
   // ---------- 話えらび ----------
@@ -125,7 +125,7 @@
         '<span class="stars">' + (cl ? "★".repeat(cl.s || 1) + "☆".repeat(3 - (cl.s || 1)) : (open ? "" : "🔒")) + '</span></button>';
     });
     app.innerHTML = h + '</div>';
-    app.querySelectorAll(".ep").forEach(function(b){ b.onclick = function(){ startEpisode(c, +b.dataset.e); }; });
+    app.querySelectorAll(".ep").forEach(function(b){ b.onclick = function(){ if(!epOpen(c, +b.dataset.e)){ toast("前の話をクリアすると開くよ"); return; } startEpisode(c, +b.dataset.e); }; });
   }
 
   // 章の10人から、その話に登場する人を決める（話ごとにちがう5人が前面に出る）

@@ -62,6 +62,7 @@ export class Battle{
     get fast(){ return this.c.UI.fast; }
     // ---------- 準備 ----------
     _setup(foeIds, opt){
+        this._idle = 0;   // 「戦闘が進まない」見張り（main.js）の数えを、戦闘のはじめでもどす（オートで何戦も続けても、途中で『もとにもどしました』にならないように）
         const {R, data, S} = this.c; const o = opt || {};
         if(!this.fx){ this.fx = new Fx(R); this.weap = makeWeapons(R); const sg = new Geo(); sg.cyl(.5, .5, .01, 14, [0, 0, 0], M4.T(0, .02, 0)); this.shadow = R.mesh(sg); }
         if(this.back) this.back.dispose(); this.back = buildBackdrop(R, o.ground || "field");
@@ -176,7 +177,7 @@ export class Battle{
                     this.log(this.party[0].name + "たちは にげだした！"); await this.wait(.6);
                     if(ok){ result = "run"; break; } this.log("しかし まわりこまれてしまった！"); await this.wait(.6); continue;
                 }
-                await this._perform(a);
+                await this._perform(a); this._idle = 0;   // 1つ動きが終わるたびに、見張りの数えをもどす
                 if(this.fled){ result = "run"; break; }
                 if(this.foes.every((f) => f.ko)){ result = "win"; break; }
                 if(this.party.every((p) => p.m.hp <= 0)){ result = "lose"; break; }
