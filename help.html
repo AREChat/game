@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<script src="./protect.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1030">
+<title>あそびかた・よくある質問 ｜ ARE ゲーム</title>
+<meta name="description" content="AREのゲームのあそびかた、セーブ、もどりかた、オフラインでのあそびかたなどをまとめました。">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<style>
+:root{color-scheme:dark;--bg:#080d24;--panel:#121a3d;--line:#2b3868;--text:#eef1ff;--muted:#a9b4e0;--accent:#7aa2ff;--gold:#ffd24a}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Meiryo",system-ui,sans-serif;line-height:1.85;
+  background:radial-gradient(900px 500px at 15% -10%,#26357f 0%,transparent 60%),radial-gradient(800px 500px at 95% 0%,#4a2a86 0%,transparent 55%),var(--bg);min-height:100vh}
+a{color:var(--accent)}
+.wrap{max-width:760px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 16px 60px}
+.nav{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 4px}
+.nav a{text-decoration:none;color:var(--text);border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:8px 16px;font-weight:700;font-size:14px}
+.nav a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+h1{font-size:clamp(26px,6vw,36px);margin:.7em 0 .2em;line-height:1.3}
+.lead{color:var(--muted);margin:0 0 1.2em}
+h2{font-size:19px;margin:1.9em 0 .5em;border-left:6px solid var(--gold);padding-left:10px}
+.card{background:rgba(18,26,61,.8);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin:10px 0}
+.card b.q{display:block;color:#cfe0ff;margin-bottom:2px}
+.card p{margin:.2em 0}
+ul{padding-left:1.3em;margin:.4em 0}
+li{margin:.2em 0}
+.small{color:var(--muted);font-size:13px}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 6px;background:#0d1433;font-size:.92em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <a href="./index.html">🎮 ゲームえらびにもどる</a>
+    <a href="https://arechat.github.io/ARE/login.html">💬 チャットへもどる</a>
+  </div>
+  <h1>あそびかた・よくある質問</h1>
+  <p class="lead">ARE のゲームは、ブラウザでそのままあそべます（無料）。はじめての人向けに、よく聞かれることをまとめました。</p>
+
+  <h2>🎮 あそぶ前に</h2>
+  <div class="card"><b class="q">どの端末であそべますか？</b>
+    <p>スマホ・タブレット・パソコンのブラウザであそべます。スマホとタブレットは<b>横向き</b>、パソコンは大きな画面がおすすめです。</p></div>
+  <div class="card"><b class="q">ゲームを選ぶには？</b>
+    <p><a href="./index.html">ゲームえらびの画面</a>で、あそびたいゲームの「▶ あそぶ」を押します。上のボタンで、RPG・カード・推理などにしぼりこめます。前回あそんだゲームは、いちばん上から「つづきから」で開けます。</p></div>
+
+  <h2>💾 セーブ・データ</h2>
+  <div class="card"><b class="q">セーブはどこに残りますか？</b>
+    <p>いまあそんでいる<b>端末のブラウザの中</b>に残ります。別の端末や、別のブラウザには引きつがれません。</p></div>
+  <div class="card"><b class="q">セーブが消えることはありますか？</b>
+    <ul>
+      <li>ブラウザの「サイトのデータ」や「閲覧履歴」を消すと、セーブも消えることがあります。</li>
+      <li>プライベートモード（シークレットモード）では、閉じたときに消えます。</li>
+    </ul></div>
+
+  <h2>⬅️ もどりかた</h2>
+  <div class="card"><b class="q">ゲームをやめてチャットにもどるには？</b>
+    <p>ゲーム画面の左上にある「← もどる」を押します。ゲームが自分でもどるボタンを出しているときは、そちらを使ってください。</p>
+    <p>Android の「戻る」を押したときは、まず開いている画面（閉じる・キャンセルなど）が1つ閉じます。何も開いていなければ「もう一度おすとチャットにもどる」と出るので、少しのうちにもう一度押すともどります。</p></div>
+
+  <h2>📶 電波が弱いとき・オフライン</h2>
+  <div class="card"><b class="q">電波がなくてもあそべますか？</b>
+    <p><b>OFFLINE PARADISE</b> は、電波がなくてもあそべるミニゲームです。ほかのゲームは、画面に「📥 オフライン準備」のボタンが出ていれば、押しておくと画像や音楽を端末に保存できます。電波の弱い場所でも、あそびやすくなります。</p></div>
+
+  <h2>🕹 コントローラー（ゲームパッド）</h2>
+  <div class="card"><b class="q">パッドのボタンの配置を変えたい</b>
+    <p>対応しているゲームでは、設定の「🎮 ボタン設定」から、ボタン1つ1つの割りあてを好きに変えられます。</p></div>
+
+  <h2>🔑 お試し期間について</h2>
+  <div class="card"><b class="q">お試し期間のあとはどうなりますか？</b>
+    <p>ゲームによっては、お試し期間のあとに解放が必要なものがあります。くわしくは、チャットの「その他」タブにある各ゲームの説明を見てください。</p></div>
+
+  <h2>💻 パソコン用アプリ（Windows）</h2>
+  <div class="card"><b class="q">アプリ版はありますか？</b>
+    <p>ARE QUEST（ARE 〜そういうときは、AREだ！〜）と推理ゲームには、Windows 用のアプリ版があります。入手のしかたは、<a href="https://github.com/AREChat/game" rel="noopener">ゲームの置き場（GitHub）</a>の説明を見てください。</p></div>
+
+  <h2>🛠 うまく動かないとき</h2>
+  <div class="card">
+    <ul>
+      <li>画面が止まったときは、ページを再読み込み（パソコンは <kbd>F5</kbd>）してみてください。</li>
+      <li>音が出ないときは、端末の音量とマナーモード、ブラウザの音の設定を確認してください。</li>
+      <li>それでも直らないときは、<a href="https://arechat.github.io/ARE/help.html" rel="noopener">AREのヘルプ</a>を見るか、チャットで運営に知らせてください。</li>
+    </ul></div>
+
+  <p class="small" style="margin-top:2em">このページは、プレイする人向けの案内です。ゲームを作る人向けの説明は、GitHub の README にあります。</p>
+</div>
+</body>
+</html>

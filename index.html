@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<script src="./protect.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1030">
+<title>ARE ゲーム ｜ あそびたいゲームをえらぼう</title>
+<meta name="description" content="AREのゲームをまとめた入口です。RPG・カード・推理・ミニゲームなど、ブラウザですぐあそべます（無料）。">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<style>
+:root{color-scheme:dark;--bg:#080d24;--panel:#121a3d;--panel2:#18224d;--line:#2b3868;--text:#eef1ff;--muted:#a9b4e0;--accent:#7aa2ff;--accent2:#b58bff;--gold:#ffd24a}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Meiryo",system-ui,sans-serif;line-height:1.7;
+  background:radial-gradient(900px 500px at 15% -10%,#26357f 0%,transparent 60%),radial-gradient(800px 500px at 95% 0%,#4a2a86 0%,transparent 55%),var(--bg);min-height:100vh}
+a{color:inherit}
+.wrap{max-width:1040px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 16px 56px}
+header.top{text-align:center;padding:26px 0 10px}
+.logo{display:inline-block;font-weight:900;letter-spacing:.22em;font-size:14px;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:3px 16px;background:rgba(18,26,61,.6)}
+h1{font-size:clamp(28px,6.5vw,46px);margin:.35em 0 .1em;line-height:1.25;background:linear-gradient(90deg,#fff,#c9d7ff 45%,#d9c2ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{margin:0 auto;max-width:36em;color:var(--muted);font-size:clamp(14px,3.6vw,16px)}
+.resume{display:none;margin:18px auto 0;max-width:520px}
+.resume.on{display:block}
+.resume a{display:flex;align-items:center;gap:12px;text-decoration:none;border-radius:16px;padding:12px 16px;border:1px solid #4f67c9;background:linear-gradient(90deg,#24338a,#3a2a80);box-shadow:0 6px 24px rgba(60,80,200,.28)}
+.resume .ico{font-size:28px}
+.resume small{display:block;color:#cfd8ff;font-size:12px}
+.resume b{font-size:16px}
+.resume .go{margin-left:auto;background:var(--gold);color:#201400;font-weight:800;border-radius:999px;padding:6px 16px;font-size:14px;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:24px 0 18px}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:8px 16px;font:600 14px/1 inherit;cursor:pointer;min-height:40px}
+.chip[aria-pressed=true]{background:linear-gradient(180deg,#4d6ff0,#3552c9);border-color:#8fa8ff}
+.chip:focus-visible,.card:focus-visible,.foot a:focus-visible,.back:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));gap:16px}
+.card{position:relative;display:flex;flex-direction:column;text-decoration:none;border-radius:18px;overflow:hidden;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);transition:transform .18s,border-color .18s,box-shadow .18s}
+.card:hover{transform:translateY(-4px);border-color:#6f8aff;box-shadow:0 12px 30px rgba(20,30,100,.55)}
+.card:active{transform:translateY(-1px)}
+.cover{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,var(--c1,#27388a),var(--c2,#5a34a0));display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cover .emoji{font-size:58px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45))}
+.cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(8,13,36,.7))}
+.ribbon{position:absolute;z-index:2;top:10px;left:10px;background:var(--gold);color:#201400;font-weight:800;font-size:12px;border-radius:999px;padding:2px 10px}
+.body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.name{font-size:17px;font-weight:800;line-height:1.35;margin:0}
+.name small{display:block;font-size:12px;font-weight:600;color:var(--muted)}
+.desc{margin:0;font-size:13.5px;color:#cdd5f5;flex:1}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.tag{font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--muted);background:rgba(8,13,36,.5)}
+.play{margin-top:8px;align-self:flex-start;background:linear-gradient(180deg,#5a7bff,#3b57d6);border-radius:999px;padding:7px 20px;font-weight:800;font-size:14px;border:1px solid #9db2ff}
+.card:hover .play{background:linear-gradient(180deg,#7a95ff,#4a67e6)}
+.empty{display:none;text-align:center;color:var(--muted);padding:30px 0}
+.foot{margin-top:40px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.foot a{text-decoration:none;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:10px 18px;font-weight:700;font-size:14px}
+.foot a:hover{border-color:#6f8aff}
+.note{margin:22px auto 0;max-width:42em;text-align:center;color:var(--muted);font-size:12.5px}
+.back{display:inline-flex;align-items:center;gap:6px;position:absolute;left:0;top:0;margin:10px 0 0;text-decoration:none;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:8px 14px;font-weight:700;font-size:13px}
+header.top{position:relative}
+@media (max-width:520px){.back{position:static;margin:0 0 8px}.cover .emoji{font-size:48px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="back" id="backTop" href="https://arechat.github.io/ARE/login.html">← チャットへもどる</a>
+    <span class="logo">ARE GAMES</span>
+    <h1>あそびたいゲームを<br>えらぼう</h1>
+    <p class="lead">ぜんぶブラウザでそのままあそべます（無料）。スマホ・タブレットは<b>横向き</b>がおすすめです。</p>
+    <div class="resume" id="resume"></div>
+  </header>
+
+  <nav class="chips" id="chips" aria-label="ゲームのしぼりこみ">
+    <button type="button" class="chip" data-f="all" aria-pressed="true">すべて</button>
+    <button type="button" class="chip" data-f="rpg" aria-pressed="false">🗡️ RPG</button>
+    <button type="button" class="chip" data-f="card" aria-pressed="false">🃏 カード</button>
+    <button type="button" class="chip" data-f="mystery" aria-pressed="false">🔍 推理・パズル</button>
+    <button type="button" class="chip" data-f="casual" aria-pressed="false">🎰 ミニゲーム・のんびり</button>
+  </nav>
+
+  <main>
+    <div class="grid" id="grid"><noscript><p>このページは JavaScript を使います。ブラウザの設定で JavaScript をオンにしてください。</p></noscript></div>
+    <p class="empty" id="empty">このしぼりこみに合うゲームはありません。</p>
+  </main>
+
+  <div class="foot">
+    <a id="backBottom" href="https://arechat.github.io/ARE/login.html">💬 チャットへもどる</a>
+    <a href="https://arechat.github.io/LearnLab124/">📚 学習サイト（LearnLab124）</a>
+    <a href="./help.html">❓ あそびかた・よくある質問</a>
+  </div>
+  <p class="note">セーブはこの端末のブラウザに保存されます（別の端末・別のブラウザには引きつがれません）。</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var LOGIN = "https://arechat.github.io/ARE/login.html";
+  var OK_BACK = /^https:\/\/arechat\.github\.io\/(ARE|AREDA)\/(chat|login)(\.html)?(\?[^#]*)?$/;
+  var OK_REF = /^(https:\/\/arechat\.github\.io\/(ARE|AREDA)\/)/;
+  var back = "", chat = LOGIN;
+  try{
+    var b = new URLSearchParams(location.search).get("back");
+    if(b && OK_BACK.test(b)){ back = b; chat = b; }
+    else{ var m = String(document.referrer || "").match(OK_REF); if(m) chat = m[1] + "chat.html"; }
+  }catch(_e){}
+  ["backTop","backBottom"].forEach(function(id){ var a = document.getElementById(id); if(a) a.href = chat; });
+
+  // id, 名前, ふりがな風サブ, 説明, 行き先, ジャンル(絞りこみ), タグ, 絵文字, 色1, 色2, サムネ
+  var GAMES = [
+    {id:"are-quest", name:"ARE", sub:"〜そういうときは、AREだ！〜", desc:"王道ふうの2D RPG。過去へタイムスリップして、メモリを取りもどそう。セーブ3つ・自動戦闘・自動レベル上げ。", href:"game/index.html", cat:"rpg", tags:["2D","RPG","やりこみ"], emoji:"🗡️", c1:"#2a4a9a", c2:"#7a3aa8", img:"thumbs/are-quest.webp"},
+    {id:"quest2-3", name:"ARE QUEST 2・3", sub:"AREを入手せよ ／ 月影のあしあと", desc:"ストーリー重視の3D・RPG。前日譚から後日談まで、物語を楽しむシリーズです。", href:"game2/index.html", cat:"rpg", tags:["3D","RPG","ストーリー"], emoji:"📖", c1:"#25507a", c2:"#2a2f7a", img:"thumbs/quest2.webp"},
+    {id:"starweaver", name:"星紡ぎの旅人", sub:"GAME6", desc:"星の道しるべをたどる、オリジナルの冒険ファンタジーJRPG。探索とバトルを楽しもう。", href:"game4/starweaver/index.html", cat:"rpg", tags:["RPG","ファンタジー"], emoji:"⭐", c1:"#3a3a9a", c2:"#a04a8a", img:"thumbs/starweaver.webp"},
+    {id:"dream", name:"ドリーム・フロンティア", sub:"3Dテーマパーク", desc:"一人称で歩く、オリジナルの3Dテーマパーク。ライドやアトラクションをめぐってスタンプを集めよう。", href:"dream-frontier/index.html", cat:"casual", tags:["3D","一人称","スタンプ集め"], emoji:"🎡", c1:"#1f6a8a", c2:"#7a4ab0"},
+    {id:"card", name:"ARE CARD", sub:"〜そういうときは、AREだ！〜", desc:"3Dの盤面で遊ぶカードバトル。デッキを選んでCPUと対戦します。", href:"game4/card/index.html", cat:"card", tags:["カード","3D","CPU対戦"], emoji:"🃏", c1:"#5a2a7a", c2:"#2a3f8a", img:"thumbs/card.webp"},
+    {id:"daifugo", name:"大富豪", sub:"本格ルール", desc:"3〜2の技・縛り・革命・階級・カード交換。ルールは自由に変えられます。", href:"https://arechat.github.io/ARE/daifugo/index.html", cat:"card", tags:["カード","ルール自由"], emoji:"👑", c1:"#7a5a1f", c2:"#4a2a60", ext:true},
+    {id:"mystery", name:"推理ゲーム", sub:"表｜全10章", desc:"会話と証言を集めて、升目（マス目）パズルで事件を解く、オリジナルの推理ゲーム。", href:"game5/play/index.html", cat:"mystery", tags:["推理","全10章"], emoji:"🔍", c1:"#26406a", c2:"#1f2a5a", img:"thumbs/mystery.webp"},
+    {id:"mystery2", name:"推理ゲーム2", sub:"裏", desc:"「表」の推理ゲームに○×をつけながら解いていく、もうひとつの推理ゲーム。", href:"game6/index.html", cat:"mystery", tags:["推理","○×"], emoji:"🕵️", c1:"#3a2a5a", c2:"#1f3a6a"},
+    {id:"blocks", name:"ARE BLOCKS", sub:"おもちゃブロック", desc:"おもちゃブロック風の落ち物パズル。ブロックをうまく積んで、そろえて消そう。", href:"game5/blocks/index.html", cat:"mystery", tags:["落ち物パズル","ブロック"], emoji:"🧱", c1:"#a05a2a", c2:"#7a2a5a"},
+    {id:"offline", name:"OFFLINE PARADISE", sub:"電波がなくてもOK", desc:"ルーレットで選ばれる5つのミニゲーム。コインをためて図鑑をうめよう。", href:"game7/index.html", cat:"casual", tags:["ミニゲーム","オフラインOK"], emoji:"🎰", c1:"#a03a6a", c2:"#3a2a8a"}
+  ];
+
+  var grid = document.getElementById("grid"), empty = document.getElementById("empty"), resume = document.getElementById("resume");
+  var KEY = "are_game_last", last = "";
+  try{ last = localStorage.getItem(KEY) || ""; }catch(_e){}
+
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function url(g){
+    if(!back || g.ext) return g.href;
+    return g.href + (g.href.indexOf("?") < 0 ? "?" : "&") + "back=" + encodeURIComponent(back);
+  }
+  function card(g){
+    var cover = '<div class="cover" style="--c1:' + g.c1 + ';--c2:' + g.c2 + '"><span class="emoji" aria-hidden="true">' + g.emoji + '</span>' +
+      (g.img ? '<img src="' + g.img + '" alt="" loading="lazy" decoding="async" onerror="this.remove()">' : '') +
+      (g.id === last ? '<span class="ribbon">前回あそんだ</span>' : '') + '</div>';
+    return '<a class="card" data-id="' + g.id + '" data-cat="' + g.cat + '" href="' + esc(url(g)) + '"' + (g.ext ? ' rel="noopener"' : '') + '>' + cover +
+      '<div class="body"><h2 class="name">' + esc(g.name) + '<small>' + esc(g.sub) + '</small></h2><p class="desc">' + esc(g.desc) + '</p>' +
+      '<div class="tags">' + g.tags.map(function(t){ return '<span class="tag">' + esc(t) + '</span>'; }).join("") + '</div>' +
+      '<span class="play">▶ あそぶ</span></div></a>';
+  }
+  grid.innerHTML = GAMES.map(card).join("");
+
+  var lg = GAMES.filter(function(g){ return g.id === last; })[0];
+  if(lg){
+    resume.innerHTML = '<a href="' + esc(url(lg)) + '"><span class="ico" aria-hidden="true">' + lg.emoji + '</span><span><small>前回あそんだゲーム</small><b>' + esc(lg.name) + (lg.sub ? ' ' + esc(lg.sub) : '') + '</b></span><span class="go">つづきから ▶</span></a>';
+    resume.className = "resume on";
+  }
+
+  grid.addEventListener("click", function(e){
+    var a = e.target.closest ? e.target.closest(".card") : null;
+    if(a){ try{ localStorage.setItem(KEY, a.dataset.id); }catch(_e){} }
+  });
+  resume.addEventListener("click", function(){ if(lg){ try{ localStorage.setItem(KEY, lg.id); }catch(_e){} } });
+
+  document.getElementById("chips").addEventListener("click", function(e){
+    var b = e.target.closest ? e.target.closest(".chip") : null;
+    if(!b) return;
+    var f = b.dataset.f, shown = 0;
+    [].forEach.call(document.querySelectorAll(".chip"), function(c){ c.setAttribute("aria-pressed", c === b ? "true" : "false"); });
+    [].forEach.call(grid.querySelectorAll(".card"), function(c){
+      var ok = f === "all" || c.dataset.cat === f; c.style.display = ok ? "" : "none"; if(ok) shown++;
+    });
+    empty.style.display = shown ? "none" : "block";
+  });
+})();
+</script>
+</body>
+</html>
