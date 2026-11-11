@@ -67,10 +67,15 @@
     }catch(e){ out.textContent = "いま ダウンロードできません（ネットを 確認してね）。"; }
     running = false;
   }
+  var opening = false;
   async function open(){
     if(panel){ panel.remove(); panel = null; return; }
+    if(opening) return;   // 連打で2つ開かないように
+    opening = true;
     var sizes = {image: 0, audio: 0}, ok = false;
     try{ var d = await loadList(); sizes.image = d.bytes.image; sizes.audio = d.bytes.audio; ok = true; }catch(_e){}
+    opening = false;
+    if(panel) return;
     panel = document.createElement("div"); panel.id = "areOffPanel";
     panel.style.cssText = "position:fixed;left:50%;bottom:max(46px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:2147483001;width:min(92vw,380px);background:#10162e;color:#fff;border:1px solid #6b7cff;border-radius:14px;padding:14px;font:14px/1.6 system-ui,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.55)";
     var h = document.createElement("div"); h.style.cssText = "font-weight:800;margin-bottom:6px"; h.textContent = "📥 ネットが ない家でも あそぶ準備";
@@ -79,7 +84,7 @@
     var bar = document.createElement("progress"); bar.hidden = true; bar.style.cssText = "width:100%";
     var b1 = btn("画像だけ（約" + mb(sizes.image) + "）", function(){ if(!running) run("img", out, bar); });
     var b2 = btn("音楽も ぜんぶ（約" + mb(sizes.image + sizes.audio) + "）", function(){ if(!running) run("all", out, bar); });
-    var b3 = btn("とじる", function(){ cancel = true; panel.remove(); panel = null; ls("are-off-hide", "1"); var f = document.getElementById("areOffFab"); if(f) f.remove(); });
+    var b3 = btn("とじる", function(){ cancel = true; if(panel){ panel.remove(); panel = null; } ls("are-off-hide", "1"); var f = document.getElementById("areOffFab"); if(f) f.remove(); });
     b3.style.background = "#37405f";
     if(!ok){ out.textContent = "いまは 一覧を 読めません（ネットを 確認してね）。"; }
     else { var done = ls("are-off-done"); if(done) out.textContent = "前回の 保存: " + (/:all$/.test(done) ? "音楽ふくむ ぜんぶ" : "画像まで") + "（更新が あれば もう一度 押してね）"; }
