@@ -43,7 +43,8 @@
   function setIntensity(i){ intensity = Math.max(0, Math.min(3, i)); }
   $("snd").onclick = function(){ save.mute = !save.mute; persist(); paintSnd(); if(master) master.gain.value = save.mute ? 0 : .5; };
   function paintSnd(){ $("snd").textContent = save.mute ? "🔇" : "🔊"; } paintSnd();
-  document.addEventListener("pointerdown", function(){ bgmOn(); }, {passive: true});
+  // 音の許可は「ゆびを はなした時」「click」「キー」でないと 出ない（iPhone・iPad・Android）。さわった しゅんかん（pointerdown）だけでは 足りない
+  ["pointerdown", "pointerup", "touchend", "click", "keydown"].forEach(function(t){ document.addEventListener(t, function(){ bgmOn(); }, {passive: true, capture: true}); });
 
   // ---------- 画面 ----------
   function show(id){ document.querySelectorAll(".scr").forEach(function(s){ s.classList.toggle("on", s.id === id); }); if(id !== "s-play") setIntensity(0); }
@@ -90,18 +91,24 @@
   var cv = $("cv"), cx = cv.getContext("2d"), W = 360, H = 640;
   var T = {t: 0, last: 0, raf: 0};
   var S = {score: 0, combo: 0};             // ゲーム側から使う
-  function start(g){
-    current = g; running = true; jackpot = false; core.over = false; core.bonusTime = 0;
+  function start(g){ if(core.gate) core.gate(g, begin); else begin(g); }       // gate：操作説明の画面（input.js）。なければ そのまま はじめる
+  function begin(g){
+    current = g; running = true; core.paused = false; jackpot = false; core.over = false; core.bonusTime = 0;
     show("s-play"); $("hName").textContent = g.icon + " " + g.name; $("hScore").textContent = "0"; $("hTime").textContent = g.dur;
     var help = $("help"); help.textContent = g.help; help.style.opacity = 1; setTimeout(function(){ help.style.opacity = 0; }, 3200);
     S.score = 0; S.combo = 0; setIntensity(1);
     g.init(core);
+    if(core.onBegin) core.onBegin(g);
     T.t = 0; T.last = performance.now(); cancelAnimationFrame(T.raf); T.raf = requestAnimationFrame(loop);
   }
+  function abort(){ running = false; core.paused = false; core.over = false; cancelAnimationFrame(T.raf); setIntensity(0); show("s-title"); if(core.onEnd) core.onEnd(); }
   function loop(now){
     if(!running) return;
     var dt = Math.min(.05, (now - T.last) / 1000); T.last = now;
-    if(!document.hidden){ T.t += dt; current.update(dt, core); }
+    if(core.paused){ T.raf = requestAnimationFrame(loop); return; }              // 一時停止中
+    var sdt = dt * (core.speed || 1);                                           // ゲームの速さ（せってい：ふつう／ゆっくり）
+    if(core.frame) core.frame(dt);                                              // パッド・キーボードの おしっぱなし処理（input.js）
+    if(!document.hidden){ T.t += sdt; current.update(sdt, core); }
     var left = Math.max(0, current.dur - T.t + (core.bonusTime || 0));
     $("hTime").textContent = Math.ceil(left); $("hScore").textContent = Math.floor(S.score);
     current.draw(cx, core);
@@ -119,6 +126,7 @@
     $("rInfo").innerHTML = (rec ? "🎉 ベストスコア こうしん！<br>" : "ベスト：" + best + "<br>") + (jackpot ? "📡 通信回復ジャックポット！ コイン 2 倍！<br>" : "") + (fromRoulette ? "🎰 ルーレットボーナス ×1.5" : "");
     $("rCoin").innerHTML = "🪙 +" + gain + "（ぜんぶで " + save.coins + "）";
     SFX[rec ? "fan" : "good"](); show("s-res");
+    if(core.onEnd) core.onEnd();
   }
 
   // 電波が戻ったら：ジャックポット（このゲームのコインが2倍）
@@ -142,14 +150,7 @@
     if(running && current.onUp) current.onUp(p[0], p[1], core, performance.now() - P.st, P.swiped);
     if(running && !P.swiped && current.onTap && performance.now() - P.st < 300) current.onTap(p[0], p[1], core); }
   cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
-  window.addEventListener("keydown", function(e){
-    if(!running) return; var k = e.key;
-    if(k === "ArrowUp" || k === " "){ e.preventDefault(); if(current.onSwipe) current.onSwipe("up", core); if(current.onTap) current.onTap(W / 2, H / 2, core); if(current.onDown) current.onDown(W / 2, H / 2, core); }
-    if(k === "ArrowDown" && current.onSwipe) current.onSwipe("down", core);
-    if(k === "ArrowLeft" && current.onSwipe) current.onSwipe("left", core);
-    if(k === "ArrowRight" && current.onSwipe) current.onSwipe("right", core);
-  });
-  window.addEventListener("keyup", function(e){ if(running && (e.key === " " || e.key === "ArrowUp") && current.onUp) current.onUp(W / 2, H / 2, core, 200, false); });
+  // キーボード・パッドの そうさは input.js が うけもつ
 
   // ---------- ボタン ----------
   $("bRoulette").onclick = roulette;
@@ -167,6 +168,8 @@
 
   var core = {W: W, H: H, S: S, P: P, SFX: SFX, tone: tone, setIntensity: setIntensity, cutin: cutin, save: save, over: false, bonusTime: 0, rand: Math.random,
     register: function(g){ GAMES.push(g); }, time: function(){ return T.t; }, left: function(){ return current.dur - T.t + core.bonusTime; }, equip: function(){ return save.eq; }};
+  core.show = show; core.start = start; core.begin = begin; core.abort = abort; core.roulette = roulette; core.persist = persist; core.bgmOn = bgmOn;
+  core.games = GAMES; core.current = function(){ return current; }; core.isRunning = function(){ return running; }; core.pos = pos; core.paused = false; core.speed = 1;
   window.G7 = core;
   paintWallet();
 })();

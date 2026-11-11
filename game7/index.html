@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>OFFLINE PARADISE</title>
 <meta name="theme-color" content="#0a0420">
-<script src="../protect.js"></script>
+<script src="../protect.js"></script><script src="../shared/are-padmap.js"></script>
 <link rel="stylesheet" href="./style.css">
 <script src="../shared/are-offline.js" defer></script>
 </head>
@@ -13,6 +13,7 @@
 <div id="net"></div>
 <button id="exitBtn" type="button" aria-label="出口"></button>
 <button id="snd" type="button" aria-label="音の入り切り">🔊</button>
+<button id="pauseBtn" type="button" aria-label="いちじ停止" hidden>⏸ ていし</button>
 <main id="stage">
   <section id="s-title" class="scr on">
     <div class="logo">OFFLINE<br>PARADISE</div>
@@ -20,7 +21,8 @@
     <div class="wallet">🪙 <b id="coinN">0</b>　<span id="equipped"></span></div>
     <button class="big" id="bRoulette" type="button">🎰 ルーレットで はじめる</button>
     <div class="row"><button id="bPick" type="button">えらんで あそぶ</button><button id="bColl" type="button">🏆 図鑑・ショップ</button></div>
-    <p class="hint">どれも タップとスワイプだけ・1回 30秒〜1分。<br>あそんだ分は 🪙 になって、ぜんぶのゲームで共通だよ。</p>
+    <div class="row"><button id="bHow" type="button">📖 あそびかた</button><button id="bSet" type="button">⚙ せってい</button></div>
+    <p class="hint">スマホ・タブレットは タッチ、パソコンは キーボード、プロコンでも あそべるよ。<br>1回 30秒〜1分。あそんだ分は 🪙 になって、ぜんぶのゲームで共通だよ。</p>
   </section>
   <section id="s-roul" class="scr">
     <div class="slot"><div id="reel">？</div></div>
@@ -38,6 +40,9 @@
     <div id="cutin" class="cutin"></div>
     <div id="help" class="help"></div>
   </section>
+  <section id="s-ready" class="scr"></section>
+  <section id="s-set" class="scr"></section>
+  <section id="s-help" class="scr"></section>
   <section id="s-res" class="scr">
     <h2 id="rTitle">けっか</h2>
     <div id="rScore" class="bigscore">0</div>
@@ -46,11 +51,14 @@
     <div class="row"><button class="big" id="rAgain" type="button">🎰 もういちど</button><button id="rTitleBtn" type="button">タイトルへ</button></div>
   </section>
 </main>
+<div id="tp" hidden></div>
+<div id="pauseBox" class="pausebox" hidden></div>
 <script src="../shared/are-mode.js"></script>
 <script src="../shared/game-nav.js"></script>
 <script src="../shared/game-exit.js"></script>
 <script src="./js/core.js"></script>
 <script src="./js/games.js"></script>
+<script src="./js/input.js"></script>
 <script>(function(){var b=document.getElementById("exitBtn");if(!b||!window.AREExit)return;b.textContent=AREExit.label();b.addEventListener("click",function(){AREExit.open();});})();</script>
 </body>
 </html>

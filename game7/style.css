@@ -36,3 +36,42 @@ button.big{font-size:19px;font-weight:800;padding:15px 26px;background:linear-gr
 #hName{max-width:52vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
 
 #exitBtn{position:fixed;left:8px;top:calc(36px + env(safe-area-inset-top));z-index:30;padding:4px 10px;font-size:13px;border-radius:999px}
+
+/* ===== そうさ（せってい・説明・一時停止・画面のボタン）===== */
+button:focus-visible{outline:3px solid #ffd24a;outline-offset:2px}
+#pauseBtn{position:fixed;right:64px;top:calc(6px + env(safe-area-inset-top));z-index:31;padding:4px 10px;font-size:13px;border-radius:999px}
+#s-ready,#s-set,#s-help{justify-content:flex-start;padding-top:calc(46px + env(safe-area-inset-top));padding-bottom:24px;gap:10px}
+.panel{width:min(94vw,520px);text-align:left;background:#1a0d3f;border:1px solid #5a3fc0;border-radius:14px;padding:10px 12px}
+.panel h3{margin:0 0 6px;font-size:15px;color:#ffe27a}
+.dev{display:grid;grid-template-columns:2.2em 1fr;gap:2px 8px;align-items:start;padding:7px 8px;border-radius:10px;margin:4px 0;font-size:14px;line-height:1.5;background:#241058}
+.dev.me{background:#3a2a8a;outline:2px solid #ffd24a}
+.dev b{font-size:22px;grid-row:span 2}
+.dev small{color:#cdb8ff}
+.rdy-title{font-size:22px;font-weight:900;margin:0}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:5.5em;padding:9px 6px;font-size:14px}
+.seg button.on{background:#ffcf3a;color:#2b1000;border-color:#ffcf3a;font-weight:800}
+.krow{display:flex;align-items:center;gap:6px;margin:5px 0;font-size:14px}
+.krow span.l{flex:1}
+.krow button{min-width:5.5em;padding:7px 8px;font-size:13px}
+.krow button.cap{background:#ffcf3a;color:#2b1000}
+.stat{font-size:12.5px;color:#9fe3b5;margin:4px 0 0;min-height:1.3em}
+.note2{font-size:12px;color:#9d8bd0;margin:4px 0 0}
+.pausebox{position:fixed;inset:0;z-index:50;background:rgba(10,4,32,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px}
+.pausebox[hidden]{display:none}
+.pausebox h2{font-size:26px}
+.pausebox button{min-width:15em;font-size:17px}
+#tp{position:fixed;left:0;right:0;bottom:0;z-index:20;height:0;pointer-events:none}
+#tp[hidden]{display:none}
+#tp .grp{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom));pointer-events:none}
+#tp .grp.l{left:12px;width:168px;height:168px}
+#tp .grp.r{right:14px}
+#tp .tb{position:absolute;pointer-events:auto;touch-action:none;display:grid;place-items:center;font-weight:900;color:#fff;background:rgba(40,20,100,.55);border:2px solid rgba(255,255,255,.55);border-radius:50%;opacity:.82;-webkit-user-select:none;user-select:none;padding:0;line-height:1.1}
+#tp .tb.on{background:rgba(255,207,58,.85);color:#2b1000;transform:scale(.94)}
+#tp .tb.d{width:56px;height:56px;font-size:24px;border-radius:16px}
+#tp .tb.u{left:56px;top:0}#tp .tb.dn{left:56px;top:112px}#tp .tb.lf{left:0;top:56px}#tp .tb.rt{left:112px;top:56px}
+#tp .tb.a{width:96px;height:96px;font-size:14px;right:0;bottom:0;background:rgba(255,120,40,.6)}
+@media (max-height:520px){#tp .grp.l{transform:scale(.78);transform-origin:left bottom}#tp .tb.a{width:78px;height:78px}}
+body.nav button:focus,body.nav a:focus{outline:3px solid #ffd24a;outline-offset:2px;box-shadow:0 0 14px #ffd24a}
+.topbar{position:sticky;top:calc(38px + env(safe-area-inset-top));z-index:6;align-self:stretch;display:flex;justify-content:flex-start;padding:4px 0;margin:-6px 0 0}
+.topbar button{padding:8px 16px;font-size:15px;background:#2a1a6a}
