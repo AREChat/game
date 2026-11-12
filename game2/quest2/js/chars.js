@@ -1,3 +1,4 @@
+import {VIL_IDS, VIL_F} from "./villagers.js";
 
 "use strict";
 // ===== 手作りの丸くてかわいい低ポリ3Dキャラ（外部モデル不要）と、モンスターのテクスチャ =====
@@ -187,7 +188,26 @@ function drawProc(R, P, o, opt){
 const SPR_H = {hero:1.55, aki:1.55, ken:1.55, mio:1.5, yuina:1.5, makabe:1.65, takamori:1.65, v_boy:1.3, v_girl:1.3, v_man:1.6, v_woman:1.55, v_elder:1.45, v_granny:1.4, v_shop:1.5, v_guard:1.6};
 const SPR_BY_STYLE = {short:["v_boy","v_man"], spiky:["v_boy","v_man"], cap:["v_man","v_guard","v_boy"], hat:["v_elder","v_guard","v_man"], long:["v_girl","v_woman","v_shop"], bun:["v_granny","v_woman","v_shop"]};
 const sprCache = new Map(), sprTex = new Map();
-function sprPick(L){
+const vilSlot = new Map();
+function vilFor(slot){
+    if(vilSlot.has(slot)) return vilSlot.get(slot);
+    const map = slot.split(":")[0], N = VIL_IDS.length;
+    let h = 7; for(let i = 0; i < slot.length; i++) h = (h * 31 + slot.charCodeAt(i)) >>> 0;
+    const inMap = [], cnt = new Map();
+    for(const [s, id] of vilSlot){ cnt.set(id, (cnt.get(id) || 0) + 1); if(s.split(":")[0] === map) inMap.push(id); }
+    // 同じ場所にまだ出ていない人のうち、ほかの場所での登場が少なく、同じ場所にいる人と見た目がいちばん離れている人を選ぶ
+    const dist = (a, b) => { const x = VIL_F[a], y = VIL_F[b]; let d = 0; for(let i = 0; i < x.length; i++) d += (x[i] - y[i]) * (x[i] - y[i]); return d; };
+    let best = null, bs = -1e18;
+    for(let i = 0; i < N; i++){
+        const id = VIL_IDS[(h + i) % N]; if(inMap.includes(id)) continue;
+        const md = inMap.length ? Math.min(...inMap.map((o) => dist(id, o))) : 0;
+        const sc = -(cnt.get(id) || 0) * 1e6 + md - i * .5;
+        if(sc > bs){ bs = sc; best = id; }
+    }
+    if(!best) best = VIL_IDS[h % N];
+    vilSlot.set(slot, best); return best;
+}
+function sprPick(L, slot){
     if(L.cape) return "hero";
     const h = String(L.hair).toLowerCase(), s = L.style, sh = String(L.shirt).toLowerCase();
     if(s === "spiky" && h === "#6a2a1a") return "aki";
@@ -196,6 +216,7 @@ function sprPick(L){
     if(s === "long" && h === "#8a5a3a" && sh === "#e0709a") return "yuina";
     if(s === "bun" && h === "#6a3a2a" && sh === "#4aa0c0") return "makabe";
     if(s === "hat" && h === "#555555") return "takamori";
+    if(slot) return vilFor(String(slot));
     const list = SPR_BY_STYLE[s] || SPR_BY_STYLE.short; let k = 0; const j = JSON.stringify(L);
     for(let i = 0; i < j.length; i++) k = (k * 31 + j.charCodeAt(i)) >>> 0;
     return list[k % list.length];
@@ -209,10 +230,10 @@ function sprLoad(R, name, side){
     img.src = "img/chara/" + key + ".webp";
     return rec;
 }
-export function charMeshes(R, look){
+export function charMeshes(R, look, slot){
     const L = Object.assign({skin:"#f6cfa6", hair:"#3a2a20", shirt:"#3b6fd8", pants:"#2d3a5a", style:"short", accent:"#ffd24a", cape:null, size:1}, look || {});
-    const key = JSON.stringify(L); if(sprCache.has(key)) return sprCache.get(key);
-    const name = sprPick(L);
+    const key = JSON.stringify(L) + (slot ? "@" + slot : ""); if(sprCache.has(key)) return sprCache.get(key);
+    const name = sprPick(L, slot);
     const g = new Geo(); g.cyl(.42, .42, .01, 12, [0, 0, 0], M4.T(0, .02, 0), true);
     const P = {spr: {name, f: sprLoad(R, name, "f"), b: sprLoad(R, name, "b"), l: sprLoad(R, name, "l"), r: sprLoad(R, name, "r"), meshes: {}}, proc: procChar(R, look), shadow: R.mesh(g), size: L.size};
     sprCache.set(key, P); return P;

@@ -48,8 +48,8 @@ function setWorld(id){
 function refreshNpcs(){
     const R = ctx.R, S = ctx.S; npcs = [];
     if(!mapDef) return;
-    for(const f of (mapDef.folk || [])) npcs.push({kind: "folk", id: f.id, name: f.name, x: f.at[0], z: f.at[1], yaw: rnd() * 6, P: charMeshes(R, f.look), lines: f.lines || [], shop: f.shop, rest: f.rest, fac: f.fac, home: f.at.slice(), wander: f.wander || 0, tgt: null, wait: rnd() * 2, t: rnd() * 9, li: 0, walk: 0});
-    for(const n of story.npcsOn(mapDef.id)) npcs.push({kind: "story", id: n.id, name: n.name, x: n.at[0], z: n.at[1], yaw: n.yaw || 0, P: charMeshes(R, n.look), def: n, home: n.at.slice(), wander: 0, t: rnd() * 9, walk: 0});
+    for(const f of (mapDef.folk || [])) npcs.push({kind: "folk", id: f.id, name: f.name, x: f.at[0], z: f.at[1], yaw: rnd() * 6, P: charMeshes(R, f.look, mapDef.id + ":" + f.id), lines: f.lines || [], shop: f.shop, rest: f.rest, fac: f.fac, home: f.at.slice(), wander: f.wander || 0, tgt: null, wait: rnd() * 2, t: rnd() * 9, li: 0, walk: 0});
+    for(const n of story.npcsOn(mapDef.id)) npcs.push({kind: "story", id: n.id, name: n.name, x: n.at[0], z: n.at[1], yaw: n.yaw || 0, P: charMeshes(R, n.look, "s:" + n.id), def: n, home: n.at.slice(), wander: 0, t: rnd() * 9, walk: 0});
     const sp = mapDef.spawn;
     for(const n of npcs){ const [x, z] = world.freeSpot(n.x, n.z); n.x = x; n.z = z; }
 }

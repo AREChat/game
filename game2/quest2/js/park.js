@@ -142,7 +142,7 @@ export class Park{
         // ARE もじ
         this.areTex = R.tex(canvasTex(256, 96, (x, w, h) => { x.clearRect(0, 0, w, h); x.font = "bold 80px sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.shadowColor = "#ffe9a0"; x.shadowBlur = 24; x.fillStyle = "#ffffff"; x.fillText("A R E", w / 2, h / 2 + 4); }));
         // ナビ と ひとびと
-        const mk = (id, name, x, z, yaw, look, key) => this.npcs.push({id, name, x, z, yaw, P: charMeshes(R, look), t: Math.random() * 9, key});
+        const mk = (id, name, x, z, yaw, look, key) => this.npcs.push({id, name, x, z, yaw, P: charMeshes(R, look, "p:" + id), t: Math.random() * 9, key});
         mk("navi", "ナビ", 0, 8, Math.PI, {shirt: "#ffffff", hair: "#7ae0ff", style: "bun", accent: "#ff7aa8"});
         mk("keeper", "ひかりの番人", -34, -3.5, Math.PI / 2 * 3, {shirt: "#c8b0ff", hair: "#eeeeff", style: "long", accent: "#8a6af0", cape: "#6a4ac0"});
         mk("staff", "コースターの スタッフ", 4, -36, 0, {shirt: "#e05a4a", hair: "#3a2a20", style: "cap", accent: "#ffd24a"});

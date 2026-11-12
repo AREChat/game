@@ -209,14 +209,44 @@ const BUILD = {
 };
 
 // 見た目の指定（図鑑データから決まる）
+
+// ===== 1枚絵（前・右・左・後ろ）のモンスター =====
+// img/mon/<id>_f|r|l|b.webp がある ID だけ 1枚絵で ひょうじ（読みこめない間／失敗した時は 手作り3Dのまま）。
+const MON_SPR = new Set(["poyon", "yorubat", "masshu", "oboron", "gantetsu", "dashking", "gyoretsu", "ishidoro", "kageboshi", "kurobane_ou", "yamikarasu"]);
+const monSprCache = new WeakMap();
+function monSpr(R, id){
+    if(!MON_SPR.has(id)) return null;
+    let c = monSprCache.get(R); if(!c){ c = new Map(); monSprCache.set(R, c); }
+    if(c.has(id)) return c.get(id);
+    const s = {v: {}, meshes: {}, ready: () => ["f", "r", "l", "b"].every((k) => s.v[k].tex)}; c.set(id, s);
+    for(const k of ["f", "r", "l", "b"]){
+        const rec = s.v[k] = {tex: null, w: 0, h: 0}; const img = new Image();
+        img.onload = () => { try{ rec.tex = R.tex(img); rec.w = img.naturalWidth; rec.h = img.naturalHeight; }catch(_e){} };
+        img.src = "img/mon/" + id + "_" + k + ".webp";
+    }
+    return s;
+}
+function drawMonSprite(R, model, S, st, root0){
+    const t = st.t || 0, s = st.s || 1, sq = st.sq || 0, dead = st.dead || 0;
+    const cx = R.cam[0] - st.x, cz = R.cam[2] - st.z, by = Math.atan2(cx, cz), len = Math.hypot(cx, cz) || 1, yaw = st.yaw || 0;
+    const fx = Math.sin(yaw), fz = Math.cos(yaw);
+    const a = Math.atan2(fx * Math.cos(by) - fz * Math.sin(by), (fx * cx + fz * cz) / len);
+    const rec = Math.abs(a) < Math.PI / 4 ? S.v.f : Math.abs(a) > Math.PI * 3 / 4 ? S.v.b : a > 0 ? S.v.r : S.v.l;
+    const key = rec.w + "x" + rec.h; let mesh = S.meshes[key];
+    if(!mesh){ const H = model.h * rec.h / 256, g = new Geo(); g.sprite(H * rec.w / rec.h, H, [1, 1, 1], M4.id()); mesh = S.meshes[key] = R.mesh(g); }
+    const bob = Math.sin(t * 2.2 + (st.ph || 0)) * .05 + (model.fly ? Math.sin(t * 2.4) * .22 : 0) + (st.hop || 0);
+    const root = M4.mul(M4.trs(st.x, (model.fly ? .5 : 0) + bob, st.z + (st.lunge || 0), by, s), M4.S(1 + sq * .25 + dead * .2, Math.max(.02, 1 - sq * .35 - dead * .95), 1 + sq * .25 + dead * .2));
+    const fl = st.flash || 0, al = (st.alpha === undefined ? 1 : st.alpha) * (model.alpha || 1);
+    R.draw(mesh, {m: root, tex: rec.tex, mode: 1, blend: true, cut: .05, tint: [1 + fl * 1.8, 1 + fl * 1.8, 1 + fl * 1.8, al]});
+}
 export function specOf(m){
     const seed = hashS(m.id || m.name || "x");
-    const A = m.art || {}; return {kind: A.kind || KINDS[seed % KINDS.length], c1: A.color || "#6aa0e8", c2: A.color2 || shadeC(A.color || "#6aa0e8", 1.45), seed, f: A.f || {}};
+    const A = m.art || {}; return {id: m.id, kind: A.kind || KINDS[seed % KINDS.length], c1: A.color || "#6aa0e8", c2: A.color2 || shadeC(A.color || "#6aa0e8", 1.45), seed, f: A.f || {}};
 }
 const cache = new WeakMap();
 export function monsterModel(R, spec){
     let c = cache.get(R); if(!c){ c = new Map(); cache.set(R, c); }
-    const key = spec.kind + spec.c1 + spec.c2 + JSON.stringify(spec.f) + (spec.kind === "food" ? spec.seed % 3 : 0);
+    const key = spec.kind + spec.c1 + spec.c2 + JSON.stringify(spec.f) + (spec.kind === "food" ? spec.seed % 3 : 0) + (MON_SPR.has(spec.id) ? "#" + spec.id : "");
     if(c.has(key)) return c.get(key);
     const b = builder(); const info = (BUILD[spec.kind] || BUILD.slime)(b, spec);
     const parts = b.done().map((p) => ({mesh: R.mesh(p.g), role: p.role, pivot: p.pivot, cull: false}));
@@ -226,6 +256,7 @@ export function monsterModel(R, spec){
 }
 // 部品ごとのアニメ。st: {x,z,yaw,s,t,sq(つぶれ),lunge,flash,alpha,jaw(0..1),atk(0..1),dead(0..1)}
 export function drawMonster(R, model, st, tex){
+    if(model.spec && model.spec.id && R.cam){ const S = monSpr(R, model.spec.id); if(S && S.ready()){ drawMonSprite(R, model, S, st); return; } }
     const s = st.s || 1, t = st.t || 0, fly = model.fly ? Math.sin(t * 2.4) * .22 : 0;
     const bob = Math.sin(t * 2.2 + (st.ph || 0)) * .05 + fly + (st.hop || 0);
     const sq = st.sq || 0, dead = st.dead || 0;
