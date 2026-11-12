@@ -134,3 +134,8 @@ body.bangshake #app{animation:bshake .62s linear}
 #title.screen{background:linear-gradient(180deg,rgba(7,12,29,.35),rgba(7,12,29,.7)),url(img/title.webp) center/cover,#0a0f3a}
 body:has(#dlg:not([hidden])) #touch{display:none}
 body.touch #hudL{margin-left:5.8em}
+/* 戦闘：コマンドを左下に置き、ステータスと横ならびで1つのまとまりに（スマホで押しやすい） */
+#btCmd{top:auto;bottom:calc(var(--safe-b) + 2% + 7.3em)}
+#bt:has(#btCmd:not([hidden])) #btParty{left:calc(var(--safe-l) + 1.2% + 10.4em);justify-content:flex-start}
+#btCmd:has(#btCmdList.long){max-height:calc(100% - var(--safe-t) - 7.3em - 4%);overflow:hidden}
+#bt:has(#btCmdList.long) #btParty{left:calc(var(--safe-l) + 1.2% + 14.4em)}

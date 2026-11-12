@@ -111,3 +111,8 @@ body.bangshake #app{animation:bshake .62s linear}
 #bt:has(#btCmdList.long) #btParty{padding-left:15.9em}
 @media (max-width:640px){#btParty .pb{min-width:5.2em;padding:.25em .4em .5em}#btParty{gap:.3em}}
 @media (max-width:520px){#btParty{padding-left:0}#bt:has(#btCmdList.long) #btParty{padding-left:0}#btCmd{bottom:calc(var(--safe-b) + 2% + 6.2em + 5.2em)}}
+/* 戦闘：コマンドを左下に置き、ステータスと横ならびで1つのまとまりに（スマホで押しやすい） */
+#btCmd{top:auto;bottom:calc(var(--safe-b) + 2% + 7.3em)}
+#bt:has(#btCmd:not([hidden])) #btParty{left:calc(var(--safe-l) + 1.2% + 10.4em);justify-content:flex-start}
+#btCmd:has(#btCmdList.long){max-height:calc(100% - var(--safe-t) - 7.3em - 4%);overflow:hidden}
+#bt:has(#btCmdList.long) #btParty{left:calc(var(--safe-l) + 1.2% + 14.4em)}
