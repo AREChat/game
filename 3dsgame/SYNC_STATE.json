@@ -1,0 +1,454 @@
+{
+ "source_folder": "3dsgame_Update19_20261112_01",
+ "note": "自動アップロードの記録。Drive の最新 UpdateNN フォルダ名と、各ファイルの大きさ・SHA-256。変更があったかどうかの判定に使う。",
+ "files": {
+  "Makefile": {
+   "size": 3452,
+   "sha256": "cf9353605c9d14a0f77a94c991dbcf9e2a7fbf43afca8d8acb7eb03a5221e8c4"
+  },
+  "README.txt": {
+   "size": 560,
+   "sha256": "2bde0c15218628b3d6ac0e649f00c52022ca0a46e32d77abdb09c224e4412394"
+  },
+  "_INFO.txt": {
+   "size": 550,
+   "sha256": "97d179117efbee483b193107250e69d4fc7b1ebcb30c135bc15cfa2e564780fd"
+  },
+  "docs/ASSETS.md": {
+   "size": 3165,
+   "sha256": "b57d16c1c860209c736235664bcafb5ecc3cc0417c821860d8378e7402b020e7"
+  },
+  "docs/ASSETS_UPDATE14.md": {
+   "size": 2648,
+   "sha256": "18e92e65f2c5ee24e7c9c51f327bd403944e6106c510dfe5a28a0081cf86281e"
+  },
+  "docs/BUILD_JA.md": {
+   "size": 2493,
+   "sha256": "c8a3b02e1b6aca08f8fbbf50a3149f850a7df0ad2d828c2b993efdac4cb7627b"
+  },
+  "docs/DEVLOG.md": {
+   "size": 6490,
+   "sha256": "46d0dfc95d65067b724a910417725cac1e1ca251ad15ef624fc32dc8e81201f3"
+  },
+  "docs/DEVLOG_UPDATE04.md": {
+   "size": 2152,
+   "sha256": "65a42238132f0d97a8eabc690f75c3deb1c709c19ddea32a0f0bf399acc179b5"
+  },
+  "docs/DEVLOG_UPDATE05.md": {
+   "size": 2280,
+   "sha256": "9473098916be00b2882a75d44a1be02980dcc80d88c9cd3efb5ec8e31d6ae3f5"
+  },
+  "docs/DEVLOG_UPDATE06.md": {
+   "size": 2264,
+   "sha256": "7477480e2d48430b58497974c903fa75132ed2045e84809767531f91922644ed"
+  },
+  "docs/DEVLOG_UPDATE07.md": {
+   "size": 2907,
+   "sha256": "39b0cd09aa9ade9cde1e925fe90d16baa857824a39b5bc8dab803cdef9e8caa7"
+  },
+  "docs/DEVLOG_UPDATE08.md": {
+   "size": 2346,
+   "sha256": "9d69b349589890ff0af0a5062a3c76e44c7572c2ce4d47d0a9243871db3ee607"
+  },
+  "docs/DEVLOG_UPDATE09.md": {
+   "size": 2445,
+   "sha256": "b2c8ece4dabf85c27682a5c125d3151321bf9484e69394f579f73aad10d9c274"
+  },
+  "docs/DEVLOG_UPDATE10.md": {
+   "size": 3437,
+   "sha256": "15da4c85c95b413bf1499249c629c95dccbc212d3498effdb08bd8ef80a719e4"
+  },
+  "docs/DEVLOG_UPDATE11.md": {
+   "size": 3252,
+   "sha256": "71355306db746c671aa6b57242178f58e2e764065588b7b5d41e8c0dccc65803"
+  },
+  "docs/DEVLOG_UPDATE12.md": {
+   "size": 2221,
+   "sha256": "a81b59773abfc4c0854768b7de5b80efe615e94abe7881303039fd09f0a8dcae"
+  },
+  "docs/DEVLOG_UPDATE13.md": {
+   "size": 2321,
+   "sha256": "b78823b684e8bb6963de895642287ca82c83e329ba1b87f18c1d459982ce64a3"
+  },
+  "docs/DEVLOG_UPDATE14.md": {
+   "size": 1236,
+   "sha256": "08d1cd00a987da8729ae2005ec462ba81f022f02252836059d0ff43315da8982"
+  },
+  "docs/DEVLOG_UPDATE15.md": {
+   "size": 1103,
+   "sha256": "7dc7179454c7bf0fe8a214a4e19479cdbb0e2af1d0f0d84c7ed6b185a9c97a33"
+  },
+  "docs/DEVLOG_UPDATE16.md": {
+   "size": 1844,
+   "sha256": "04d8f58ac590a4c82a518208f4a720c6dbf03a5a200197cca7767e35d2a264fe"
+  },
+  "docs/DEVLOG_UPDATE17.md": {
+   "size": 1417,
+   "sha256": "aeefbcfda4b22db396a4bd5967227bdf27651f11caa16d2a13875286a8acd887"
+  },
+  "docs/DEVLOG_UPDATE18.md": {
+   "size": 1453,
+   "sha256": "8a90f9e8d3b1bb2bf02c3dbf450440499efed7f18a84632d2f7df45586107325"
+  },
+  "docs/DEVLOG_UPDATE19.md": {
+   "size": 1685,
+   "sha256": "ac1a7184ce1309161b32070b358dc6e9975eb38896cd1833886f51b7ae064960"
+  },
+  "docs/MAKEFILE_NOTE_UPDATE14.md": {
+   "size": 1530,
+   "sha256": "5816374c7a979230f45d85137991ada96f75553fda28962c2c17b2c2ceb22eee"
+  },
+  "docs/ROADMAP.md": {
+   "size": 882,
+   "sha256": "927adcb906f2ddc4dab84475c276ba7deebeb07f133163656fe09bab5af70373"
+  },
+  "docs/STORY_GUIDE.md": {
+   "size": 2894,
+   "sha256": "18b7c45edccb74c1620df2c65751ad006e5144a7f82031d77574c10063b58a06"
+  },
+  "docs/story_bible.md": {
+   "size": 8550,
+   "sha256": "2e69a75356c6540f5e86811854ed926ef8eb53929fe7f8a556060c91a12f9056"
+  },
+  "source/battle_ai.c": {
+   "size": 2016,
+   "sha256": "f16e050c82f145defcccb0767848dbc1d42a10b76fcef5046c5156a43308a14f"
+  },
+  "source/battle_ai.h": {
+   "size": 1301,
+   "sha256": "30ff2028e0bb91d0d42b0339b8dfda5fd93fa27496e438cf9d6ed540a01c7090"
+  },
+  "source/ch3data.c": {
+   "size": 3236,
+   "sha256": "57649a1c50df41a059b4f12359a494d191380240ead80f3dd447370752cc3c48"
+  },
+  "source/ch3data.h": {
+   "size": 1226,
+   "sha256": "421bfc61a10836af0c6c35541724832fd10c18bac238810347a7e60d3c4c0b1a"
+  },
+  "source/ch3script.c": {
+   "size": 3759,
+   "sha256": "d9e9affb07c66fddf1a8cefef932854e9416abc1c41d77e943ae35621a30e4f2"
+  },
+  "source/ch3script.h": {
+   "size": 1500,
+   "sha256": "070254143e2812f6e86f1a0a5c860d7fba20b5e50eaee1bae3667b444834f5b6"
+  },
+  "source/ch4data.c": {
+   "size": 4505,
+   "sha256": "aa8095887356918f876c4ad5f11b034f0f3a9b05d47761fedd67f35abeb5d5e4"
+  },
+  "source/ch4data.h": {
+   "size": 2081,
+   "sha256": "0057a58c0e0e4b0d94f069b9d495e9c28315e28b07e868beaab03edbc6aa827f"
+  },
+  "source/ch4script.c": {
+   "size": 4879,
+   "sha256": "1f68d97a9ede2f46064e7529e62bfcb124a86ad85d0271b3e1166ba3c64b3f38"
+  },
+  "source/ch4script.h": {
+   "size": 1518,
+   "sha256": "1e444c071b5a063c187af56d666dd374b49ebd918467b1450bb8451ccb068772"
+  },
+  "source/ch5data.c": {
+   "size": 4577,
+   "sha256": "a7d92bddb8ec27b3cd6f4a794e2ab1f5d99f7b15daeb07cd5369509ab604f209"
+  },
+  "source/ch5data.h": {
+   "size": 1902,
+   "sha256": "b07e5745275cca1c71efcee9318f845fdd1b9470c574de6d128f1f7df082dc05"
+  },
+  "source/ch5script.c": {
+   "size": 3872,
+   "sha256": "efc5dea3fb0d4055c5ac0c6af1a83eaeeec9fc9e1d116c17265ba2e4c07c5314"
+  },
+  "source/ch5script.h": {
+   "size": 1478,
+   "sha256": "bc45ce12558160ee94549ae6e87fb61f71714cd96590f413f491911f99ef46ab"
+  },
+  "source/ch6data.c": {
+   "size": 4190,
+   "sha256": "596853281f9ff605171753739c934f125797045d18d53a5b738c5fcdd7c94ef1"
+  },
+  "source/ch6data.h": {
+   "size": 1804,
+   "sha256": "65634246f1c20bd840b52b0c18e983a37737d7ac2a1662bc87ae0812f1fcf136"
+  },
+  "source/ch6script.c": {
+   "size": 3012,
+   "sha256": "621451d3ff6fe486fcb24837e8e9b070bff63c0270da4726ef374df05e6a5e01"
+  },
+  "source/ch6script.h": {
+   "size": 800,
+   "sha256": "1c7e673c660e889257edab8349d31eeabcf2acd50ce6820bf7ccefba3395c915"
+  },
+  "source/ch7data.c": {
+   "size": 4063,
+   "sha256": "433f907db5a553acf6b39541303aeaf15297b1d516cbf956755373d5a7743bd0"
+  },
+  "source/ch7data.h": {
+   "size": 1842,
+   "sha256": "218bc1cc629ac76934a4e6f0b3bcac25ce4e4bf2aa85d90a8d517d2e75a8966b"
+  },
+  "source/ch7script.c": {
+   "size": 3185,
+   "sha256": "39e62617da901fbb2677e05f0b260b4aca48798a7c86fbc1497b7e709a7c7f58"
+  },
+  "source/ch7script.h": {
+   "size": 1167,
+   "sha256": "83ae966688461f9cbbbcfa2b21d91f3c224a808fab4a25b4b597a464df0fe836"
+  },
+  "source/ch8data.c": {
+   "size": 4222,
+   "sha256": "f6ec94c69c5a57eefb66e70e46879e74277207ff6cea4111d851467af7175042"
+  },
+  "source/ch8data.h": {
+   "size": 1817,
+   "sha256": "2a55bac99d0cb900f09e906fdf150143e1ec994cc1f2a34fd881467733ed3461"
+  },
+  "source/ch8script.c": {
+   "size": 3137,
+   "sha256": "b11bef35467634ee5ddc7a6f6d5b32cc64378e88e36f5781788fa6c8a1fae6f3"
+  },
+  "source/ch8script.h": {
+   "size": 1144,
+   "sha256": "eea9e6f106eb12cea16ea50238c482f01e484fb2549e5e475b373d9a21b96a56"
+  },
+  "source/clue.c": {
+   "size": 2074,
+   "sha256": "02d29aa3a1eee266a1db0cb0628a7f9f60bb4a5bad451a2be11ac7441ba1f104"
+  },
+  "source/clue.h": {
+   "size": 1423,
+   "sha256": "af0c19a053438ffabfdf14c6a9d17fed81468f410296a7dadc52762f87ea8f99"
+  },
+  "source/data_story.c": {
+   "size": 25221,
+   "sha256": "bbf5ea85b1a0a96ddbfcbbcfab293c4475ecacb024ae0c5a10f0e3da66137d4a"
+  },
+  "source/data_world.c": {
+   "size": 11517,
+   "sha256": "47d16f3c22862694fdd71db0b829b43d619f0477adcaea6b0bfad43ca9a74f95"
+  },
+  "source/encounter.c": {
+   "size": 1138,
+   "sha256": "99412b4f6b94c9ed31a9a007af7288705da7877782d4a8ccfa2905e1c4473080"
+  },
+  "source/encounter.h": {
+   "size": 872,
+   "sha256": "f7af5e01db08edc90e0132f8c7a929d18dccc7816348ec9b17935f3b8820b22a"
+  },
+  "source/equip_save.c": {
+   "size": 2088,
+   "sha256": "206da9ab719d4d199ed0576c02eebb681773e4753e6b2e030959c1eaeb7e4ed7"
+  },
+  "source/equip_save.h": {
+   "size": 931,
+   "sha256": "cb218b72363b4f7936c52793ed0b2fa772135bd8f3e7b58b64496a471ac280a9"
+  },
+  "source/game.c": {
+   "size": 38441,
+   "sha256": "38fbb664efa8f06c1c85d96144e8bdb4f6ebb7250a04511efbe05e6e0daff4ae"
+  },
+  "source/game.h": {
+   "size": 3596,
+   "sha256": "fe2d3b1e94ec50aa10b817ac217cdff5a1879b36685c6b8e56521c8ac0c9de8a"
+  },
+  "source/gfxdraw.c": {
+   "size": 1982,
+   "sha256": "e3ca43977f03a94f76bfa8daa2f9a82c566536774a211d9aa19f01ef6db23878"
+  },
+  "source/gfxdraw.h": {
+   "size": 685,
+   "sha256": "bee8161a79c5dec196fbad2505312db1d248d54d8e62e597e5e65fa79a3f21bb"
+  },
+  "source/gfxhook.c": {
+   "size": 1961,
+   "sha256": "494cecf964524576f664fbb1a24f209e8195a5c99425445897217736ecfbb18e"
+  },
+  "source/gfxhook.h": {
+   "size": 778,
+   "sha256": "d91d8efaed3a203f94a73ddd2dfa7f30f0d1237ac50283f45be967cd39c2955f"
+  },
+  "source/growth.c": {
+   "size": 1273,
+   "sha256": "a533c38de9a69e83858cd80bd4e56d7d844e572e6f541d001d6ea78f85d81a70"
+  },
+  "source/growth.h": {
+   "size": 1039,
+   "sha256": "35dd9e310581a930166463e827f4e259f45e70b06e72b25ab2e69650bf58590b"
+  },
+  "source/host_api.h": {
+   "size": 295,
+   "sha256": "5148806746c12c64e28993fc8ceeea717d78f9fc390e008522622a09c81b7d87"
+  },
+  "source/ids.h": {
+   "size": 1882,
+   "sha256": "22f1a74a9acdde4c5e766bd2d491aec67999e4b89e2e49c45e8a01dc146ce8d7"
+  },
+  "source/main.c": {
+   "size": 107,
+   "sha256": "06e39fb56bfb063835ee6afc3be9a7bc1997b26333a1ac44eb69506d239e460e"
+  },
+  "source/namemem.c": {
+   "size": 1411,
+   "sha256": "81d3de8283247d94cb509a25730b0d4cdd80f4c66f824a6387b177db9fb38579"
+  },
+  "source/namemem.h": {
+   "size": 893,
+   "sha256": "3d5b36844f3fb1f29cb3b1d947b4721657332fcb0e4a206934b7f227804be446"
+  },
+  "source/plat_gfx.h": {
+   "size": 939,
+   "sha256": "7cd7437855d301564bb26a2ef3462bc78d35fa8069509b03e47f219d86357023"
+  },
+  "source/platform.h": {
+   "size": 1369,
+   "sha256": "1965698658b6410ab4885e28547c5e3992b50269bfdf1e6f0114701c40c1d16f"
+  },
+  "source/platform_3ds.c": {
+   "size": 3220,
+   "sha256": "4c62c85e1ad34f22211dfd07179e26bb8f229d0f8e818fb165691ef5be32fc56"
+  },
+  "source/platform_3ds_gfx.c": {
+   "size": 4171,
+   "sha256": "8f4eb5313f2395a3b4795fe929387031a72878079589010027142df187455c4c"
+  },
+  "source/platform_3ds_wrap.c": {
+   "size": 1437,
+   "sha256": "59ee2ab71275cb75d369fcbea4cf0477fbfc40bdc790b9abbcb4ef0a3f73870d"
+  },
+  "source/platform_host.c": {
+   "size": 2687,
+   "sha256": "4c1502a147dca8f20d4bf2b17fab1d3796ecf60f3973180c0a6bccb43bab71ca"
+  },
+  "source/platform_host_gfx.c": {
+   "size": 514,
+   "sha256": "c91979b7c7d053d66cc47ef34078e71dd8d84ca04318a933d85617fae30fc542"
+  },
+  "source/puzzle.c": {
+   "size": 1651,
+   "sha256": "cc58bffa73879cdad6ace66f30e21f36e0ab55c1b79033034b6eb2145645cf3a"
+  },
+  "source/puzzle.h": {
+   "size": 1335,
+   "sha256": "b7e518a9ed3b49a41ca41ca43d02fcf90e75bbe222af3fd4502a5af00b3846ec"
+  },
+  "source/shop.c": {
+   "size": 4154,
+   "sha256": "19b0c9136bbf68530bb25b7df9538e6795c6f2f69f208ae70f93cdde0abfc2e5"
+  },
+  "source/shop.h": {
+   "size": 1970,
+   "sha256": "51a5bdd59ede386b1d185bd98d91ca6072472016f54ad5b4f80b15524b41120e"
+  },
+  "source/sprites.c": {
+   "size": 2554,
+   "sha256": "b5e6ed130bdf0b9ac76ea96368010702f6b1f147cab747646d8ef8ab6416192f"
+  },
+  "source/sprites.h": {
+   "size": 2452,
+   "sha256": "9a1466cf84cd5ddea5b1b3376e01299e9f0ced90924df4c32f0456210c53174c"
+  },
+  "source/turn_order.c": {
+   "size": 413,
+   "sha256": "355fbdff302ce035ebbce6fb917ca332faab83f7a1e8b992151342b7d9cea050"
+  },
+  "source/turn_order.h": {
+   "size": 443,
+   "sha256": "69c1e6b493e6fe0c55dbee1d12ba6e58882f745420bb73525a4dec44772f3ddd"
+  },
+  "tests/test_battle.c": {
+   "size": 4855,
+   "sha256": "f1f25ecff19093564e4973288fd2efa65da5db9cf372b7cffdc002c201c78d36"
+  },
+  "tests/test_ch3data.c": {
+   "size": 4858,
+   "sha256": "4b9ae4d39c29d81c5dd04fb6acfe43ea955909c54811909655de4fcd2ff830c0"
+  },
+  "tests/test_ch3script.c": {
+   "size": 4037,
+   "sha256": "c5aa692aaf7b25a4254ef0632d31b2af6ce299be7f128225d487a35c2b6dcc8e"
+  },
+  "tests/test_ch4.c": {
+   "size": 10787,
+   "sha256": "b262e77c6e708a16b5f7254332ff3dffd6dd7d8b4e105130daa5c8e46e54ed7f"
+  },
+  "tests/test_ch5.c": {
+   "size": 4479,
+   "sha256": "f8f9c1426da64c6360770ff81445e394bd39ee58277f1ada18557e7b8577b6d9"
+  },
+  "tests/test_ch6.c": {
+   "size": 4967,
+   "sha256": "f7ea9e47e2c22381915c573acc2a197227fca5a4df906a89c04a78fb3bd6e2e1"
+  },
+  "tests/test_ch7.c": {
+   "size": 4819,
+   "sha256": "d24b9968579e4b030fecacfef78c0fc5374911abda34d4bf8bbd6228bf8c3d6d"
+  },
+  "tests/test_ch8.c": {
+   "size": 5054,
+   "sha256": "681ec0d21a0b0e90a9be02a13c9255f312183bf6b4165a340a45c1c467dcd3db"
+  },
+  "tests/test_clue_name.c": {
+   "size": 4296,
+   "sha256": "8899119aeb12cd7415a831fa2b9b456229dd01d1c2df939065e29a836ce65e3c"
+  },
+  "tests/test_equip_order.c": {
+   "size": 5346,
+   "sha256": "200c19993216721dddc800be3790d2d98e1101b4b480f6e75dee3dc1629d94bb"
+  },
+  "tests/test_gfxdraw.c": {
+   "size": 1152,
+   "sha256": "039d7879459876ae56a85f016befd2a6cd886186f6db0fd7d8aade441bf60dd1"
+  },
+  "tests/test_gfxhook.c": {
+   "size": 1665,
+   "sha256": "99af239661fed8eb87134d91abb557d25c170b363ba1972a8b460dcfa816e662"
+  },
+  "tests/test_growth_enc.c": {
+   "size": 3887,
+   "sha256": "9096c85e4593164accb61d46b695b6a3cbee9342f702fa57c0bed087e1a1e577"
+  },
+  "tests/test_main.c": {
+   "size": 22584,
+   "sha256": "1e77c72335bfc0a356bde0285d808c10e2ed3debee5d83edee226e507ef894ce"
+  },
+  "tests/test_puzzle.c": {
+   "size": 2649,
+   "sha256": "95603c7ec4f7eea195376e1f4e3004a0d76f8c2feb3dbacb5bdc379c279e73b7"
+  },
+  "tests/test_shop.c": {
+   "size": 6146,
+   "sha256": "3a4d2a099e0774c0e8d0c1277be854e5bc82459c78290abf24ad9c066c46f6bc"
+  },
+  "tests/test_sprites.c": {
+   "size": 3091,
+   "sha256": "71d6661905c9168e30fd826e2258a69f14fdb4a950b2f56a5e32506e41bac91b"
+  },
+  "tools/audit_data.c": {
+   "size": 4066,
+   "sha256": "76e5991db19be086b128e52474c65e4f4d3346472fd392134f9427a641ea60ee"
+  },
+  "tools/check_banned.py": {
+   "size": 2892,
+   "sha256": "fd066c00c69c4b2f5ee4fbbe2c7fb6e4f554f608c7db70550399f06036a8b3ef"
+  },
+  "tools/make_assets.py": {
+   "size": 15677,
+   "sha256": "1ef15a00d8e2461c8c3a768b47db09410a36069d9c1dcbfd92bfd3a91f478536"
+  },
+  "tools/playtest.c": {
+   "size": 8562,
+   "sha256": "4e68ac65bd9406086329336cdc0b405ee9c5ddd5b409204170d1ada6e003a4b5"
+  },
+  "tools/run_tests.sh": {
+   "size": 4581,
+   "sha256": "31aba18587ec4cfcd9cd746657e0ca97fcf8f807074f93c11b3375230040562e"
+  },
+  "tools/scenario_ch1_2.txt": {
+   "size": 1552,
+   "sha256": "736835f12fb8b4bb0a3b4fb5c8326cf253d58defb3f1ba0a503d6397391b682d"
+  }
+ }
+}

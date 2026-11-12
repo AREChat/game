@@ -1,3 +1,8 @@
 desktop/node_modules/
 desktop/app/
 desktop/dist/
+
+# 3DS ゲーム（3dsgame/）：本名の一覧と Windows の設定ファイルは公開しない
+3dsgame/tools/private_blocklist.txt
+**/desktop.ini
+3dsgame/build_host/
