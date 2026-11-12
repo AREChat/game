@@ -1,0 +1,5 @@
+3dsgame_Update14_20261111_03
+要約: Update13_02を土台に、第8章「試験の都」の下準備(ch8data/ch8script/test_ch8)を追加。他のファイルはそのままコピー。
+テスト結果: ch8 853273 チェック 全通過(PCのgccで確認)。既存テストと check_banned.py は今回未実行(元ファイルを取得できないため)。
+次回予定: game.c への組み込み(最優先) / platform_3ds.c の画像・BGM / 第9章の下準備。
+Update16: 全機能テストと修正(docs/DEVLOG_UPDATE16.md参照)
