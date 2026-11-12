@@ -214,24 +214,27 @@ export function charMeshes(R, look){
     const key = JSON.stringify(L); if(sprCache.has(key)) return sprCache.get(key);
     const name = sprPick(L);
     const g = new Geo(); g.cyl(.42, .42, .01, 12, [0, 0, 0], M4.T(0, .02, 0), true);
-    const P = {spr: {name, f: sprLoad(R, name, "f"), b: sprLoad(R, name, "b"), meshes: {}}, proc: procChar(R, look), shadow: R.mesh(g), size: L.size};
+    const P = {spr: {name, f: sprLoad(R, name, "f"), b: sprLoad(R, name, "b"), l: sprLoad(R, name, "l"), r: sprLoad(R, name, "r"), meshes: {}}, proc: procChar(R, look), shadow: R.mesh(g), size: L.size};
     sprCache.set(key, P); return P;
 }
 function sprMesh(R, P, rec){
     const k = rec.w + "x" + rec.h; if(P.spr.meshes[k]) return P.spr.meshes[k];
-    const H = (SPR_H[P.spr.name] || 1.5) * 1.25, g = new Geo(); g.sprite(H * rec.w / rec.h, H, [1, 1, 1], M4.id());
+    const H = (SPR_H[P.spr.name] || 1.5) * 1.25 * rec.h / 256, g = new Geo(); g.sprite(H * rec.w / rec.h, H, [1, 1, 1], M4.id());
     return P.spr.meshes[k] = R.mesh(g);
 }
 // 影つきで描く。obj: {x,y,z,yaw,walk(0〜1),t,hop}
 export function drawChar(R, P, o, opt){
-    const S = P.spr, f = S && S.f, b = S && S.b;
-    if(!S || !f.tex || !b.tex || !R.cam) return drawProc(R, P.proc, o, opt);
+    const S = P.spr;
+    if(!S || !S.f.tex || !S.b.tex || !S.l.tex || !S.r.tex || !R.cam) return drawProc(R, P.proc, o, opt);
     const sc = P.size || 1, op = opt || {};
     const walk = o.walk || 0, bob = Math.abs(Math.cos(o.t * 9)) * .07 * walk + (o.hop || 0);
     const idle = walk < .05 ? Math.sin(o.t * 2) * .012 : 0, tilt = Math.sin(o.t * 9) * .07 * walk;
-    const cx = R.cam[0] - o.x, cz = R.cam[2] - o.z, yaw = o.yaw || 0;
-    const front = (Math.sin(yaw) * cx + Math.cos(yaw) * cz) > 0;
-    const rec = front ? f : b, by = Math.atan2(cx, cz);
+    const cx = R.cam[0] - o.x, cz = R.cam[2] - o.z, yaw = o.yaw || 0, by = Math.atan2(cx, cz);
+    // キャラの向き（fx,fz）を、カメラから見た「正面・右むき・左むき・後ろ」に分ける
+    const fx = Math.sin(yaw), fz = Math.cos(yaw), len = Math.hypot(cx, cz) || 1;
+    const toCam = (fx * cx + fz * cz) / len, toRight = fx * Math.cos(by) - fz * Math.sin(by);
+    const a = Math.atan2(toRight, toCam);
+    const rec = Math.abs(a) < Math.PI / 4 ? S.f : Math.abs(a) > Math.PI * 3 / 4 ? S.b : a > 0 ? S.r : S.l;
     const m = M4.mul(M4.trs(o.x, (o.y || 0) + bob + idle, o.z, by, sc), M4.RZ(tilt));
     R.draw(sprMesh(R, P, rec), {m, tex: rec.tex, mode: 1, blend: true, cut: .05, tint: op.tint || null});
     if(!op.noShadow) R.draw(P.shadow, {m: M4.trs(o.x, (o.y || 0) + .01, o.z, 0, sc), mode: 3, tint: [0, 0, 0, .28], blend: true, late: true});
