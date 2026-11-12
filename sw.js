@@ -4,7 +4,7 @@
 // ・html は ネット優先（つながるときは 常に最新）／js・css などは 控え先・裏で更新。
 // ・ARE QUEST 本体（game/）は game/sw.js が 先に担当する。GET 以外・ほかのサイトには さわらない。
 importScripts("precache-manifest.js", "sw-core.js");
-const CACHE = "game-v13-20261112";
+const CACHE = "game-v14-20261112";
 const core = self.areCore({shell: CACHE, root: "./", precache: true, fetch: false});
 const STATIC_RE = /\.(?:js|css|png|webp|jpe?g|gif|svg|ico|json|webmanifest|txt|woff2?|ttf|mp3|mp4)$/i;
 
