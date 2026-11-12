@@ -6,7 +6,7 @@ import {Geo, M4, canvasTex} from "./gl.js";
 const cache = new Map();
 
 // look の色をそのまま使い、各パーツをひとつの軽量メッシュにまとめる。
-export function charMeshes(R, look){
+function procChar(R, look){
     const L = Object.assign({
         skin:"#f6cfa6", hair:"#3a2a20", shirt:"#7897c9", pants:"#59657d",
         style:"short", accent:"#e8c879", cape:null, size:1
@@ -138,7 +138,7 @@ export function charMeshes(R, look){
 }
 
 // 影つきで描く。obj: {x,y,z,yaw,walk(0〜1),t,hop}
-export function drawChar(R, P, o, opt){
+function drawProc(R, P, o, opt){
     const sc = P.size || 1, op = opt || {};
     const sw = Math.sin(o.t * 9) * 0.75 * (o.walk || 0);
     const bob = Math.abs(Math.cos(o.t * 9)) * .06 * (o.walk || 0) + (o.hop || 0);
@@ -178,6 +178,63 @@ export function drawChar(R, P, o, opt){
         });
     }
 
+    return bob;
+}
+
+
+// ===== 1枚絵（スプライト）のキャラ：画像をカメラの方に向けて立てて表示する =====
+// 画像は img/chara/<名前>_f.webp（正面）と _b.webp（後ろ姿）。読み込めないあいだ／失敗したときは、下の「手作り3D」で表示する。
+const SPR_H = {hero:1.55, aki:1.55, ken:1.55, mio:1.5, yuina:1.5, makabe:1.65, takamori:1.65, v_boy:1.3, v_girl:1.3, v_man:1.6, v_woman:1.55, v_elder:1.45, v_granny:1.4, v_shop:1.5, v_guard:1.6};
+const SPR_BY_STYLE = {short:["v_boy","v_man"], spiky:["v_boy","v_man"], cap:["v_man","v_guard","v_boy"], hat:["v_elder","v_guard","v_man"], long:["v_girl","v_woman","v_shop"], bun:["v_granny","v_woman","v_shop"]};
+const sprCache = new Map(), sprTex = new Map();
+function sprPick(L){
+    if(L.cape) return "hero";
+    const h = String(L.hair).toLowerCase(), s = L.style, sh = String(L.shirt).toLowerCase();
+    if(s === "spiky" && h === "#6a2a1a") return "aki";
+    if(s === "cap" && h === "#1a1a2a") return "ken";
+    if(s === "long" && h === "#e0c070") return "mio";
+    if(s === "long" && h === "#8a5a3a" && sh === "#e0709a") return "yuina";
+    if(s === "bun" && h === "#6a3a2a" && sh === "#4aa0c0") return "makabe";
+    if(s === "hat" && h === "#555555") return "takamori";
+    const list = SPR_BY_STYLE[s] || SPR_BY_STYLE.short; let k = 0; const j = JSON.stringify(L);
+    for(let i = 0; i < j.length; i++) k = (k * 31 + j.charCodeAt(i)) >>> 0;
+    return list[k % list.length];
+}
+function sprLoad(R, name, side){
+    const key = name + "_" + side; if(sprTex.has(key)) return sprTex.get(key);
+    const rec = {tex: null, w: 0, h: 0, bad: false}; sprTex.set(key, rec);
+    const img = new Image();
+    img.onload = () => { try{ rec.tex = R.tex(img); rec.w = img.naturalWidth; rec.h = img.naturalHeight; }catch(_e){ rec.bad = true; } };
+    img.onerror = () => { rec.bad = true; };
+    img.src = "img/chara/" + key + ".webp";
+    return rec;
+}
+export function charMeshes(R, look){
+    const L = Object.assign({skin:"#f6cfa6", hair:"#3a2a20", shirt:"#3b6fd8", pants:"#2d3a5a", style:"short", accent:"#ffd24a", cape:null, size:1}, look || {});
+    const key = JSON.stringify(L); if(sprCache.has(key)) return sprCache.get(key);
+    const name = sprPick(L);
+    const g = new Geo(); g.cyl(.42, .42, .01, 12, [0, 0, 0], M4.T(0, .02, 0), true);
+    const P = {spr: {name, f: sprLoad(R, name, "f"), b: sprLoad(R, name, "b"), meshes: {}}, proc: procChar(R, look), shadow: R.mesh(g), size: L.size};
+    sprCache.set(key, P); return P;
+}
+function sprMesh(R, P, rec){
+    const k = rec.w + "x" + rec.h; if(P.spr.meshes[k]) return P.spr.meshes[k];
+    const H = (SPR_H[P.spr.name] || 1.5) * 1.25, g = new Geo(); g.sprite(H * rec.w / rec.h, H, [1, 1, 1], M4.id());
+    return P.spr.meshes[k] = R.mesh(g);
+}
+// 影つきで描く。obj: {x,y,z,yaw,walk(0〜1),t,hop}
+export function drawChar(R, P, o, opt){
+    const S = P.spr, f = S && S.f, b = S && S.b;
+    if(!S || !f.tex || !b.tex || !R.cam) return drawProc(R, P.proc, o, opt);
+    const sc = P.size || 1, op = opt || {};
+    const walk = o.walk || 0, bob = Math.abs(Math.cos(o.t * 9)) * .07 * walk + (o.hop || 0);
+    const idle = walk < .05 ? Math.sin(o.t * 2) * .012 : 0, tilt = Math.sin(o.t * 9) * .07 * walk;
+    const cx = R.cam[0] - o.x, cz = R.cam[2] - o.z, yaw = o.yaw || 0;
+    const front = (Math.sin(yaw) * cx + Math.cos(yaw) * cz) > 0;
+    const rec = front ? f : b, by = Math.atan2(cx, cz);
+    const m = M4.mul(M4.trs(o.x, (o.y || 0) + bob + idle, o.z, by, sc), M4.RZ(tilt));
+    R.draw(sprMesh(R, P, rec), {m, tex: rec.tex, mode: 1, blend: true, cut: .05, tint: op.tint || null});
+    if(!op.noShadow) R.draw(P.shadow, {m: M4.trs(o.x, (o.y || 0) + .01, o.z, 0, sc), mode: 3, tint: [0, 0, 0, .28], blend: true, late: true});
     return bob;
 }
 

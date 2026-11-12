@@ -1,88 +1,144 @@
+
 "use strict";
-// ===== 手作りの丸くてかわいい低ポリ3Dキャラ・版B（QUEST3 用／外部モデル不要）と、モンスターのテクスチャ =====
+// ===== 手作りの丸くてかわいい低ポリ3Dキャラ（外部モデル不要）と、モンスターのテクスチャ =====
 import {Geo, M4, canvasTex} from "./gl.js";
 
 const cache = new Map();
-const rgb = (c) => typeof c === "string" ? [parseInt(c.slice(1, 3), 16) / 255, parseInt(c.slice(3, 5), 16) / 255, parseInt(c.slice(5, 7), 16) / 255] : c;
-const tint = (c, k) => { const a = rgb(c); return [Math.min(1, a[0] * k), Math.min(1, a[1] * k), Math.min(1, a[2] * k)]; };
 
-export function charMeshes(R, look){
-    const L = Object.assign({skin:"#f6cfa6", hair:"#3a2a20", shirt:"#7897c9", pants:"#59657d", style:"short", accent:"#e8c879", cape:null, size:1}, look || {});
-    const key = "B" + JSON.stringify(L);
+// look の色をそのまま使い、各パーツをひとつの軽量メッシュにまとめる。
+function procChar(R, look){
+    const L = Object.assign({
+        skin:"#f6cfa6", hair:"#3a2a20", shirt:"#7897c9", pants:"#59657d",
+        style:"short", accent:"#e8c879", cape:null, size:1
+    }, look || {});
+    const key = JSON.stringify(L);
     if(cache.has(key)) return cache.get(key);
-    const mk = (fn) => { const g = new Geo(); fn(g); return R.mesh(g); };
-    // この描画では円柱は「底が y=0」なので、中心が基準になるよう直して置く
-    const cyl = (g, rt, rb, h, seg, col, m) => g.cyl(rt, rb, h, seg, col, M4.mul(m, M4.T(0, -h / 2, 0)), true);
-    const sph = (g, r, seg, rings, col, m) => g.sphere(r, seg, rings, col, m);
-    const skinShadow = tint(L.skin, .92), hair = L.hair, hairHigh = tint(L.hair, 1.15), hairShadow = tint(L.hair, .82);
-    const shirtShadow = tint(L.shirt, .85), accent = L.accent, shoeCol = [.35, .25, .2];
-    const eyeDark = [.12, .12, .15], eyeWhite = [1, 1, 1], blush = [.96, .6, .62], mouthCol = [.75, .35, .35];
-    const SS = 10, SR = 8, CS = 8;
+
+    const mesh = (g) => R.mesh(g);
+    const mk = (fn) => { const g = new Geo(); fn(g); return mesh(g); };
+    const tr = (x,y,z,sx,sy,sz) => M4.mul(M4.T(x,y,z), M4.S(sx,sy,sz));
     const P = {};
-    const leg = () => mk((g) => {
-        const up = M4.T(0, .03, 0);
-        cyl(g, .13, .11, .32, CS, L.pants, M4.mul(up, M4.T(0, -.16, 0)));
-        sph(g, .11, SS, SR, skinShadow, M4.mul(up, M4.T(0, -.32, 0)));
-        sph(g, .13, SS, SR, shoeCol, M4.mul(up, M4.mul(M4.T(0, -.42, .04), M4.S(1, .85, 1.3))));
+
+    // 足：原点が付け根。丸いズボンと小さな丸靴で構成。
+    const leg = (side) => mk((g) => {
+        g.sphere(.145, 6, 4, L.pants, tr(0,-.245,0, .92,1.55,1.0));
+        g.sphere(.135, 6, 4, "#66594f", tr(0,-.435,.045, 1.18,.62,1.35));
+        g.sphere(.105, 6, 4, "#8a796b", tr(0,-.478,.055, 1.18,.22,1.25));
     });
-    P.legL = leg(); P.legR = leg();
+    P.legL = leg(-1);
+    P.legR = leg(1);
+
+    // 胴
     P.torso = mk((g) => {
-        sph(g, .32, SS, SR, L.shirt, M4.mul(M4.T(0, .02, 0), M4.S(.95, 1.1, .9)));
-        cyl(g, .31, .33, .12, CS, shirtShadow, M4.T(0, -.18, 0));
-        cyl(g, .17, .2, .05, CS, accent, M4.T(0, .2, 0));
-        sph(g, .04, 6, 6, accent, M4.T(0, .12, .28));
-        if(L.cape) cyl(g, .22, .3, .5, CS, L.cape, M4.mul(M4.T(0, -.02, -.27), M4.mul(M4.RX(.12), M4.S(1, 1, .3))));
+        g.sphere(.34, 10, 8, L.shirt, tr(0,0,0, 1.0,1.0,.82));
+        g.sphere(.115, 6, 4, L.accent, tr(0,.225,.205, 1.25,.48,.42));
+        g.sphere(.035, 7, 5, L.accent, M4.T(0,.035,.282));
+        if(L.cape){
+            g.sphere(.29, 9, 7, L.cape, tr(0,-.025,-.205, 1.02,1.02,.30));
+        }
     });
-    const arm = () => mk((g) => {
-        sph(g, .13, SS, SR, L.shirt, M4.T(0, -.05, 0));
-        cyl(g, .09, .08, .24, CS, L.skin, M4.T(0, -.18, 0));
-        sph(g, .09, SS, SR, L.skin, M4.T(0, -.32, .02));
-    });
-    P.armL = arm(); P.armR = arm();
+
+    // 頭
     P.head = mk((g) => {
-        const hy = .46;
-        sph(g, .48, SS + 2, SR + 2, L.skin, M4.mul(M4.T(0, hy, 0), M4.S(1.04, .98, 1)));
-        for(const x of [.18, -.18]){
-            sph(g, .075, 8, 8, eyeDark, M4.mul(M4.T(x, hy - .03, .44), M4.S(.85, 1.2, .4)));
-            sph(g, .028, 6, 6, eyeWhite, M4.T(x + .02, hy + .01, .47));
-            sph(g, .07, 6, 6, blush, M4.mul(M4.T(x * 1.33, hy - .12, .40), M4.S(1.1, .6, .3)));
+        g.sphere(.46, 10, 8, L.skin, M4.T(0,.46,0));
+
+        // 大きな目・ハイライト・頬
+        for(const s of [-1,1]){
+            g.sphere(.078, 6, 4, "#fffaf2", tr(s*.145,.465,.391, .82,1.12,.34));
+            g.sphere(.055, 6, 4, "#302b32", tr(s*.145,.463,.414, .88,1.12,.36));
+            g.sphere(.019, 7, 5, "#ffffff", M4.T(s*.145-.014,.49,.435));
+            g.sphere(.047, 6, 4, "#e9a4a0", tr(s*.255,.335,.365, 1.0,.62,.28));
         }
-        sph(g, .03, 6, 6, mouthCol, M4.mul(M4.T(0, hy - .16, .45), M4.S(1.2, .5, .3)));
-        sph(g, .47, SS, SR, hairShadow, M4.mul(M4.T(0, hy + .1, -.17), M4.S(1.0, .95, .92)));
-        const st = L.style;
-        if(st === "short"){
-            sph(g, .26, 8, 8, hairHigh, M4.T(0, hy + .3, .06));
-            sph(g, .17, 8, 8, hair, M4.T(.37, hy + .1, .06)); sph(g, .17, 8, 8, hair, M4.T(-.37, hy + .1, .06));
-            sph(g, .18, 8, 8, hair, M4.mul(M4.T(0, hy + .27, .37), M4.S(1.3, .65, .6)));
-        }else if(st === "spiky"){
-            cyl(g, .04, .22, .35, 6, hairHigh, M4.mul(M4.T(0, hy + .44, .05), M4.RX(-.15)));
-            cyl(g, .03, .18, .3, 6, hair, M4.mul(M4.T(.26, hy + .36, .1), M4.RZ(-.45)));
-            cyl(g, .03, .18, .3, 6, hair, M4.mul(M4.T(-.26, hy + .36, .1), M4.RZ(.45)));
-            sph(g, .16, 8, 8, hair, M4.mul(M4.T(.05, hy + .22, .42), M4.S(1.4, .6, .5)));
-        }else if(st === "long"){
-            cyl(g, .16, .11, .6, CS, hair, M4.mul(M4.T(.32, hy - .25, -.05), M4.RZ(-.12)));
-            cyl(g, .16, .11, .6, CS, hair, M4.mul(M4.T(-.32, hy - .25, -.05), M4.RZ(.12)));
-            sph(g, .2, 8, 8, hair, M4.mul(M4.T(0, hy + .23, .41), M4.S(1.3, .7, .6)));
-        }else if(st === "bun"){
-            sph(g, .24, 8, 8, hairHigh, M4.T(0, hy + .48, -.1));
-            cyl(g, .16, .16, .08, CS, accent, M4.T(0, hy + .36, -.1));
-            sph(g, .18, 8, 8, hair, M4.mul(M4.T(0, hy + .22, .4), M4.S(1.3, .6, .5)));
-        }else if(st === "cap"){
-            sph(g, .51, SS, SR, accent, M4.mul(M4.T(0, hy + .08, -.02), M4.S(1.04, 1.02, 1.04)));
-            sph(g, .28, 8, 8, tint(accent, .85), M4.mul(M4.T(0, hy + .18, .44), M4.mul(M4.RX(.25), M4.S(1.2, .15, 1.1))));
-        }else if(st === "hat"){
-            cyl(g, .68, .7, .06, SS, accent, M4.mul(M4.T(0, hy + .22, .02), M4.RX(.1)));
-            cyl(g, .08, .46, .55, CS, tint(accent, .9), M4.mul(M4.T(0, hy + .5, -.04), M4.RX(-.15)));
-            sph(g, .1, 6, 6, [1, .95, .8], M4.T(0, hy + .8, -.12));
+
+        // 小さな口
+        g.sphere(.025, 7, 5, "#a95f5b", tr(0,.315,.405, 1.0,.48,.24));
+
+        const hc = L.hair;
+
+        const hairCap = () => g.sphere(
+            .465, 10, 7, hc,
+            tr(0,.665,-.045, 1.0,.56,1.0)
+        );
+
+        if(L.style === "short"){
+            hairCap();
+            g.sphere(.16, 6, 4, hc, tr(-.19,.60,.315, 1.0,.72,.62));
+            g.sphere(.17, 6, 4, hc, tr(.015,.625,.345, 1.0,.72,.62));
+            g.sphere(.14, 6, 4, hc, tr(.20,.59,.30, 1.0,.72,.62));
+
+        } else if(L.style === "long"){
+            hairCap();
+            g.sphere(.16, 6, 4, hc, tr(-.37,.30,-.015, .78,1.65,.78));
+            g.sphere(.16, 6, 4, hc, tr(.37,.30,-.015, .78,1.65,.78));
+            g.sphere(.15, 6, 4, hc, tr(0,.12,-.31, 1.55,1.25,.62));
+            g.sphere(.16, 6, 4, hc, tr(0,.61,.33, 1.0,.62,.50));
+
+        } else if(L.style === "spiky"){
+            hairCap();
+
+            for(let k=0;k<5;k++){
+                const x = (k-2)*.145;
+                const y = .82 + (k===2 ? .12 : (k%2===0 ? .045 : .08));
+
+                g.cyl(
+                    .075,.105,.20,8,hc,
+                    M4.mul(
+                        M4.T(x,y-.08,-.015),
+                        M4.RZ((2-k)*.16)
+                    ),
+                    true
+                );
+
+                g.sphere(.078,7,5,hc,M4.T(x,y+.105,-.015));
+            }
+
+            g.sphere(.15,8,5,hc,tr(0,.61,.34,1.0,.62,.48));
+
+        } else if(L.style === "cap"){
+            g.sphere(.445,10,7,hc,tr(0,.65,-.035,1.0,.40,1.0));
+            g.cyl(.30,.34,.105,10,L.accent,M4.T(0,.79,-.005),true);
+            g.sphere(.34,8,5,L.accent,tr(0,.795,.055,1.0,.16,.80));
+            g.sphere(.22,8,5,L.accent,tr(0,.79,.265,1.0,.10,.50));
+
+        } else if(L.style === "bun"){
+            hairCap();
+            g.sphere(.15,8,6,hc,M4.T(0,.98,-.055));
+            g.sphere(.105,8,5,hc,M4.T(.075,1.055,-.045));
+            g.sphere(.15,8,5,hc,tr(0,.61,.33,1.0,.62,.48));
+
+        } else if(L.style === "hat"){
+            g.sphere(.445,10,7,hc,tr(0,.65,-.035,1.0,.40,1.0));
+            g.cyl(.40,.40,.045,12,L.accent,M4.T(0,.78,0),true);
+            g.cyl(.19,.27,.30,10,L.accent,M4.T(0,.80,0),true);
+            g.sphere(.055,7,5,"#fff0bd",M4.T(0,1.105,0));
+
+        } else {
+            hairCap();
         }
     });
-    P.shadow = mk((g) => { g.cyl(.38, .38, .01, 12, [0, 0, 0], M4.T(0, .02, 0), true); });
+
+    // 腕：丸い上腕と手
+    const arm = (side) => mk((g) => {
+        g.sphere(.105,8,6,L.shirt,M4.mul(M4.T(0,-.205,0),M4.S(1.0,1.85,1.0)));
+        g.sphere(.092,8,6,L.skin,M4.T(0,-.445,.015));
+        g.cyl(.105,.105,.055,8,L.accent,M4.T(0,-.335,0),true);
+    });
+
+    P.armL = arm(-1);
+    P.armR = arm(1);
+
+    // 影
+    P.shadow = mk((g) => {
+        g.cyl(.42,.42,.01,12,[0,0,0],M4.T(0,.02,0),true);
+    });
+
     P.size = L.size;
-    cache.set(key, P); return P;
+    cache.set(key,P);
+    return P;
 }
 
 // 影つきで描く。obj: {x,y,z,yaw,walk(0〜1),t,hop}
-export function drawChar(R, P, o, opt){
+function drawProc(R, P, o, opt){
     const sc = P.size || 1, op = opt || {};
     const sw = Math.sin(o.t * 9) * 0.75 * (o.walk || 0);
     const bob = Math.abs(Math.cos(o.t * 9)) * .06 * (o.walk || 0) + (o.hop || 0);
@@ -122,6 +178,63 @@ export function drawChar(R, P, o, opt){
         });
     }
 
+    return bob;
+}
+
+
+// ===== 1枚絵（スプライト）のキャラ：画像をカメラの方に向けて立てて表示する =====
+// 画像は img/chara/<名前>_f.webp（正面）と _b.webp（後ろ姿）。読み込めないあいだ／失敗したときは、下の「手作り3D」で表示する。
+const SPR_H = {hero:1.55, aki:1.55, ken:1.55, mio:1.5, yuina:1.5, makabe:1.65, takamori:1.65, v_boy:1.3, v_girl:1.3, v_man:1.6, v_woman:1.55, v_elder:1.45, v_granny:1.4, v_shop:1.5, v_guard:1.6};
+const SPR_BY_STYLE = {short:["v_boy","v_man"], spiky:["v_boy","v_man"], cap:["v_man","v_guard","v_boy"], hat:["v_elder","v_guard","v_man"], long:["v_girl","v_woman","v_shop"], bun:["v_granny","v_woman","v_shop"]};
+const sprCache = new Map(), sprTex = new Map();
+function sprPick(L){
+    if(L.cape) return "hero";
+    const h = String(L.hair).toLowerCase(), s = L.style, sh = String(L.shirt).toLowerCase();
+    if(s === "spiky" && h === "#6a2a1a") return "aki";
+    if(s === "cap" && h === "#1a1a2a") return "ken";
+    if(s === "long" && h === "#e0c070") return "mio";
+    if(s === "long" && h === "#8a5a3a" && sh === "#e0709a") return "yuina";
+    if(s === "bun" && h === "#6a3a2a" && sh === "#4aa0c0") return "makabe";
+    if(s === "hat" && h === "#555555") return "takamori";
+    const list = SPR_BY_STYLE[s] || SPR_BY_STYLE.short; let k = 0; const j = JSON.stringify(L);
+    for(let i = 0; i < j.length; i++) k = (k * 31 + j.charCodeAt(i)) >>> 0;
+    return list[k % list.length];
+}
+function sprLoad(R, name, side){
+    const key = name + "_" + side; if(sprTex.has(key)) return sprTex.get(key);
+    const rec = {tex: null, w: 0, h: 0, bad: false}; sprTex.set(key, rec);
+    const img = new Image();
+    img.onload = () => { try{ rec.tex = R.tex(img); rec.w = img.naturalWidth; rec.h = img.naturalHeight; }catch(_e){ rec.bad = true; } };
+    img.onerror = () => { rec.bad = true; };
+    img.src = "img/chara/" + key + ".webp";
+    return rec;
+}
+export function charMeshes(R, look){
+    const L = Object.assign({skin:"#f6cfa6", hair:"#3a2a20", shirt:"#3b6fd8", pants:"#2d3a5a", style:"short", accent:"#ffd24a", cape:null, size:1}, look || {});
+    const key = JSON.stringify(L); if(sprCache.has(key)) return sprCache.get(key);
+    const name = sprPick(L);
+    const g = new Geo(); g.cyl(.42, .42, .01, 12, [0, 0, 0], M4.T(0, .02, 0), true);
+    const P = {spr: {name, f: sprLoad(R, name, "f"), b: sprLoad(R, name, "b"), meshes: {}}, proc: procChar(R, look), shadow: R.mesh(g), size: L.size};
+    sprCache.set(key, P); return P;
+}
+function sprMesh(R, P, rec){
+    const k = rec.w + "x" + rec.h; if(P.spr.meshes[k]) return P.spr.meshes[k];
+    const H = (SPR_H[P.spr.name] || 1.5) * 1.25, g = new Geo(); g.sprite(H * rec.w / rec.h, H, [1, 1, 1], M4.id());
+    return P.spr.meshes[k] = R.mesh(g);
+}
+// 影つきで描く。obj: {x,y,z,yaw,walk(0〜1),t,hop}
+export function drawChar(R, P, o, opt){
+    const S = P.spr, f = S && S.f, b = S && S.b;
+    if(!S || !f.tex || !b.tex || !R.cam) return drawProc(R, P.proc, o, opt);
+    const sc = P.size || 1, op = opt || {};
+    const walk = o.walk || 0, bob = Math.abs(Math.cos(o.t * 9)) * .07 * walk + (o.hop || 0);
+    const idle = walk < .05 ? Math.sin(o.t * 2) * .012 : 0, tilt = Math.sin(o.t * 9) * .07 * walk;
+    const cx = R.cam[0] - o.x, cz = R.cam[2] - o.z, yaw = o.yaw || 0;
+    const front = (Math.sin(yaw) * cx + Math.cos(yaw) * cz) > 0;
+    const rec = front ? f : b, by = Math.atan2(cx, cz);
+    const m = M4.mul(M4.trs(o.x, (o.y || 0) + bob + idle, o.z, by, sc), M4.RZ(tilt));
+    R.draw(sprMesh(R, P, rec), {m, tex: rec.tex, mode: 1, blend: true, cut: .05, tint: op.tint || null});
+    if(!op.noShadow) R.draw(P.shadow, {m: M4.trs(o.x, (o.y || 0) + .01, o.z, 0, sc), mode: 3, tint: [0, 0, 0, .28], blend: true, late: true});
     return bob;
 }
 
