@@ -184,9 +184,9 @@ export class Game{
         // 風車
         D.push({m: "windmill", x: -14 + 1.1, y: 9, z: -34, rx: T * 1.2});
         // ゲスト
-        for(const g of this.guests){ const x = Math.cos(g.a) * g.r * 1.7, z = Math.sin(g.a) * g.r * 1.7 + 2; const dir = g.w > 0 ? 1 : -1; D.push({m: g.m, x, y: 0, z, yaw: Math.atan2(-Math.sin(g.a) * dir, Math.cos(g.a) * dir) + (dir > 0 ? 0 : Math.PI) * 0}); }
+        for(const g of this.guests){ const x = Math.cos(g.a) * g.r * 1.7, z = Math.sin(g.a) * g.r * 1.7 + 2; const dir = g.w > 0 ? 1 : -1; D.push({m: g.m, p: g.m, x, y: 0, z, yaw: Math.atan2(-Math.sin(g.a) * dir, Math.cos(g.a) * dir) + (dir > 0 ? 0 : Math.PI) * 0}); }
         // 4人
-        for(const q of QUARTET) D.push({m: "npc_" + q.id, x: q.at[0], y: 0, z: q.at[1], yaw: Math.atan2(this.x - q.at[0], this.z - q.at[1]) });
+        for(const q of QUARTET) D.push({m: "npc_" + q.id, p: q.id, x: q.at[0], y: 0, z: q.at[1], yaw: Math.atan2(this.x - q.at[0], this.z - q.at[1]) });
         // ナビ
         const ob = this.objective(); if(ob && this.mode === "walk"){ const dx = ob.at[0] - this.x, dz = ob.at[1] - this.z, d = Math.hypot(dx, dz) || 1; const nx = this.x + dx / d * 2.4, nz = this.z + dz / d * 2.4; D.push({m: "navi", x: nx, y: 1.9 + Math.sin(T * 3) * .12, z: nz, yaw: T * 2}); }
         // カルーセル

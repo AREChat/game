@@ -4,6 +4,7 @@
 import {T, source} from "./engine.js";          // ここで Three.js の 読みこみに しっぱいすると この import 自体が エラーになる
 import {Geo} from "./gl.js";
 import {texCanvas} from "./textures.js";
+import {SPRITE_H, spriteImage, pickView, spriteReady} from "./df-sprites.js";
 import {addPrim} from "./backend-gl2.js";
 
 export async function create(canvas, opts){
@@ -43,6 +44,7 @@ export async function create(canvas, opts){
     };
     const B = {name: "three", info: "Three.js r" + source.revision + "（" + source.used + "）", layers: [], protos: {}, pools: {}, sprites: [], used: 0};
     const root = new T.Group(); scene.add(root);
+    B.pMats = {}; B.pSprites = []; B.pGeo = new T.PlaneGeometry(1, 1); B.sGeo = new T.CircleGeometry(1, 20); B.sMat = new T.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: .25, depthWrite: false});
     B.resize = (w, h, scale) => { const s = scale || 1; renderer.setPixelRatio(window.devicePixelRatio || 1); renderer.setSize(Math.max(2, Math.floor(w * s)), Math.max(2, Math.floor(h * s)), false); camera.aspect = w / h; camera.updateProjectionMatrix(); B.w = renderer.domElement.width; B.h = renderer.domElement.height; };
     B.getSize = () => [B.w || canvas.clientWidth, B.h || canvas.clientHeight];
     B.setScene = (sc) => {
@@ -60,8 +62,15 @@ export async function create(canvas, opts){
         const light = env.light || [.4, .8, .45], lightLen = Math.hypot(light[0], light[1], light[2]) || 1, tx = cam.eye[0], tz = cam.eye[2]; sun.target.position.set(tx, 0, tz); sun.position.set(tx + light[0] / lightLen * 135, light[1] / lightLen * 135, tz + light[2] / lightLen * 135);
         for(const l of B.layers) if(l.scroll && l.map){ l.map.offset.set(t * l.scroll[0], t * l.scroll[1]); }
         for(const p of Object.values(B.pools)) for(const m of p) m.visible = false; for(const s of B.sprites) s.visible = false;
-        const used = {}; let si = 0;
+        const used = {}; let si = 0, ps = 0; for(const pm of B.pSprites) pm.body.visible = pm.shadow.visible = false;
         for(const d of dyn){
+            if(d.p && spriteReady(d.p)){   // 1枚絵の人（画像が そろっていれば）。上下は まっすぐ、左右だけ カメラの方を向く
+                const pv = pickView(cam.eye, d.x, d.z, d.yaw), im = spriteImage(d.p, pv.view), H = (SPRITE_H[d.p] || 2.2) * im.img.naturalHeight / 256, W = H * im.img.naturalWidth / im.img.naturalHeight;
+                const key = d.p + "_" + pv.view; let mt = B.pMats[key]; if(!mt){ const tx = new T.Texture(im.img); tx.colorSpace = T.SRGBColorSpace; tx.needsUpdate = true; mt = B.pMats[key] = new T.MeshBasicMaterial({map: tx, transparent: true, alphaTest: .05, side: T.DoubleSide}); }
+                let pm = B.pSprites[ps]; if(!pm){ pm = {body: new T.Mesh(B.pGeo, mt), shadow: new T.Mesh(B.sGeo, B.sMat)}; pm.body.frustumCulled = false; pm.body.renderOrder = 3; pm.shadow.rotation.x = -Math.PI / 2; root.add(pm.body); root.add(pm.shadow); B.pSprites.push(pm); } ps++;
+                pm.body.material = mt; pm.body.visible = pm.shadow.visible = true; pm.body.position.set(d.x, (d.y || 0) + H / 2, d.z); pm.body.rotation.set(0, pv.face, 0); pm.body.scale.set(W, H, 1); pm.shadow.position.set(d.x, (d.y || 0) + .03, d.z); pm.shadow.scale.set(H * .22, H * .22, 1);
+                continue;
+            }
             if(d.m){ const P = B.protos[d.m]; if(!P) continue; const pool = B.pools[d.m] || (B.pools[d.m] = []); const k = used[d.m] = (used[d.m] || 0) + 1; let m = pool[k - 1]; if(!m){ m = new T.Mesh(P.geo, P.mat); m.rotation.order = "YXZ"; m.frustumCulled = false; if(P.mat.transparent) m.renderOrder = 3; root.add(m); pool.push(m); }
                 m.visible = true; m.position.set(d.x, d.y || 0, d.z); m.rotation.set(d.rx || 0, d.yaw || 0, 0, "YXZ"); m.scale.set(d.sx || 1, d.sy || 1, d.sz || 1); m.castShadow = !P.mat.transparent; m.receiveShadow = !P.mat.transparent; }
             else if(d.s){ let s = B.sprites[si++]; const key = d.s + (d.add !== false); if(!s){ s = new T.Sprite(smat(d.s, d.add !== false)); s.userData.key = key; root.add(s); B.sprites.push(s); } else if(s.userData.key !== key){ s.material.dispose(); s.material = smat(d.s, d.add !== false); s.userData.key = key; } const c2 = d.c || [1, 1, 1]; s.visible = true; s.position.set(d.x, d.y, d.z); s.scale.set(d.w || d.size || 1, d.h || d.size || 1, 1); s.renderOrder = 4; s.material.opacity = d.a === undefined ? .8 : d.a; s.material.color.setRGB(c2[0], c2[1], c2[2]); }

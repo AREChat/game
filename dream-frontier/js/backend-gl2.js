@@ -2,6 +2,7 @@
 //  Three.js が 使えない時の 代替として そのまま ゲームが うごく。
 import {createRenderer, M4, Geo} from "./gl.js";
 import {texCanvas} from "./textures.js";
+import {SPRITE_H, spriteImage, pickView, spriteReady} from "./df-sprites.js";
 
 const mat = (p) => { let m = M4.T(p.x || 0, p.y || 0, p.z || 0); if(p.ry) m = M4.mul(m, M4.RY(p.ry)); if(p.rx) m = M4.mul(m, M4.RX(p.rx)); if(p.rz) m = M4.mul(m, M4.RZ(p.rz)); return m; };
 export function addPrim(g, p){
@@ -15,7 +16,7 @@ export async function create(canvas, opts){
     const o = opts || {};
     const R = createRenderer(canvas, {keep: !!o.keep});
     if(!R){ const e = new Error("WebGL2 を 取得できませんでした（この ブラウザ／端末では 3D が 使えません）"); e.code = "NO_WEBGL2"; throw e; }
-    const texCache = {}; const tex = (n) => texCache[n] || (texCache[n] = R.tex(texCanvas(n), {repeat: true}));
+    const pTex = {}; const texCache = {}; const tex = (n) => texCache[n] || (texCache[n] = R.tex(texCanvas(n), {repeat: true}));
     const sg = new Geo(); sg.sprite(1, 1, [1, 1, 1], M4.id()); const spr = R.mesh(sg);
     const B = {name: "webgl2", info: "自作 WebGL2（外部ライブラリなし）", R, layers: [], models: {}, spr};
     B.resize = (w, h, scale) => R.resize(w, h, scale);
@@ -32,6 +33,12 @@ export async function create(canvas, opts){
         R.begin({eye, target: tgt, fov: cam.fov * Math.PI / 180}, {fogC: env.fog, fogNear: env.near, fogFar: env.far, amb: env.amb, light: env.light});
         for(const l of B.layers){ if(l.hidden) continue; R.draw(l.mesh, l.scroll ? Object.assign({}, l.opt, {uv: [t * l.scroll[0], t * l.scroll[1]]}) : l.opt); }
         for(const d of dyn){
+            if(d.p && spriteReady(d.p)){   // 1枚絵の人（画像が そろっていれば）
+                const pv = pickView(eye, d.x, d.z, d.yaw), im = spriteImage(d.p, pv.view), H = (SPRITE_H[d.p] || 2.2) * im.img.naturalHeight / 256, W = H * im.img.naturalWidth / im.img.naturalHeight;
+                const key = d.p + "_" + pv.view; const t = pTex[key] || (pTex[key] = R.tex(im.img));
+                R.draw(spr, {m: M4.mul(M4.T(d.x, d.y || 0, d.z), M4.mul(M4.RY(pv.face), M4.S(W, H, 1))), tex: t, mode: 2, blend: true, cut: .05});
+                continue;
+            }
             if(d.m){ const M = B.models[d.m]; if(!M) continue; let m = M4.T(d.x, d.y || 0, d.z); if(d.yaw) m = M4.mul(m, M4.RY(d.yaw)); if(d.rx) m = M4.mul(m, M4.RX(d.rx)); if(d.sx || d.sy || d.sz) m = M4.mul(m, M4.S(d.sx || 1, d.sy || 1, d.sz || 1)); R.draw(M.mesh, Object.assign({}, M.opt, {m})); }
             else if(d.s){ const face = Math.atan2(eye[0] - d.x, eye[2] - d.z), w = d.w || d.size || 1, h = d.h || d.size || 1, c = d.c || [1, 1, 1]; R.draw(spr, {m: M4.mul(M4.T(d.x, d.y - h / 2, d.z), M4.mul(M4.RY(face), M4.S(w, h, 1))), tex: tex(d.s), mode: 2, add: d.add !== false, blend: d.add === false, tint: [c[0], c[1], c[2], d.a === undefined ? .8 : d.a]}); }
         }
