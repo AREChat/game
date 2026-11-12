@@ -4,11 +4,7 @@
 // ・html は ネット優先（つながるときは 常に最新）／js・css などは 控え先・裏で更新。
 // ・ARE QUEST 本体（game/）は game/sw.js が 先に担当する。GET 以外・ほかのサイトには さわらない。
 importScripts("precache-manifest.js", "sw-core.js");
-<<<<<<< HEAD
-const CACHE = "game-v14-20261112";
-=======
-const CACHE = "game-v12-20261112";
->>>>>>> d4cc3d4 (推理ゲーム（表）：スマホで音が出ない不具合を直す（指を離した時・click・キーで再生を試し、拒否されたら次の操作でも再試行）)
+const CACHE = "game-v15-20261112";
 const core = self.areCore({shell: CACHE, root: "./", precache: true, fetch: false});
 const STATIC_RE = /\.(?:js|css|png|webp|jpe?g|gif|svg|ico|json|webmanifest|txt|woff2?|ttf|mp3|mp4)$/i;
 
