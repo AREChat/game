@@ -1,0 +1,56 @@
+name: Actions の実行履歴を掃除する
+
+# 実行履歴（Actions タブの一覧）を、いちばん新しい1件だけ残して消します。
+#  ・手動：Actions タブ →「Actions の実行履歴を掃除する」→ Run workflow
+#  ・自動：毎日 日本時間 3:41（UTC の 18:41）。GitHub の混み具合で数分〜数十分おくれることがあります。
+# ※ 実行中・待機中のものは消せないので、そのまま残します（次の掃除で消えます）。
+# ※ この掃除の実行そのものも、終わるまでは残ります。
+# ※ 公開サイトそのもの（Pages の中身）や、タグ・Releases・Artifacts には触りません。
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 18 * * *"
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: cleanup-runs
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 古い実行履歴を消す（最新1件だけ残す）
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -u
+          # 新しい順に「ID 状態」を並べる（この掃除自身は除く）
+          gh api --paginate "repos/$REPO/actions/runs?per_page=100" \
+            --jq '.workflow_runs[] | "\(.id) \(.status)"' \
+            | grep -v "^${GITHUB_RUN_ID} " > runs.txt || true
+          total=$(wc -l < runs.txt)
+          echo "この掃除を除いた履歴: $total 件"
+          if [ "$total" -le 1 ]; then
+            echo "1件以下なので、何もしません"
+            exit 0
+          fi
+          keep=$(head -n 1 runs.txt | cut -d' ' -f1)
+          echo "残す（いちばん新しい）: $keep"
+          tail -n +2 runs.txt | while read -r id status; do
+            if [ "$status" != "completed" ]; then
+              echo "スキップ（$status）: $id"; continue
+            fi
+            if gh api -X DELETE "repos/$REPO/actions/runs/$id" >/dev/null 2>&1; then
+              echo "削除: $id"
+            else
+              echo "削除できず: $id"
+            fi
+          done
+          left=$(gh api "repos/$REPO/actions/runs?per_page=1" --jq '.total_count')
+          echo "掃除のあとの履歴: $left 件（この掃除の実行を含む）"
