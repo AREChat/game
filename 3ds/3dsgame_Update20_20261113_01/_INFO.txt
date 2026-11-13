@@ -5,3 +5,5 @@ Update20 (2026-11-13 JST) 土台: Update19_20261112_01
 テスト: gcc(WinLibs 16.2)を入れて sh tools/run_tests.sh 全通過(test_sprites 845チェック、禁止語OK、データ監査OK、通しプレイ20通りOK)。tests/test_sprites.c を新しい大きさ・12コマ・0.5倍の確認に更新。spr_person_name も主人公12コマに対応。
 次回予定: 実機(または3DSエミュレータ)で絵の見え方を確認 / 主人公以外の向きの絵(必要なら) / 絵の細かい直し。
 切り抜きの直し済み: 地面の枠線を除いた、建物の屋根(煙突・塔の先)の切れを直した。
+3DS実機用ビルド: devkitProで make して hoshiakari.3dsx ができることを確認(約3.5MB)。実機での動作は未確認。
+Makefile直し: platform_host_gfx.cを3DSビルドから除外 / --wrap(plat_init,plat_exit,plat_rect,plat_screen)追加 / gfx/*.t3s から romfs/gfx/*.t3x を作る手順を追加。romfs/ にBGMのWAV3曲。

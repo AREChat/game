@@ -30,6 +30,8 @@ CFLAGS  += $(INCLUDE) -D__3DS__ -std=gnu99
 CXXFLAGS:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 ASFLAGS := -g $(ARCH)
 LDFLAGS  = -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+# Update20: game.cの色の四角を絵に差し替えるため、platform層の4つの関数をリンカでつなぎ替える(platform_3ds_wrap.c)
+LDFLAGS += -Wl,--wrap=plat_init -Wl,--wrap=plat_exit -Wl,--wrap=plat_rect -Wl,--wrap=plat_screen
 
 LIBS    := -lcitro2d -lcitro3d -lctru -lm
 LIBDIRS := $(PORTLIBS) $(CTRULIB)
@@ -40,11 +42,10 @@ export TOPDIR := $(CURDIR)
 export VPATH  := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) $(foreach dir,$(DATA),$(CURDIR)/$(dir)) $(foreach dir,$(GRAPHICS),$(CURDIR)/$(dir))
 export DEPSDIR := $(CURDIR)/$(BUILD)
 
-# platform_host.c は PCテスト専用なので 3DS ビルドから除外
-CFILES   := $(filter-out platform_host.c,$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c))))
+# platform_host.c / platform_host_gfx.c は PCテスト専用なので 3DS ビルドから除外
+CFILES   := $(filter-out platform_host.c platform_host_gfx.c,$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c))))
 CPPFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES   := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-GFXFILES := $(foreach dir,$(GRAPHICS),$(notdir $(wildcard $(dir)/*.t3s)))
 BINFILES := $(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
 
 ifeq ($(strip $(CPPFILES)),)
@@ -81,8 +82,15 @@ ifneq ($(ROMFS),)
 	export _3DSXFLAGS += --romfs=$(CURDIR)/$(ROMFS)
 endif
 
+# Update20: gfx/*.t3s -> romfs/gfx/*.t3x (tex3dsで作る。実機は romfs:/gfx/*.t3x を読む)
+T3X := $(patsubst $(GRAPHICS)/%.t3s,$(ROMFS)/gfx/%.t3x,$(wildcard $(GRAPHICS)/*.t3s))
+$(ROMFS)/gfx/%.t3x: $(GRAPHICS)/%.t3s $(GRAPHICS)/%.png
+	@mkdir -p $(ROMFS)/gfx
+	@echo $@
+	@tex3ds -i $< -o $@
+
 .PHONY: all clean
-all: $(BUILD)
+all: $(T3X) $(BUILD)
 	@mkdir -p $(BUILD)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
@@ -91,7 +99,7 @@ $(BUILD):
 
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf
+	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf $(ROMFS)/gfx
 
 else
 DEPENDS := $(OFILES:.o=.d)
