@@ -1,6 +1,7 @@
 "use strict";
 // ===== マップ（JSON）→ 3Dの町・原っぱ・店内を組み立てる。当たり判定つき =====
 import {Geo, M4, canvasTex} from "./gl.js";
+import {decorProp, decorShelf, posterMesh} from "./decor.js";
 
 const hash = (a, b) => { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >> 13)) * 1274126177 | 0; return ((h ^ (h >> 16)) >>> 0) / 4294967295; };
 
@@ -55,6 +56,7 @@ export function buildWorld(R, def){
     for(const b of (def.buildings || [])){
         const col = b.color || "#e8c9a0", roof = b.roof || "#b8433a"; const w = b.w, d = b.d, h = b.h || 3;
         sg.box(w, h, d, col, M4.T(b.x, 0, b.z)); W.colliders.push([b.x - w / 2, b.z - d / 2, b.x + w / 2, b.z + d / 2]);
+        if(b.goods) decorShelf(sg, b);
         if(!def.interior && b.roof !== "none"){ const rh = b.rh || Math.max(1.6, Math.min(w, d) * .45); sg.cyl(0, 1, rh, 4, roof, M4.mul(M4.T(b.x, h, b.z), M4.mul(M4.S(w * .78, 1, d * .78), M4.RY(Math.PI / 4))), true); }
         const side = b.door || "s"; const dir = {s:[0, 1], n:[0, -1], e:[1, 0], w:[-1, 0]}[side]; const along = dir[0] ? [0, 1] : [1, 0];
         const fw = dir[0] ? d : w, off = (dir[0] ? w : d) / 2;
@@ -66,7 +68,7 @@ export function buildWorld(R, def){
     addPart(sg, {mode:0});
     for(const s of signs){ const q = new Geo(); q.sprite(s.w, s.w * 96 / 256, [1, 1, 1], M4.mul(M4.T(s.x, s.y, s.z), M4.RY(s.yaw))); const m = R.mesh(q); W.free.push(m); const t = textSign(R, s.text, s.bg); W.parts.push({mesh:m, opt:{mode:2, tex:t}}); W.free.push({tex:t}); }
     // 木・草木
-    const tg = new Geo();
+    const tg = new Geo(), posters = [], denv = {tg, W, posters};
     for(const t of (def.trees || [])){
         const s = t[2] || (.85 + hash(t[0], t[1]) * .5), kind = hash(t[1], t[0]) < .4;
         tg.cyl(.2 * s, .3 * s, 1.5 * s, 6, "#7a5230", M4.T(t[0], 0, t[1]));
@@ -82,8 +84,11 @@ export function buildWorld(R, def){
         else if(p.t === "box"){ tg.box(p.w || 1, p.h || 1, p.d || 1, p.color || "#c9915a", M4.mul(M4.T(p.x, 0, p.z), M4.RY(p.yaw || 0))); W.colliders.push([p.x - (p.w || 1) / 2, p.z - (p.d || 1) / 2, p.x + (p.w || 1) / 2, p.z + (p.d || 1) / 2]); }
         else if(p.t === "rock"){ tg.sphere(.8 * (p.s || 1), 6, 4, "#9a9aa6", M4.mul(M4.T(p.x, .3, p.z), M4.S(1, .65, 1))); W.circles.push([p.x, p.z, .7 * (p.s || 1)]); }
         else if(p.t === "bench"){ tg.box(1.6, .1, .5, "#9a6e48", M4.mul(M4.T(p.x, .45, p.z), M4.RY(p.yaw || 0))); tg.box(1.6, .5, .08, "#8a5e38", M4.mul(M4.T(p.x, .5, p.z - .22), M4.RY(p.yaw || 0))); }
+        else if(p.t === "poster") posters.push(p);
+        else decorProp(denv, p);
     }
     addPart(tg, {mode:0});
+    for(const p of posters) posterMesh(R, W, denv, p);
     // 屋内の壁
     if(def.interior){
         const wg2 = new Geo(), wc = def.wall || "#e8dcc4", [x0, z0, x1, z1] = W.bounds; const t = .6, H = 4.2;

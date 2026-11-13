@@ -491,7 +491,7 @@ async function boot(){
 
 // ---------- テスト用API（本番のコードをそのまま通す）----------
 window.__q2 = {
-    ctx, get state(){ return state; }, get S(){ return ctx.S; }, get story(){ return story; }, get npcs(){ return npcs; }, get world(){ return world; }, P: () => P,
+    ctx, warpMap, get state(){ return state; }, get S(){ return ctx.S; }, get story(){ return story; }, get npcs(){ return npcs; }, get world(){ return world; }, P: () => P,
     fast(on){ UI.fast = !!on; }, bosses: () => bossSpots, challengeBoss, setAutoBattle(v){ ctx.autoBattle = !!v; }, zoneAt: (x, z) => world && world.dangerAt ? world.dangerAt(x, z) : null, press: (n) => Input.press(n), startNew, showTitle, continueGame, autosave, Save, UI,
     async begin(name, chapter){ $("nameIn").value = name || "主人公"; await startNew(chapter); },
     fps: () => ({fps, scale, w: ctx.R.w, h: ctx.R.h, ema}),
