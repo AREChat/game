@@ -55,13 +55,13 @@ export function buildWorld(R, def){
     for(const b of (def.buildings || [])){
         const col = b.color || "#e8c9a0", roof = b.roof || "#b8433a"; const w = b.w, d = b.d, h = b.h || 3;
         sg.box(w, h, d, col, M4.T(b.x, 0, b.z)); W.colliders.push([b.x - w / 2, b.z - d / 2, b.x + w / 2, b.z + d / 2]);
-        if(!def.interior && b.roof !== "none"){ const rh = b.rh || Math.max(1.6, Math.min(w, d) * .45); sg.cyl(0, 1, rh, 4, roof, M4.mul(M4.T(b.x, h, b.z), M4.mul(M4.RY(Math.PI / 4), M4.S(w * .78, 1, d * .78))), true); }
+        if(!def.interior && b.roof !== "none"){ const rh = b.rh || Math.max(1.6, Math.min(w, d) * .45); sg.cyl(0, 1, rh, 4, roof, M4.mul(M4.T(b.x, h, b.z), M4.mul(M4.S(w * .78, 1, d * .78), M4.RY(Math.PI / 4))), true); }
         const side = b.door || "s"; const dir = {s:[0, 1], n:[0, -1], e:[1, 0], w:[-1, 0]}[side]; const along = dir[0] ? [0, 1] : [1, 0];
         const fw = dir[0] ? d : w, off = (dir[0] ? w : d) / 2;
         const px = b.x + dir[0] * (off + .02), pz = b.z + dir[1] * (off + .02); const yaw = Math.atan2(dir[0], dir[1]);
         if(!b.nodoor){ sg.box(Math.min(1.4, fw * .3), 1.9, .12, "#5a3a22", M4.mul(M4.T(px, 0, pz), M4.RY(yaw))); sg.box(Math.min(1.7, fw * .36), .12, .2, "#7a5a3a", M4.mul(M4.T(px, 1.9, pz), M4.RY(yaw))); }
         if(!b.nowin && fw > 3 && h > 2.2) for(const s of [-1, 1]) sg.box(.9, .8, .1, "#ffe9a0", M4.mul(M4.T(px + along[0] * s * fw * .3, h * .45, pz + along[1] * s * fw * .3), M4.RY(yaw)));
-        if(b.sign) signs.push({text:b.sign, x:px + dir[0] * .04, z:pz + dir[1] * .04, y:Math.min(h - .4, 2.9), yaw, w:Math.min(fw * .8, 4.2), bg:b.signBg});
+        if(b.sign){ const ov = (!def.interior && b.roof !== "none") ? off * .11 + .05 : 0; signs.push({text:b.sign, x:px + dir[0] * (.04 + ov), z:pz + dir[1] * (.04 + ov), y:Math.min(h - .4, 2.9), yaw, w:Math.min(fw * .8, 4.2), bg:b.signBg}); }
     }
     addPart(sg, {mode:0});
     for(const s of signs){ const q = new Geo(); q.sprite(s.w, s.w * 96 / 256, [1, 1, 1], M4.mul(M4.T(s.x, s.y, s.z), M4.RY(s.yaw))); const m = R.mesh(q); W.free.push(m); const t = textSign(R, s.text, s.bg); W.parts.push({mesh:m, opt:{mode:2, tex:t}}); W.free.push({tex:t}); }

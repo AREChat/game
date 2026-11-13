@@ -91,9 +91,9 @@ export class Park{
         // 光の番人 の ほこら
         solid.cyl(2, 2.4, .6, 8, "#6a5a9a", M4.T(-34, 0, -6), true); solid.cyl(0, 1.3, 3.4, 8, "#9a8aea", M4.T(-34, .6, -6), true); B.circ.push([-34, -6, 2.4]);
         // ---- スカイ・コースト ----
-        box(solid, 0, -43, 14, 8, 4, "#f2e8d0"); solid.cyl(0, 1, 2.2, 4, "#e05a4a", M4.mul(M4.T(0, 4, -43), M4.mul(M4.RY(Math.PI / 4), M4.S(10.6, 1, 6.2)))); rect(-7, -47, 7, -39);
+        box(solid, 0, -43, 14, 8, 4, "#f2e8d0"); solid.cyl(0, 1, 2.2, 4, "#e05a4a", M4.mul(M4.T(0, 4, -43), M4.mul(M4.S(10.6, 1, 6.2), M4.RY(Math.PI / 4)))); rect(-7, -47, 7, -39);
         solid.box(5, .3, 1.6, "#ffd24a", M4.T(0, 3.2, -38.9)); for(let i = -2; i <= 2; i++){ solid.box(.12, 1, 1, "#ffffff", M4.T(i * 1.6, 0, -35)); }
-        box(solid, 12, -40, 4, 3, 2.6, "#fff0d8"); solid.cyl(0, 1, 1.2, 4, "#4a90e0", M4.mul(M4.T(12, 2.6, -40), M4.mul(M4.RY(Math.PI / 4), M4.S(3.4, 1, 2.6)))); rect(10, -41.5, 14, -38.5);
+        box(solid, 12, -40, 4, 3, 2.6, "#fff0d8"); solid.cyl(0, 1, 1.2, 4, "#4a90e0", M4.mul(M4.T(12, 2.6, -40), M4.mul(M4.S(3.4, 1, 2.6), M4.RY(Math.PI / 4)))); rect(10, -41.5, 14, -38.5);
         const T = this.track, step = 2; B.trackPts = [];
         for(let i = 0; i < T.pts.length; i += step){ const a = T.pts[i], b = T.pts[(i + step) % T.pts.length]; const dx = b[0] - a[0], dy = b[2] - a[2], dz = b[1] - a[1], l = Math.hypot(dx, dy, dz); const yaw = Math.atan2(dx, dz), pit = Math.atan2(dy, Math.hypot(dx, dz));
             const m = M4.mul(M4.T((a[0] + b[0]) / 2, (a[2] + b[2]) / 2, (a[1] + b[1]) / 2), M4.mul(M4.RY(yaw), M4.RX(-pit)));
@@ -105,7 +105,7 @@ export class Park{
         wall(MX0, MZ0, MX1, MZ0 + WT); wall(MX0, MZ1 - WT, MX1, MZ1); wall(MX1 - WT, MZ0, MX1, MZ1); wall(MX0, MZ0, MX0 + WT, -1.8); wall(MX0, 1.8, MX0 + WT, MZ1);
         wall(76, MZ0, 76.6, -8); wall(76, -5, 76.6, 5); wall(76, 8, 76.6, MZ1); wall(76.6, -.3, MX1, .3);
         tile.plane(MX1 - MX0, MZ1 - MZ0, [.55, .45, .6], M4.T((MX0 + MX1) / 2, .05, 0), 8, 3); tile.plane(MX1 - MX0, MZ1 - MZ0, [.5, .45, .6], M4.mul(M4.T((MX0 + MX1) / 2, WH, 0), M4.RX(Math.PI)), 8, 3);
-        solid.cyl(0, 1, 3.4, 4, "#3a2a46", M4.mul(M4.T((MX0 + MX1) / 2, WH, 0), M4.mul(M4.RY(Math.PI / 4), M4.S(34, 1, 18))));
+        solid.cyl(0, 1, 3.4, 4, "#3a2a46", M4.mul(M4.T((MX0 + MX1) / 2, WH, 0), M4.mul(M4.S(34, 1, 18), M4.RY(Math.PI / 4))));
         // へやの かざり
         solid.box(.9, 2.6, 5, "#6a3a22", M4.T(93, 0, -6)); for(let k = 0; k < 7; k++) solid.box(.5, 2.2, .3, ["#4a7ae0", "#4a7ae0", "#e04a4a"][k % 3], M4.T(92.4, .2, -8 + k * .7)); B.circ.push([92.5, -6, 1.2]);   // ほんだな
         solid.box(.2, 2.2, 3.2, "#c8a050", M4.T(93.6, .9, 6)); solid.box(.1, 1.8, 2.8, "#d8e0f0", M4.T(93.5, 1.1, 6)); solid.sphere(.3, 6, 4, "#2a2a3a", M4.T(93.4, 1.8, 5.3)); solid.sphere(.3, 6, 4, "#2a2a3a", M4.T(93.4, 1.4, 6.6));   // え
@@ -122,7 +122,7 @@ export class Park{
         solid.box(10, 7, 3, "#7a7a88", M4.T(0, 0, 95)); water.plane(5, 7, [1, 1, 1], M4.mul(M4.T(0, 3.6, 93.2), M4.mul(M4.RX(Math.PI / 2), M4.S(1, 1, 1))), 2, 4);
         this.fall = {x: 0, z: 93.3};
         wood.box(6, .3, 8, [1, 1, 1], M4.T(0, .0, 62)); wood.box(.3, 1, 8, [1, 1, 1], M4.T(-3, 0, 62)); wood.box(.3, 1, 8, [1, 1, 1], M4.T(3, 0, 62)); rect(-3.2, 58, -2.8, 66); rect(2.8, 58, 3.2, 66);
-        box(solid, -12, 60, 5, 4, 3, "#e8f2f8"); solid.cyl(0, 1, 1.8, 4, "#2a9ac8", M4.mul(M4.T(-12, 3, 60), M4.mul(M4.RY(Math.PI / 4), M4.S(4.4, 1, 3.6)))); rect(-14.5, 58, -9.5, 62);
+        box(solid, -12, 60, 5, 4, 3, "#e8f2f8"); solid.cyl(0, 1, 1.8, 4, "#2a9ac8", M4.mul(M4.T(-12, 3, 60), M4.mul(M4.S(4.4, 1, 3.6), M4.RY(Math.PI / 4)))); rect(-14.5, 58, -9.5, 62);
         this.lanterns = [[-27, 72], [27, 82], [0, 97]].map((p) => ({x: p[0], z: p[1], got: false}));
         for(const l of this.lanterns){ solid.cyl(.12, .16, 2.2, 6, "#6a5a4a", M4.T(l.x, 0, l.z), true); }
         for(let i = 0; i < 30; i++){ const a = hash(i, 41) * 6.283, r = 6 + hash(i, 42) * 8; solid.sphere(.3, 6, 4, "#ffd0e8", M4.mul(M4.T(Math.cos(a) * r * 1.5, .22, 79 + Math.sin(a) * r), M4.S(1.5, .25, 1.5))); }
