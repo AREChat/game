@@ -251,9 +251,15 @@ function pkDlcStart(chId, arg){
     return {ok:false, msg:"？"};
 }
 function pkNoop(){}
+// 入園ゲートの なぞなぞ：選択肢の ならびを、問題ごとに ランダムに する（正解が いつも 先頭、を なくす）
+function pkQuizOrd(qz){
+    const Q = PK_DLC_RULES.__quiz;
+    if(!qz.ord || qz.ord.length !== Q.length) qz.ord = Q.map((q) => { const a = q.c.map((_c, k) => k); for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(G.rnd() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; });
+    return qz.ord;
+}
 function pkDlcQuizAnswer(i){
     const qz = G.pk.quiz, Q = PK_DLC_RULES.__quiz; if(!qz) return {ok:false, msg:"？"};
-    const right = Q[qz.i].a === i; if(right) qz.ok++; qz.i++;
+    const right = Q[qz.i].a === pkQuizOrd(qz)[qz.i][i]; if(right) qz.ok++; qz.i++;
     if(qz.i >= Q.length){ const ok = qz.ok; const ch = qz.ch; G.pk.quiz = null; if(ok >= 2){ const r = pkDlcComplete(ch); return {ok:true, end:true, msg:"せいかい " + ok + "/" + Q.length + "！ ゲートが ひらいた！\n" + r.msg}; } return {ok:true, end:true, msg:"せいかい " + ok + "/" + Q.length + "…。もう一度 ちょうせんしよう！"}; }
     return {ok:true, msg:right ? "せいかい！" : "ざんねん…"};
 }

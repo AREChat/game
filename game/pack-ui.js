@@ -239,7 +239,7 @@ function pkTabDlc(){
     const p = pkS(), u = G.pk;
     if(u.quiz){
         const qz = u.quiz, Q = PK_DLC_RULES.__quiz[qz.i];
-        return '<h2>🌟 入園ゲートの なぞなぞ</h2><div class="card"><b>だい' + (qz.i + 1) + '問</b><div>' + esc(Q.q) + '</div>' + '<div class="row">' + Q.c.map((c, i) => pkBtn(esc(c), "quiz|" + i)).join("") + '</div></div>';
+        return '<h2>🌟 入園ゲートの なぞなぞ</h2><div class="card"><b>だい' + (qz.i + 1) + '問</b><div>' + esc(Q.q) + '</div>' + '<div class="row">' + pkQuizOrd(qz)[qz.i].map((orig, i) => pkBtn(esc(Q.c[orig]), "quiz|" + i)).join("") + '</div></div>';
     }
     let h = '<h2>🌟 追加コンテンツ</h2><div class="meta">本編クリア後の おたのしみ 5本。ストーリーは かわりません。</div>';
     PK.L.dlc.forEach((d) => {

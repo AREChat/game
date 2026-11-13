@@ -1835,7 +1835,7 @@ function pump(){
         if(fr.i >= fr.a.length){ st.pop(); continue; }
         const op = fr.a[fr.i++], k = op[0];
         if(k === "say"){ G.mode = "talk"; G.say = {who:(window.tqWho ? tqWho(op[1]) : op[1]), text:(window.tqRen ? tqRen(rpgFmt(op[2])) : rpgFmt(op[2]))}; tqSpeak(G.say.text, op[1]); render(); return; }
-        if(k === "choice"){ G.mode = "choice"; G.choices = op[1]; render(); return; }
+        if(k === "choice"){ G.mode = "choice"; G.choices = (op[2] && op[2].shuffle) ? rpgShuffle(op[1]) : op[1]; render(); return; }
         if(k === "set") S.f[op[1]] = 1;
         else if(k === "clr") delete S.f[op[1]];
         else if(k === "if"){ const br = rpgCond(op[1]) ? op[2] : op[3]; if(br && br.length) st.push({a:br, i:0}); }
@@ -1867,6 +1867,12 @@ ACT.skipTalk = () => {
     while(G.mode === "talk" && guard++ < 400){ tqSpeakStop(); pump(); }
 };
 ACT.next = () => { if(!finishTyping()) rpgNext(); };
+// クイズの 選択肢は、出すたびに ならびを ランダムに かえる（正解が いつも まんなか・いつも 先頭、を なくす）
+function rpgShuffle(list){
+    const a = list.slice();
+    for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(G.rnd() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+}
 ACT.choose = (v) => {
     if(G.mode !== "choice" || !G.choices) return;
     const c = G.choices[Number(v)]; G.choices = null; G.mode = "script";
@@ -3453,9 +3459,15 @@ function pkDlcStart(chId, arg){
     return {ok:false, msg:"？"};
 }
 function pkNoop(){}
+// 入園ゲートの なぞなぞ：選択肢の ならびを、問題ごとに ランダムに する（正解が いつも 先頭、を なくす）
+function pkQuizOrd(qz){
+    const Q = PK_DLC_RULES.__quiz;
+    if(!qz.ord || qz.ord.length !== Q.length) qz.ord = Q.map((q) => { const a = q.c.map((_c, k) => k); for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(G.rnd() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; });
+    return qz.ord;
+}
 function pkDlcQuizAnswer(i){
     const qz = G.pk.quiz, Q = PK_DLC_RULES.__quiz; if(!qz) return {ok:false, msg:"？"};
-    const right = Q[qz.i].a === i; if(right) qz.ok++; qz.i++;
+    const right = Q[qz.i].a === pkQuizOrd(qz)[qz.i][i]; if(right) qz.ok++; qz.i++;
     if(qz.i >= Q.length){ const ok = qz.ok; const ch = qz.ch; G.pk.quiz = null; if(ok >= 2){ const r = pkDlcComplete(ch); return {ok:true, end:true, msg:"せいかい " + ok + "/" + Q.length + "！ ゲートが ひらいた！\n" + r.msg}; } return {ok:true, end:true, msg:"せいかい " + ok + "/" + Q.length + "…。もう一度 ちょうせんしよう！"}; }
     return {ok:true, msg:right ? "せいかい！" : "ざんねん…"};
 }
@@ -3797,7 +3809,7 @@ function pkTabDlc(){
     const p = pkS(), u = G.pk;
     if(u.quiz){
         const qz = u.quiz, Q = PK_DLC_RULES.__quiz[qz.i];
-        return '<h2>🌟 入園ゲートの なぞなぞ</h2><div class="card"><b>だい' + (qz.i + 1) + '問</b><div>' + esc(Q.q) + '</div>' + '<div class="row">' + Q.c.map((c, i) => pkBtn(esc(c), "quiz|" + i)).join("") + '</div></div>';
+        return '<h2>🌟 入園ゲートの なぞなぞ</h2><div class="card"><b>だい' + (qz.i + 1) + '問</b><div>' + esc(Q.q) + '</div>' + '<div class="row">' + pkQuizOrd(qz)[qz.i].map((orig, i) => pkBtn(esc(Q.c[orig]), "quiz|" + i)).join("") + '</div></div>';
     }
     let h = '<h2>🌟 追加コンテンツ</h2><div class="meta">本編クリア後の おたのしみ 5本。ストーリーは かわりません。</div>';
     PK.L.dlc.forEach((d) => {

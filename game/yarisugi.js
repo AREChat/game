@@ -184,9 +184,8 @@ function yq(id, o){
     const n = o.steps.length, sid = (i) => (i ? id + "_s" + (i + 1) : id + "_q");
     o.steps.forEach((s, i) => {
         const last = i === n - 1, okOps = YKL(s.ok).concat(last ? (o.fin ? YKL(o.fin) : []).concat([["set", o.set]]) : [["run", sid(i + 1)]]);
-        const h = yHash(id + i), opts = s.a.map((t, k) => [t, k === 0 ? okOps : YKL(s.hint).concat([["run", sid(i)]])]), rot = h % opts.length;
-        const shuf = opts.slice(rot).concat(opts.slice(0, rot));
-        RPG_EV[sid(i)] = [rpgN(s.q), ["choice", shuf]];
+        const opts = s.a.map((t, k) => [t, k === 0 ? okOps : YKL(s.hint).concat([["run", sid(i)]])]);
+        RPG_EV[sid(i)] = [rpgN(s.q), ["choice", opts, {shuffle:1}]];   // ならびは 出すたびに ランダム（field.js の rpgShuffle）
     });
     RPG_EV[id] = [["if", o.chk, YKL(o.done || ["（この なぞは もう とけたよ！）"]), YKL(o.intro).concat([["run", sid(0)]])]];
 }

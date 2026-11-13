@@ -35,7 +35,7 @@ const KL = (a) => a.map((s) => { const i = s.indexOf("｜"); return i > 0 ? rpgS
 // なぞ 1問：o = {chk（とけたか 見る フラグ）, set（正解で たてる フラグ）, intro, q, opts:[[文,true/false]…], hint, ok, done, next（つぎの 問題）}
 function ksQ(id, o){
     const okOps = KL(o.ok).concat(o.set ? [["set", o.set]] : [], o.next ? [["run", o.next]] : []);
-    RPG_EV[id + "_q"] = [rpgN(o.q), ["choice", o.opts.map((x) => [x[0], x[1] ? okOps : KL(o.hint).concat([["run", id + "_q"]])])]];
+    RPG_EV[id + "_q"] = [rpgN(o.q), ["choice", o.opts.map((x) => [x[0], x[1] ? okOps : KL(o.hint).concat([["run", id + "_q"]])]), {shuffle:1}]];
     if(o.intro) RPG_EV[id] = [["if", o.chk, KL(o.done || ["（この なぞは もう とけたよ！）"]), KL(o.intro).concat([["run", id + "_q"]])]];
 }
 const KS_HINT = "紘｜ううん、おしい！ もういちど ゆっくり 考えて みよう。ヒントは…";
