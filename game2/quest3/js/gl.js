@@ -73,14 +73,14 @@ export class Geo{
         const slope = (rb - rt) / (h || 1);
         const nf = (a) => [Math.cos(a), slope, Math.sin(a)];
         const bot = ring(rb, 0, nf, shade(c, .92)), top = ring(rt, h, nf, c);
-        for(let k = 0; k < seg; k++){ this.tri(bot[k], bot[k+1], top[k+1]); this.tri(bot[k], top[k+1], top[k]); }
+        for(let k = 0; k < seg; k++){ this.tri(bot[k], top[k+1], bot[k+1]); this.tri(bot[k], top[k], top[k+1]); }
         if(cap && rt > 0){ const ctr = this.vert(m, [0,h,0], [0,1,0], shade(c, 1.1)); const t2 = ring(rt, h, () => [0,1,0], shade(c, 1.1)); for(let k = 0; k < seg; k++) this.tri(ctr, t2[k+1], t2[k]); }
         if(cap && rb > 0){ const ctr = this.vert(m, [0,0,0], [0,-1,0], shade(c, .6)); const b2 = ring(rb, 0, () => [0,-1,0], shade(c, .6)); for(let k = 0; k < seg; k++) this.tri(ctr, b2[k], b2[k+1]); }
     }
     sphere(r, seg, rings, color, m){
         const c = hex(color); seg = seg || 10; rings = rings || 6; const idx = [];
         for(let j = 0; j <= rings; j++){ const p = j / rings * Math.PI, row = []; for(let k = 0; k <= seg; k++){ const a = k / seg * Math.PI * 2; const nx = Math.sin(p)*Math.cos(a), ny = Math.cos(p), nz = Math.sin(p)*Math.sin(a); row.push(this.vert(m, [nx*r, ny*r, nz*r], [nx, ny, nz], c, [k / seg, j / rings])); } idx.push(row); }
-        for(let j = 0; j < rings; j++) for(let k = 0; k < seg; k++){ const a = idx[j][k], b = idx[j][k+1], d = idx[j+1][k], e = idx[j+1][k+1]; this.tri(a, d, b); this.tri(b, d, e); }
+        for(let j = 0; j < rings; j++) for(let k = 0; k < seg; k++){ const a = idx[j][k], b = idx[j][k+1], d = idx[j+1][k], e = idx[j+1][k+1]; this.tri(a, b, d); this.tri(b, e, d); }
     }
     // XZ平面の板（中心原点）。uvは (u,v) 繰り返し数
     plane(w, d, color, m, uvx, uvy){ const c = hex(color), x = w/2, z = d/2; this.quadf(m, [-x,0,z], [x,0,z], [x,0,-z], [-x,0,-z], [0,1,0], c, [[0,uvy||1],[uvx||1,uvy||1],[uvx||1,0],[0,0]]); }
