@@ -5,7 +5,7 @@
 // ・自分のファイルは「ネット優先（ただしブラウザの短い控えは つかう＝2回目から速い）」。つながらない ときだけ 控えを つかう。新しい版が 入ったら 古い控えは すべて 消す。
 importScripts("../precache-manifest.js", "../sw-core.js");
 const core = self.areCore({shell: "tq-game-x", root: "../", precache: false, fetch: false});
-const CACHE = "tq-game-v28-20261113";
+const CACHE = "tq-game-v29-20261113";
 self.addEventListener("install", () => { self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
     event.waitUntil((async () => {

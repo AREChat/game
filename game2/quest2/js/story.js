@@ -93,7 +93,7 @@ export class Story{
             S.subCleared = 1; UI.pic && UI.pic(""); this.c.autosave();
             await UI.card("サブストーリー　おわり", d.endCard || d.title, 3600); this.hud(); UI.toast("📖 サブストーリー ぜんぶ クリア！ ありがとう！", 5000); return;
         }
-        if(nx === undefined){ S.cleared = 1; S.ending = 1; UI.pic && UI.pic(""); this.c.autosave(); await UI.card("ＦＩＮ", "ARE QUEST 2 〜AREを入手せよ〜　（ここまで）", 3600); this.hud(); UI.toast("🔥 おまけ：原っぱに 5体の ボスが 待っている！（赤い⚔の 目じるし）", 6500); return; }
+        if(nx === undefined){ S.cleared = 1; S.ending = 1; UI.pic && UI.pic(""); this.c.autosave(); await UI.card("ＦＩＮ", "ARE QUEST 2 〜AREを入手せよ〜　（ここまで）　つづきは『ARE QUEST 3 〜月影のあしあと〜』へ", 3600); this.hud(); UI.toast("🔥 おまけ：原っぱに 5体の ボスが 待っている！（赤い⚔の 目じるし）", 6500); return; }
         UI.pic && UI.pic("");
         await UI.card(this.label(d.n) + "　クリア！", d.title, 1700);
         this.c.autosave();
