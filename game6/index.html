@@ -33,5 +33,7 @@
 <script src="./js/cast.js"></script>
 <script src="./js/gen.js"></script>
 <script src="./js/app.js"></script>
+<script src="../shared/title-secrets.js"></script>
+<script>TitleSecrets.attach({title:function(){return !!(!!document.getElementById("goStart")&&TitleSecrets.visible("#goStart"));},host:"#app"});</script>
 </body>
 </html>

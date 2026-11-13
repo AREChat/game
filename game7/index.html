@@ -60,5 +60,7 @@
 <script src="./js/games.js"></script>
 <script src="./js/input.js"></script>
 <script>(function(){var b=document.getElementById("exitBtn");if(!b||!window.AREExit)return;b.textContent=AREExit.label();b.addEventListener("click",function(){AREExit.open();});})();</script>
+<script src="../shared/title-secrets.js"></script>
+<script>TitleSecrets.attach({title:function(){return !!(document.getElementById("s-title")&&document.getElementById("s-title").classList.contains("on"));},host:"#stage"});</script>
 </body>
 </html>
