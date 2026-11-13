@@ -1,3 +1,9 @@
 desktop/node_modules/
 desktop/app/
 desktop/dist/
+
+# 3DS（3ds/）：実名の一覧・運用メモ・Windows の設定ファイル・テストの作業フォルダは公開しない
+3ds/**/tools/private_blocklist.txt
+3ds/**/docs/AUTOMATION.md
+3ds/**/build_host/
+**/desktop.ini
