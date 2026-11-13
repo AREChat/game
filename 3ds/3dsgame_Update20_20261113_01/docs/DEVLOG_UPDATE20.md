@@ -4,4 +4,7 @@
 - 主人公: dir*3+step の12コマ(dir 0=下 1=上 2=左 3=右、step 0=立ち 1,2=歩き)。chars.png の0〜11番。人は16番〜(PS_*)のまま。
 - game.c: 主人公の向き(g_face)を持つ(セーブには入れない)。game_hero_dir()/game_hero_step() で絵を選ぶ。platform_3ds_wrap.c が主人公を描くときに使う。
 - tests/test_sprites.c: 新しい大きさ、12コマ、0.5倍の確認に更新。
-- 未確認: PC用gccが無く run_tests.sh は未実行。構文チェック(arm-none-eabi-gcc -fsyntax-only -Wall -Wextra -Werror)のみ通過。実機での見え方も未確認。
+- spr_person_name を主人公12コマ(0〜11)に対応(テストで見つけて直した)。
+- 切り抜きの直し: 地面は枠線を外へ除いて(つなぎ目が目立たない)、建物は屋根(煙突・塔の先)が切れないようにした。
+- テスト: gcc(WinLibs 16.2)で sh tools/run_tests.sh 全通過(test_sprites 845、禁止語OK、データ監査OK、通しプレイ20通りOK)。
+- 未確認: 3DS実機・エミュレータでの見え方(PCでの合成プレビューは ../新素材/preview_3ds_sim.png)。

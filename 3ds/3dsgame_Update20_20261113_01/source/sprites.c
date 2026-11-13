@@ -47,7 +47,7 @@ static const char *PNAME[PS_END - PS_MOTHER] = {
 static const char *BNAME[BD_COUNT] = { "家", "学び舎", "お店", "宿屋", "駅", "保健室", "図書室", "星影の塔" };
 
 const char *spr_person_name(int id) {
- if (id >= 0 && id < 8) return "主人公";
+ if (id >= 0 && id < 12) return "主人公";
  if (id >= PS_MOTHER && id < PS_END) return PNAME[id - PS_MOTHER];
  return "";
 }

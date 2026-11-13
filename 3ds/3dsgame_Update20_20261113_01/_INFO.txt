@@ -2,6 +2,6 @@ Update20 (2026-11-13 JST) 土台: Update19_20261112_01
 追加: 絵を新しいドット絵に差し替え(人32x32・建物96x96・地面32x32。画面には0.5倍で、これまでと同じ16/48ピクセル)。
       主人公は前・後ろ・左・右の4方向 x 3コマ(立ち・歩き1・歩き2)。歩いた向きで絵が変わる(game.c: game_hero_dir / game_hero_step)。
 絵のファイル: gfx/tiles.png(256x64) gfx/chars.png(256x128: 0〜11=主人公、16〜31=ほかの人) gfx/buildings.png(384x192) と各 .t3s。
-テスト: この実行ではPC用gccが無く、sh tools/run_tests.sh は実行できていない(arm-none-eabi-gccの構文チェックのみ通過: sprites/gfxdraw/gfxhook/game/test_sprites/test_gfxhook/platform_3ds_wrap)。
-      tests/test_sprites.c を新しい大きさ・12コマ・0.5倍の確認に更新済み。次回、gccのある環境で全テストを実行すること。
-次回予定: PC用gccを入れてsh tools/run_tests.sh全通過の確認 / 実機で絵の見え方を確認 / 絵の切り抜きの細かい直し(地面の左端の線・建物の屋根の切れ)。
+テスト: gcc(WinLibs 16.2)を入れて sh tools/run_tests.sh 全通過(test_sprites 845チェック、禁止語OK、データ監査OK、通しプレイ20通りOK)。tests/test_sprites.c を新しい大きさ・12コマ・0.5倍の確認に更新。spr_person_name も主人公12コマに対応。
+次回予定: 実機(または3DSエミュレータ)で絵の見え方を確認 / 主人公以外の向きの絵(必要なら) / 絵の細かい直し。
+切り抜きの直し済み: 地面の枠線を除いた、建物の屋根(煙突・塔の先)の切れを直した。
