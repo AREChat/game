@@ -174,7 +174,7 @@
     if($('statsBtn'))$('statsBtn').addEventListener('click',stats);$('saveBtn').addEventListener('click',save);$('loadBtn').addEventListener('click',load);$('modalClose').addEventListener('click',closeModal);$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});$('modal').addEventListener('keydown',e=>{if(e.key==='Escape'&&!state.enemy)closeModal();});
     window.addEventListener('keydown',e=>{if(e.altKey||e.ctrlKey||e.metaKey||(e.target&&e.target.matches&&e.target.matches('input,textarea,select,button')))return;const map={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right'};if(map[e.key]){e.preventDefault();move(map[e.key]);}else if(e.key===' '){e.preventDefault();explore();}});
     // Keep the first screen useful even when localStorage is blocked.
-    if(!window.localStorage){$('saveBtn').disabled=true;$('loadBtn').disabled=true;}
+    let _ls=true;try{_ls=!!window.localStorage;}catch(_e){_ls=false;}if(!_ls){$('saveBtn').disabled=true;$('loadBtn').disabled=true;}
   }
   function startTitle(){
     const t=$('title');if(!t)return;let has=false;try{has=!!localStorage.getItem(SAVE_KEY);}catch(_e){}
