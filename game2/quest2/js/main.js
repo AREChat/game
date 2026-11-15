@@ -305,6 +305,7 @@ async function continueGame(ns){
     const list = Save.slots.map((s) => { const d = Save.read(s); return {label: s === "auto" ? "オートセーブ" : "スロット" + s, meta: Save.label(d), disabled: !d}; });
     const r = await UI.menu("どれを つづけますか？", list, {cancel: true}); t.hidden = false; if(r < 0){ Save.ns = ""; return; }
     const d = Save.read(Save.slots[r]); if(!d) return;
+    if(!Number.isInteger(d.chapter) || !story.has(d.chapter)){ UI.toast("セーブデータが こわれていて つづけられません。"); Save.ns = ""; return; }     // 章の番号が おかしい（手で書きかえた・こわれた）データで 黒い画面のまま止まらないように
     ctx.S = d; initState(); hideTitle(); state = "busy"; await enterGame(d.chapter, false);
 }
 async function enterGame(n, fresh){
