@@ -306,6 +306,7 @@ async function continueGame(ns){
     const r = await UI.menu("どれを つづけますか？", list, {cancel: true}); t.hidden = false; if(r < 0){ Save.ns = ""; return; }
     const d = Save.read(Save.slots[r]); if(!d) return;
     if(!Number.isInteger(d.chapter) || !story.has(d.chapter) || !Array.isArray(d.party) || !d.party.length || !d.party[0] || typeof d.party[0] !== "object"){ UI.toast("セーブデータが こわれていて つづけられません。"); Save.ns = ""; return; }     // 章の番号が おかしい（手で書きかえた・こわれた）データで 黒い画面のまま止まらないように
+    if(!Number.isFinite(d.x) || Math.abs(d.x) > 5000) d.x = 0; if(!Number.isFinite(d.z) || Math.abs(d.z) > 5000) d.z = 18; if(!Number.isFinite(d.yaw)) d.yaw = 0;     // 座標が おかしくても 町の まんなかから はじめる
     ctx.S = d; initState(); hideTitle(); state = "busy"; await enterGame(d.chapter, false);
 }
 async function enterGame(n, fresh){
