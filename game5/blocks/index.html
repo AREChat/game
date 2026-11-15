@@ -75,11 +75,52 @@ main{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:start;
 .row .chip.on{background:var(--yellow)}
 .big{font-size:44px;margin:4px 0}
 @media (max-width:760px){
-  main{grid-template-columns:auto;gap:8px}
+  main{grid-template-columns:auto 78px;justify-content:center;gap:8px}
   .side{max-width:none;flex-direction:row;flex-wrap:wrap;justify-content:center}
   .side .card{flex:1 1 120px}
-  #board{height:min(48dvh,520px)}
-  .side.right{order:3}
+  .side.left{grid-column:1/-1;justify-self:stretch;flex-wrap:nowrap;align-items:stretch}
+  .side.left .card{flex:1 1 0;min-width:0;padding:6px 10px}
+  .side.left .card:first-child{flex:0 0 96px}
+  .side.left .pocket canvas{height:52px;width:auto}
+  .side.right{max-width:78px;flex-direction:column;flex-wrap:nowrap;align-self:start}
+  .side.right .nextbox{padding:6px 4px}
+  .side.right .nextbox canvas{width:100%;height:auto}
+  #board{height:max(190px,min(46dvh,calc(100dvh - 340px),520px))}
+}
+/* じゃま役：スマホでも パーツ送り・おじゃま・あせらせ が見えて押せるように（以前は画面の外に出て押せなかった） */
+body.sab #touch{display:none!important}
+body.sab .side.left .help{display:none}
+@media (max-width:760px){
+  body.sab main{grid-template-columns:minmax(0,1fr)}
+  body.sab .side.right{grid-column:1/-1;max-width:none;flex-direction:row}
+  body.sab .side{width:100%}
+  body.sab header{gap:6px}
+  body.sab header .chip{padding:4px 9px;font-size:13px}
+  body.sab #board{height:min(31dvh,380px)}
+  body.sab .side.left #statL{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center}
+  body.sab .side.left .stat{flex-direction:column;align-items:center;font-size:11px}
+  body.sab .side.left .stat b{font-size:16px}
+  body.sab .side.right{order:2;flex-wrap:nowrap;align-items:flex-start}
+  body.sab .side.right .nextbox{flex:0 0 74px;padding:6px}
+  body.sab .side.right .nextbox canvas{height:min(30dvh,180px);width:auto}
+  body.sab .side.right #sabBox{flex:1 1 auto;min-width:0}
+  body.sab #sabBox h3{font-size:11px}
+  body.sab .picks{grid-template-columns:repeat(4,1fr)}
+  body.sab .acts{flex-direction:row}
+  body.sab .acts .btn{flex:1;padding:6px 4px;font-size:11px;line-height:1.25}
+  body.sab .picks button canvas{width:100%;height:auto}
+  body.sab .side.left .stat b{white-space:nowrap}
+  body.sab .side.left .card{padding:6px 10px}
+}
+@media (min-width:761px) and (max-height:560px){
+  body.sab main{grid-template-columns:1fr auto 1.2fr}
+  body.sab #board{height:min(62dvh,300px)}
+  body.sab .side.right{max-width:300px;flex-direction:row;align-items:flex-start}
+  body.sab .side.right .nextbox{flex:0 0 74px;padding:6px}
+  body.sab .side.right .nextbox canvas{height:min(46dvh,200px);width:auto}
+  body.sab .side.right #sabBox{flex:1 1 auto;min-width:0}
+  body.sab .picks{grid-template-columns:repeat(4,1fr)}
+  body.sab .acts .btn{padding:5px 6px;font-size:12px}
 }
 </style>
 <script src="../../shared/are-offline.js" defer></script></head>
@@ -295,7 +336,7 @@ function say(t){var m=$("msg");m.textContent=t;m.classList.remove("show");void m
 function showOv(id,on){$(id).classList.toggle("on",on);}
 
 function startGame(r){
-  role=r; $("roleBadge").textContent=r==="erase"?"🧽 けす役":"😈 じゃま役";
+  role=r; document.body.classList.toggle("sab",r==="sab"); $("roleBadge").textContent=r==="erase"?"🧽 けす役":"😈 じゃま役";
   showOv("ovMenu",false);showOv("ovPause",false);showOv("ovOver",false);
   try{document.activeElement&&document.activeElement.blur();}catch(e){}
   $("sabBox").style.display=r==="sab"?"":"none"; $("warn").style.display=r==="erase"?"":"none"; $("pocket").style.display=r==="erase"?"":"none";
@@ -516,7 +557,7 @@ function updSab(){
 /* ---------- ポーズ・やりなおし ---------- */
 function pause(){ if(state!=="play")return; state="pause"; pauseAt=performance.now(); showOv("ovPause",true); }
 function resume(){ if(state!=="pause")return; showOv("ovPause",false); state="play"; lastT=performance.now(); held={L:0,R:0,D:0};das={L:0,R:0}; }
-function toMenu(){ state="menu"; showOv("ovPause",false);showOv("ovOver",false);showOv("ovMenu",true); $("roleBadge").textContent="—"; }
+function toMenu(){ document.body.classList.remove("sab"); state="menu"; showOv("ovPause",false);showOv("ovOver",false);showOv("ovMenu",true); $("roleBadge").textContent="—"; }
 $("pauseBtn").addEventListener("click",function(){ try{this.blur();}catch(e){} state==="pause"?resume():pause(); });
 $("resumeBtn").addEventListener("click",resume);
 $("restartBtn").addEventListener("click",function(){ startGame(role); });
