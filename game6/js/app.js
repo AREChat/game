@@ -387,7 +387,7 @@
       '<p class="note hidenote">表の見かた：いちばん上の段が「人 × 各項目」。その下の段は「項目どうし」の表で、考えるときのメモに使えるよ。答えるときに見るのは、いちばん上の段（人の行）だけ。</p></div>' +
       '<div class="panel"><div class="tblwrap">' + matrixHtml() + '</div></div>';
     h += '<div class="panel"><div class="tools"><button class="btn big" type="button" id="bAns">答える</button><button class="btn sub" type="button" id="bReset">ぜんぶ消す</button></div>' +
-      '<p class="note hidenote">答える前に：「人」の行で、1人に ○ は1つだけ、同じ列にも ○ は1つだけ。下書き（✎）が残っていると答えられないよ。</p></div></div></div>';
+      '<p class="note hidenote">答える前に：「人」の行で1人に ○ を1つずつ、または項目の列で1列に ○ を1つずつ（横でも縦でもOK）。下書き（✎）が残っていると答えられないよ。</p></div></div></div>';
     app.innerHTML = h;
     fitCell();
     app.querySelectorAll(".mode button").forEach(function(b){ b.onclick = function(){ P.mode = b.dataset.mode; app.querySelectorAll(".mode button").forEach(function(x){ x.classList.toggle("on", x === b); });
@@ -424,16 +424,27 @@
     var n = P.n, dr = 0;
     eachCell(function(r, c, i, j, x){ if(x.d) dr++; });
     if(dr){ modal("<p>✎ 下書きが " + dr + " か所のこっているよ。\n答えるときは、選択肢を1つにしてください。\n（下書きを外して、○ か × にしてね）</p>", [{t: "もどる", cls: "sub"}, {t: "下書きを全部消す", f: function(){ eachCell(function(r, c, i, j, x){ x.d = 0; }); paint(); }}]); return; }
+    // 「人の行」で1人に○が1つずつ、または「項目の列」で1列に○が1つずつ。どちらかがそろっていれば答えられる（横でも縦でもOK）
+    var viaCols = {};
     for(var C = 1; C <= P.m; C++){
-      var g = P.marks["0_" + C], colCnt = []; for(var v0 = 0; v0 < n; v0++) colCnt[v0] = 0;
+      var g = P.marks["0_" + C], colCnt = [], rowBad = 0, rowMsg = "", colBad = 0, colMsg = "";
+      for(var v0 = 0; v0 < n; v0++) colCnt[v0] = 0;
       for(var p = 0; p < n; p++){
         var cnt = 0; for(var v = 0; v < n; v++) if(g[p][v].m === 1){ cnt++; colCnt[v]++; }
-        if(cnt !== 1){ toast("「" + P.cat[C].name + "」で、" + P.people[p] + "さんの ○ が " + (cnt ? "多すぎるよ" : "まだないよ") + "。1人に ○ は1つだけ！"); return; }
+        if(cnt !== 1){ rowBad++; if(!rowMsg) rowMsg = "「" + P.cat[C].name + "」で、" + P.people[p] + "さんの ○ が " + (cnt ? "多すぎるよ" : "まだないよ") + "。1人に ○ は1つだけ！"; }
       }
-      for(var v1 = 0; v1 < n; v1++) if(colCnt[v1] !== 1){ toast("「" + P.cat[C].name + "」で、「" + P.cat[C].items[v1] + "」の列の ○ が " + (colCnt[v1] ? "多すぎるよ" : "ないよ") + "。同じ列にも ○ は1つだけ！"); return; }
+      for(var v1 = 0; v1 < n; v1++) if(colCnt[v1] !== 1){ colBad++; if(!colMsg) colMsg = "「" + P.cat[C].name + "」で、「" + P.cat[C].items[v1] + "」の列の ○ が " + (colCnt[v1] ? "多すぎるよ" : "ないよ") + "。同じ列にも ○ は1つだけ！"; }
+      if(rowBad && colBad){ toast(rowBad <= colBad ? rowMsg : colMsg); return; }
+      if(rowBad) viaCols[C] = true;      // 縦（列）でそろっている
     }
     var wrong = 0;
-    for(var C2 = 1; C2 <= P.m; C2++) for(var p2 = 0; p2 < n; p2++) if(P.marks["0_" + C2][p2][truth(C2, p2)].m !== 1) wrong++;
+    for(var C2 = 1; C2 <= P.m; C2++){
+      if(viaCols[C2]){
+        for(var v2 = 0; v2 < n; v2++) for(var p3 = 0; p3 < n; p3++) if(P.marks["0_" + C2][p3][v2].m === 1 && truth(C2, p3) !== v2) wrong++;
+      }else{
+        for(var p2 = 0; p2 < n; p2++) if(P.marks["0_" + C2][p2][truth(C2, p2)].m !== 1) wrong++;
+      }
+    }
     if(wrong){ P.mist++; modal("<p>うーん…まちがいが " + wrong + " か所あるみたい。\n手がかりを、もう一度見なおしてみよう！</p>", [{t: "つづける"}]); return; }
     app.removeEventListener("click", cellClick);
     luck();
