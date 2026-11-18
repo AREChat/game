@@ -1,0 +1,6 @@
+Update21 (2026-11-18 JST) 土台: Update20_20261113_01
+直したこと: 3DS実機で絵とBGMが出なかった原因 = romfs:/ を使う前に romfsInit() を呼んでいなかった。platform_3ds_gfx.c の plat_gfx_init で romfsInit()、plat_gfx_exit で romfsExit() を呼ぶようにした。
+追加: 絵と音の読み込み結果を sdmc:/3ds/hoshiakari/gfx_log.txt に書く(romfs / 絵3枚 / ndsp の成功・失敗)。実機で動かないとき、この中身を教えてもらえば原因がわかる。
+ビルド: devkitProでmakeして hoshiakari.3dsx ができることを確認(約3.6MB)。romfsの中に gfx/*.t3x とBGM3曲が入っていることを確認。実機での動作は未確認(Update20は実機で絵・BGMが出なかった)。
+テスト: ゲームのロジックは変えていないので、Update20と同じ(全通過)。この版では再実行していない。
+メモ: BGMは3DS本体の dspfirm.cdc(DSPファーム)が必要。無いと ndspInit が失敗して音は出ない(gfx_log.txtに出る)。
