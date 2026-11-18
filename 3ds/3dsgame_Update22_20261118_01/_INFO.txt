@@ -1,0 +1,6 @@
+Update22 (2026-11-18 JST) 土台: Update21_20261118_01
+直したこと: 実機で絵が横向き・小さい・ばらばらに出た原因 = tex3ds の --atlas で絵が90度回転して入っていた(tiles/chars/buildings の3枚とも)。gfx/*.t3s から --atlas を外し、回転しないようにした(t3xの向きを確認: 256x64 / 256x128 / 512x256 の元の向き)。
+       plat_sprite は、絵の左上(subtex の left/top)を基準に切り出すようにした。
+追加: gfx_log.txt に、絵ごとの大きさ・向き(rotated)も書く。
+Update21で直ったこと: romfsInit(BGMは実機で鳴ることを確認)。
+ビルド: devkitProで make → hoshiakari.3dsx。実機での絵の見え方は未確認(次に確認してもらう)。
