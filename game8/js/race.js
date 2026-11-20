@@ -110,18 +110,22 @@ export function start(ctx){
         scene.add(dash);
     }
 
-    // 縁石（赤白の目印）：コース幅（約2.75）に対して ちゃんと「はし」に見える太さにする
-    const curbGeo = new T.BoxGeometry(0.3, 0.22, 2.3);
-    const curbMatA = new T.MeshStandardMaterial({color: 0xd43a3a, roughness: 0.6});
-    const curbMatB = new T.MeshStandardMaterial({color: 0xeeeeee, roughness: 0.6});
+    // 縁石（赤白の目印）：立体の箱だと、カメラがコースの はしに近づいたときに すぐそばの箱が 画面いっぱいに
+    // 大きく見えてしまう（近くのものほど大きく映る、カメラごしの錯覚）。そのため、地面にはりつく「平たい模様」にする。
+    const curbGeo = new T.PlaneGeometry(0.34, 1);
+    const curbMatA = new T.MeshStandardMaterial({color: 0xd43a3a, roughness: 0.75});
+    const curbMatB = new T.MeshStandardMaterial({color: 0xeeeeee, roughness: 0.75});
     for(let i = 0; i < N; i += 2){
         [left, right].forEach((side) => {
-            const m = new T.Mesh(curbGeo, (i / 2) % 2 === 0 ? curbMatA : curbMatB);
             const p = side[i], q = side[(i + 1) % N];
+            const segLen = Math.hypot(q[0] - p[0], q[1] - p[1]) * SCALE * 2;
             const ang = Math.atan2(q[0] - p[0], q[1] - p[1]);
-            m.position.set(p[0] * SCALE, 0.15, p[1] * SCALE);
-            m.rotation.y = ang;
-            m.castShadow = true; m.receiveShadow = true;
+            const m = new T.Mesh(curbGeo, (i / 2) % 2 === 0 ? curbMatA : curbMatB);
+            m.scale.set(1, segLen, 1);
+            m.rotateX(-Math.PI / 2);
+            m.rotateOnWorldAxis(new T.Vector3(0, 1, 0), ang);
+            m.position.set(p[0] * SCALE, 0.021, p[1] * SCALE);
+            m.receiveShadow = true;
             scene.add(m);
         });
     }
@@ -203,11 +207,11 @@ export function start(ctx){
             }
 
             const my = cars[0];
-            const camDist = 1.8, camHeight = 0.78;
+            const camDist = 3.4, camHeight = 1.5;
             const bx = my.position.x - Math.sin(my.rotation.y) * camDist;
             const bz = my.position.z - Math.cos(my.rotation.y) * camDist;
             camera.position.lerp(new T.Vector3(bx, camHeight, bz), 0.18);
-            const lookAt = new T.Vector3(my.position.x + Math.sin(my.rotation.y) * 1.2, 0.22, my.position.z + Math.cos(my.rotation.y) * 1.2);
+            const lookAt = new T.Vector3(my.position.x + Math.sin(my.rotation.y) * 2.2, 0.28, my.position.z + Math.cos(my.rotation.y) * 2.2);
             camera.lookAt(lookAt);
         }
         renderer.render(scene, camera);
