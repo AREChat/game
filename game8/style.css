@@ -18,6 +18,9 @@ button.big{font-size:18px;font-weight:800;padding:16px 22px;background:linear-gr
 .panel h3{margin:10px 0 4px;color:#9fd4ff;font-size:16px}
 .panel h3:first-child{margin-top:0}
 .panel p{margin:0;font-size:14px;line-height:1.7;color:#dce8f8}
+.panel .row{justify-content:flex-start}
+.panel button.on{background:linear-gradient(#5fc2ff,#2a6ee0);border-color:#9fe0ff;font-weight:800}
+#s-set{padding-top:calc(50px + env(safe-area-inset-top))}
 
 #exitBtn{position:fixed;left:8px;top:calc(8px + env(safe-area-inset-top));z-index:40;padding:5px 12px;font-size:13px;border-radius:999px}
 #pauseBtn{position:fixed;right:8px;top:calc(8px + env(safe-area-inset-top));z-index:40;padding:5px 12px;font-size:16px;border-radius:999px}
