@@ -1,0 +1,52 @@
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#06101f;color:#fff;font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+body{background:radial-gradient(circle at 50% 15%,#15335e,#06101f 70%)}
+#boot{position:fixed;inset:0;z-index:99999;background:#06101f;color:#8fd0ff;display:flex;align-items:center;justify-content:center;font:bold 20px sans-serif;transition:opacity .4s}
+#boot.off{opacity:0;pointer-events:none}
+#stage{position:fixed;inset:0;display:grid;place-items:center}
+.scr{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;text-align:center;overflow:auto}
+.scr.on{display:flex}
+.logo{font-size:clamp(40px,12vw,70px);font-weight:900;letter-spacing:.08em;background:linear-gradient(#bfe6ff,#6ea8ff 45%,#ffd36e);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 16px #3a7bffaa)}
+.sub{margin:0;color:#aecbe8}
+.hint{margin:0;color:#7f9bc0;font-size:12.5px;max-width:460px}
+h2{margin:0;font-size:22px}
+button{font:inherit;color:#fff;background:#1c3a63;border:1px solid #3f7bc9;border-radius:14px;padding:11px 18px;cursor:pointer}
+button:active{transform:translateY(2px)}
+button.big{font-size:18px;font-weight:800;padding:16px 22px;background:linear-gradient(#5fc2ff,#2a6ee0);border:0;color:#021226;box-shadow:0 4px 0 #0a2d6e,0 0 22px #4a9bff88}
+.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.panel{width:min(94vw,480px);text-align:left;background:#102140;border:1px solid #3f7bc9;border-radius:14px;padding:12px 16px}
+.panel h3{margin:10px 0 4px;color:#9fd4ff;font-size:16px}
+.panel h3:first-child{margin-top:0}
+.panel p{margin:0;font-size:14px;line-height:1.7;color:#dce8f8}
+
+#exitBtn{position:fixed;left:8px;top:calc(8px + env(safe-area-inset-top));z-index:40;padding:5px 12px;font-size:13px;border-radius:999px}
+#pauseBtn{position:fixed;right:8px;top:calc(8px + env(safe-area-inset-top));z-index:40;padding:5px 12px;font-size:16px;border-radius:999px}
+
+#s-play{padding:0;gap:0;background:#000}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#hud{position:absolute;left:0;right:0;top:calc(10px + env(safe-area-inset-top));display:flex;justify-content:center;gap:16px;font-weight:800;font-size:16px;text-shadow:0 2px 6px #000;pointer-events:none;z-index:5}
+#hud span{background:#0009;border-radius:10px;padding:3px 12px}
+#toast{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:30;font-size:clamp(22px,6vw,36px);font-weight:900;color:#fff;text-shadow:0 0 18px #4a9bff,0 3px 0 #0a2d6e;opacity:0;pointer-events:none;transition:.25s;text-align:center}
+#toast.on{opacity:1}
+
+.bigscore{font-size:46px;font-weight:900;color:#9fe3b5;text-shadow:0 0 22px #2a6ee0}
+#rBody{font-size:15px;line-height:2;color:#dce8f8}
+#rBody .rank1{color:#ffd36e;font-weight:800}
+
+#pad{position:fixed;inset:0;z-index:20;pointer-events:none}
+#pad[hidden]{display:none}
+.grp{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom))}
+#padL{left:14px;width:168px;height:84px}
+#padR{right:16px}
+.tb{position:absolute;pointer-events:auto;touch-action:none;display:grid;place-items:center;font-weight:900;color:#fff;background:rgba(20,50,100,.55);border:2px solid rgba(255,255,255,.55);border-radius:18px;opacity:.85;-webkit-user-select:none;user-select:none;width:76px;height:76px;font-size:28px}
+.tb.on{background:rgba(95,194,255,.85);color:#021226;transform:scale(.94)}
+.tb.lf{left:0;bottom:0}
+.tb.rt{left:88px;bottom:0}
+.tb.a{width:92px;height:92px;font-size:15px;right:0;bottom:0;background:rgba(255,160,40,.6);border-radius:50%}
+
+body.nav button:focus,body.nav a:focus{outline:3px solid #ffd24a;outline-offset:2px;box-shadow:0 0 14px #ffd24a}
+.pausebox{position:fixed;inset:0;z-index:50;background:rgba(6,16,31,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px}
+.pausebox[hidden]{display:none}
+.pausebox h2{font-size:26px}
+.pausebox button{min-width:15em;font-size:17px}
+@media (max-height:480px){.grp{transform:scale(.8)}#padL{transform-origin:left bottom}#padR{transform-origin:right bottom}}
