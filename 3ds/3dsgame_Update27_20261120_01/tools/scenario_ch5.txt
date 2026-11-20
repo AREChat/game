@@ -1,0 +1,115 @@
+# ===== 通しプレイ: 第4章おわり → 町の施設 → 第5章(星あかりの洞くつ) =====
+#title
+.
+A
+name ヒナタ
+A
+T
+ASSERT scene map
+#第4章までをすすめた状態にする(旗: 7=第1章おわり 11=第2章 17=第2章おわり 18..24=第3章 25..31=第4章 32=第5章はじまり)
+set flag 7
+set flag 11
+set flag 17
+set flag 24
+set flag 31
+set flag 32
+set party 4
+set mlv 0 16
+set mlv 1 16
+set mlv 2 16
+set mlv 3 16
+set gold 5000
+set item 0 20
+set area 4
+set pos 11 8
+#おじいさんの話
+WF 16 12
+U
+A
+T
+ASSERT flag 33
+#道具屋
+WF 9 7
+U
+A
+T
+ASSERT scene fac
+AAAAAAA
+BBBBBBBB
+ASSERT scene map
+#宿屋
+WF 14 7
+U
+A
+T
+ASSERT scene fac
+AAB
+BBBB
+ASSERT scene map
+#転職の間
+WF 7 9
+U
+A
+T
+ASSERT scene fac
+AAAAA
+BBBBBBBB
+ASSERT scene map
+#格闘場(スカウトした魔物がいなくても閉じられる)
+WF 18 7
+D
+A
+T
+ASSERT scene fac
+AAAB
+BBBBBBBB
+ASSERT scene map
+#カジノ(コインを買って、スロットを回す)
+WF 12 10
+U
+A
+T
+ASSERT scene fac
+AA
+AAA
+BBBBBBBBBBBB
+ASSERT scene map
+#Xメニュー: どうぐ/じゅもん・とくぎ/モンスター/ずかん を ひらいて とじる
+X
+D
+A
+BBB
+X
+DD
+A
+BBB
+X
+DDD
+A
+BBB
+X
+DDDD
+A
+BBB
+ASSERT scene map
+#洞くつへ
+WF 23 7
+WF 24 7
+ASSERT area 8
+WF 3 6
+U
+A
+T
+#ボス
+WF 20 4
+U
+A
+T
+f saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+T
+T
+ASSERT flag 34
+ASSERT scene card
+A
+T
+ASSERT scene map

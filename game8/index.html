@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>GAME8 〜アクション＆レース〜</title>
+<meta name="theme-color" content="#06101f">
+<meta name="description" content="横スクロールアクションと、コースを走るレース。3DグラフィックでブラウザからすぐあそべるオリジナルゲームGAME8。">
+<script src="../protect.js"></script>
+<link rel="stylesheet" href="./style.css">
+<script src="../shared/are-offline.js" defer></script>
+</head>
+<body>
+<div id="boot">⏳ よみこみ中…</div>
+<button id="exitBtn" type="button" aria-label="出口"></button>
+<button id="pauseBtn" type="button" hidden aria-label="いちじ停止">⏸</button>
+
+<main id="stage">
+  <section id="s-title" class="scr on">
+    <div class="logo">GAME8</div>
+    <p class="sub">アクション＆レース ｜ 3Dグラフィック</p>
+    <div class="row">
+      <button class="big" id="bAction" type="button">🏃 アクションモード</button>
+      <button class="big" id="bRace" type="button">🏁 レースモード</button>
+    </div>
+    <button id="bHow" type="button">📖 あそびかた</button>
+    <p class="hint">スマホ・タブレットは画面のボタン、パソコンは矢印キー／WASD＋Space（race: ← →）で操作します。<br>初回はデータの読みこみに少し時間がかかります。</p>
+  </section>
+
+  <section id="s-how" class="scr">
+    <h2>あそびかた</h2>
+    <div class="panel">
+      <h3>🏃 アクション</h3>
+      <p>左右で移動、ジャンプで飛びます。敵の上に乗ると倒せます。穴に落ちないように、コインを集めてゴールの旗を目指しましょう。</p>
+      <h3>🏁 レース</h3>
+      <p>自動で前に進みます。左右でハンドル操作してコースをはずれないように走り、CPUと順位を競います。コースの外に出ると速度が落ちます。</p>
+    </div>
+    <button id="howBack" type="button">もどる</button>
+  </section>
+
+  <section id="s-play" class="scr">
+    <canvas id="cv"></canvas>
+    <div id="hud"></div>
+    <div id="toast"></div>
+  </section>
+
+  <section id="s-res" class="scr">
+    <h2 id="rTitle">けっか</h2>
+    <div id="rBody"></div>
+    <div class="row">
+      <button class="big" id="rAgain" type="button">🔁 もういちど</button>
+      <button id="rTitleBtn" type="button">タイトルへ</button>
+    </div>
+  </section>
+</main>
+
+<div id="pad" hidden>
+  <div id="padL" class="grp">
+    <button class="tb lf" data-k="left" aria-label="左">◀</button>
+    <button class="tb rt" data-k="right" aria-label="右">▶</button>
+  </div>
+  <div id="padR" class="grp">
+    <button class="tb a" data-k="jump" aria-label="ジャンプ・アクセル">A</button>
+  </div>
+</div>
+
+<div id="pauseBox" class="pausebox" hidden></div>
+
+<script src="../shared/are-mode.js"></script>
+<script src="../shared/game-nav.js"></script>
+<script src="../shared/game-exit.js"></script>
+<script src="./js/game8.wasm.js"></script>
+<script type="module" src="./js/core.js"></script>
+<script src="../shared/title-secrets.js"></script>
+<script>TitleSecrets.attach({title:function(){return !!(document.getElementById("s-title")&&document.getElementById("s-title").classList.contains("on"));},host:"#s-title"});</script>
+<script src="../shared/first-tips.js" defer></script>
+</body>
+</html>

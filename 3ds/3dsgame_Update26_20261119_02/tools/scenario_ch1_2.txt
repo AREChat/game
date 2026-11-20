@@ -1,0 +1,131 @@
+# ===== 通しプレイ: 第1章〜第2章クリア (tools/playtest.c 用シナリオ) =====
+# 書式: キー(A B X U D L R . と数字の繰り返し) / W x y (歩く) / WF x y (歩く+戦闘は自動) / T (会話を送る)
+#       SOLVE (ひらめき) / f 作戦 (戦闘: a=攻撃 s=とくぎ h=やくそう) / ASSERT 項目 値 / name 名前
+#title
+.
+A
+name ヒナタあいうえおかきくけこ
+A
+T
+ASSERT scene map
+ASSERT chapter 1
+#村の人たち
+WF 12 7
+A
+T
+WF 10 6
+A
+T
+WF 5 7
+A
+T
+WF 19 7
+A
+T
+#広場(祭り)→ 乗り物 → 村へ戻る
+WF 24 7
+ASSERT area 1
+WF 12 12
+WF 12 13
+T
+ASSERT area 1
+WF 6 5
+T
+ASSERT flag 1
+WF 13 6
+A
+T
+ASSERT flag 2
+WF 0 7
+ASSERT area 0
+#第1章ボス(山賊): とくぎ+やくそうで必ず勝てること
+WF 15 7
+T
+f sahahaaaaaa
+T
+ASSERT scene map
+ASSERT flag 4
+ASSERT minlv 2
+#メニュー: セーブしてもどる
+X
+D D A
+A
+B
+B
+ASSERT scene map
+#原っぱ: 宝箱(2回目は空)
+WF 24 7
+WF 24 7
+WF 21 3
+A
+T
+ASSERT flag 8
+A
+T
+WF 5 4
+A
+T
+WF 1 7
+WF 0 7
+#みつば園
+WF 12 12
+WF 12 13
+T
+ASSERT area 3
+WF 7 8
+A
+T
+SOLVE
+T
+ASSERT flag 6
+WF 12 5
+A
+T
+ASSERT scene card
+ASSERT chapter 2
+#第2章へ
+A
+T
+ASSERT area 4
+#ミルフィの町
+WF 6 6
+A
+T
+WF 17 7
+A
+T
+WF 10 5
+A
+T
+WF 11 3
+T
+ASSERT area 5
+#学び舎: ガイ加入 → 手がかり2つ → 校長
+WF 14 9
+A
+T
+ASSERT party 2
+WF 4 9
+A
+T
+SOLVE
+T
+WF 19 9
+A
+T
+#校長戦の前に、れべるあげ(ぜんめつしない強さまで)
+GRIND 5
+HEAL
+WF 12 5
+A
+T
+SOLVE
+T
+f aaaaaaaaaaaaaaaaaaaaaaaa
+T
+ASSERT scene card
+ASSERT chapter 3
+ASSERT alive 1
+A
+T
+ASSERT scene map
