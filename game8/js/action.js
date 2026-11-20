@@ -8,6 +8,18 @@ const SCALE = 1 / 50;               // 物理の px を three.js の world 単�
 const toX = (px) => px * SCALE;
 const toY = (py) => -py * SCALE;
 
+// 光の玉（コインなどを ぱっと華やかに見せる、やわらかい丸グラデーション）
+function makeGlowTexture(){
+    const c = document.createElement("canvas"); c.width = c.height = 64;
+    const ctx = c.getContext("2d");
+    const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, "rgba(255,255,255,1)");
+    g.addColorStop(0.4, "rgba(255,230,150,.75)");
+    g.addColorStop(1, "rgba(255,230,150,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 64, 64);
+    return new T.CanvasTexture(c);
+}
+
 export function start(ctx){
     const {Input, G8, renderer, camera, makeLitScene, consumeJumpEdge, setHud, toast, showResult} = ctx;
     const scene = makeLitScene(0x8fd3ff, 0x1a2f55);
@@ -68,31 +80,44 @@ export function start(ctx){
         return m;
     });
 
-    const playerMat = new T.MeshStandardMaterial({color: 0xff4040, roughness: 0.45, metalness: 0.08});
+    const playerMat = new T.MeshStandardMaterial({color: 0xff4040, roughness: 0.3, metalness: 0.25, emissive: 0x4a0000, emissiveIntensity: 0.3});
     const playerMesh = new T.Mesh(new T.CapsuleGeometry(0.28, 0.42, 4, 10), playerMat);
     playerMesh.castShadow = true; scene.add(playerMesh);
 
-    function makeEnemyMesh(){
+    // 敵キャラ：虫・生き物っぽさを避けた、まるくて かわいい「ロボ・スライム」風の見た目
+    const ENEMY_COLORS = [0x7a5cff, 0xff6fae, 0x3ad4c8, 0xffb13a];
+    function makeEnemyMesh(idx){
         const g = new T.Group();
-        const body = new T.Mesh(new T.SphereGeometry(0.34, 14, 10), new T.MeshStandardMaterial({color: 0x8a4a2a, roughness: 0.6}));
-        body.scale.set(1, 0.82, 1); body.castShadow = true;
+        const color = ENEMY_COLORS[idx % ENEMY_COLORS.length];
+        const body = new T.Mesh(new T.SphereGeometry(0.34, 20, 16), new T.MeshStandardMaterial({color, roughness: 0.25, metalness: 0.15, emissive: color, emissiveIntensity: 0.18}));
+        body.scale.set(1, 0.88, 1); body.castShadow = true;
         g.add(body);
-        const eyeMat = new T.MeshStandardMaterial({color: 0x100800, roughness: 0.3});
-        [-0.14, 0.14].forEach((ox) => {
-            const eye = new T.Mesh(new T.SphereGeometry(0.06, 8, 6), eyeMat);
-            eye.position.set(ox, 0.08, 0.28); g.add(eye);
-        });
+        // 大きな ひとつ目（丸くて やさしい顔）
+        const eyeWhite = new T.Mesh(new T.SphereGeometry(0.16, 16, 12), new T.MeshStandardMaterial({color: 0xffffff, roughness: 0.3}));
+        eyeWhite.position.set(0, 0.06, 0.28); g.add(eyeWhite);
+        const pupil = new T.Mesh(new T.SphereGeometry(0.075, 12, 10), new T.MeshStandardMaterial({color: 0x1a1a2a, roughness: 0.2}));
+        pupil.position.set(0, 0.06, 0.40); g.add(pupil);
+        const hi = new T.Mesh(new T.SphereGeometry(0.03, 8, 6), new T.MeshBasicMaterial({color: 0xffffff}));
+        hi.position.set(0.04, 0.11, 0.44); g.add(hi);
+        // 頭の上の小さなアンテナ球（光る）
+        const antenna = new T.Mesh(new T.SphereGeometry(0.08, 12, 10), new T.MeshStandardMaterial({color, emissive: color, emissiveIntensity: 0.9, roughness: 0.3}));
+        antenna.position.set(0, 0.42, 0); g.add(antenna);
+        g.userData.phase = Math.random() * Math.PI * 2;
         return g;
     }
-    const enemyMeshes = enemyDefs.map(() => { const m = makeEnemyMesh(); scene.add(m); return m; });
+    const enemyMeshes = enemyDefs.map((_e, i) => { const m = makeEnemyMesh(i); scene.add(m); return m; });
 
-    const coinMat = new T.MeshStandardMaterial({color: 0xffd34a, roughness: 0.25, metalness: 0.85, emissive: 0x5a3a00, emissiveIntensity: 0.3});
+    const coinMat = new T.MeshStandardMaterial({color: 0xffd34a, roughness: 0.2, metalness: 0.9, emissive: 0xaa7a10, emissiveIntensity: 0.55});
+    const glowTex = makeGlowTexture();
     const coinMeshes = coinDefs.map((c) => {
-        const m = new T.Mesh(new T.CylinderGeometry(0.17, 0.17, 0.06, 16), coinMat);
+        const m = new T.Mesh(new T.CylinderGeometry(0.17, 0.17, 0.06, 20), coinMat);
         m.rotation.x = Math.PI / 2; m.castShadow = true;
         m.position.set(toX(c[0]), toY(c[1]), 0);
         scene.add(m);
-        return m;
+        const glow = new T.Sprite(new T.SpriteMaterial({map: glowTex, color: 0xffe79a, transparent: true, opacity: 0.85, depthWrite: false, blending: T.AdditiveBlending}));
+        glow.scale.set(0.9, 0.9, 1); glow.position.copy(m.position);
+        scene.add(glow);
+        return {coin: m, glow};
     });
 
     const flagGroup = new T.Group();
@@ -103,12 +128,14 @@ export function start(ctx){
     flag.position.set(pole.position.x + 0.32, pole.position.y + (GOAL.h * SCALE) / 2 - 0.3, 0);
     flagGroup.add(pole, flag); scene.add(flagGroup);
 
-    // 遠景（かんたんな山並み）
-    const farMat = new T.MeshBasicMaterial({color: 0x2a4a7a});
-    for(let i = 0; i < 14; i++){
-        const h = 6 + Math.random() * 10;
-        const m = new T.Mesh(new T.ConeGeometry(5 + Math.random() * 4, h, 5), farMat);
-        m.position.set(i * 9 - 10, toY(GY) + h / 2 - 1.2, -14 - Math.random() * 6);
+    // 遠景（色違いの山並み・奥ほど あわい色にして 奥行きを 豪華に見せる）
+    const farColors = [0x3a5a9a, 0x5a3a9a, 0x2a6a8a];
+    for(let i = 0; i < 18; i++){
+        const h = 6 + Math.random() * 12;
+        const z = -14 - Math.random() * 10;
+        const mat = new T.MeshBasicMaterial({color: farColors[i % farColors.length], transparent: true, opacity: 0.55 + 0.45 * (1 - Math.min(1, (-z - 14) / 12))});
+        const m = new T.Mesh(new T.ConeGeometry(5 + Math.random() * 4, h, 6), mat);
+        m.position.set(i * 7 - 10, toY(GY) + h / 2 - 1.2, z);
         scene.add(m);
     }
     const bigGround = new T.Mesh(new T.PlaneGeometry(400, 60), new T.MeshStandardMaterial({color: 0x0c1830, roughness: 1}));
@@ -116,7 +143,7 @@ export function start(ctx){
     scene.add(bigGround);
 
     // ---------- HUD・状態 ----------
-    let lives = 3, score = 0, done = false, wasAlive = true;
+    let lives = 3, score = 0, done = false, wasAlive = true, elapsed = 0;
     function paintHud(){ setHud('<span>❤️ ' + lives + '</span><span>🪙 ' + score + '</span>'); }
     paintHud();
 
@@ -138,22 +165,31 @@ export function start(ctx){
             playerMesh.position.set(toX(px) + 0.3, toY(py) + 0.45, 0);
             playerMesh.rotation.y = facing < 0 ? Math.PI : 0;
 
+            elapsed += dt;
             let o = 12;
             for(let i = 0; i < 32; i++){
                 if(i < enemyN){
                     const ex = buf[o], ey = buf[o + 1], ew = buf[o + 2], eh = buf[o + 3], ealive = buf[o + 4];
                     const mesh = enemyMeshes[i];
                     mesh.visible = ealive > 0;
-                    if(mesh.visible) mesh.position.set(toX(ex) + ew * SCALE / 2, toY(ey) + eh * SCALE * 0.42, 0);
+                    if(mesh.visible){
+                        const bounce = Math.abs(Math.sin(elapsed * 5 + mesh.userData.phase)) * 0.06;
+                        mesh.position.set(toX(ex) + ew * SCALE / 2, toY(ey) + eh * SCALE * 0.42 + bounce, 0);
+                        mesh.scale.set(1 - bounce * 0.4, 1 + bounce * 0.6, 1 - bounce * 0.4);
+                    }
                 }
                 o += 6;
             }
             for(let i = 0; i < 64; i++){
                 if(i < coinN){
                     const collected = buf[o + 2] > 0;
-                    const mesh = coinMeshes[i];
-                    mesh.visible = !collected;
-                    if(mesh.visible) mesh.rotation.z += dt * 3;
+                    const {coin, glow} = coinMeshes[i];
+                    coin.visible = !collected; glow.visible = !collected;
+                    if(coin.visible){
+                        coin.rotation.z += dt * 3;
+                        const pulse = 0.85 + Math.sin(elapsed * 3 + i) * 0.15;
+                        glow.scale.set(0.9 * pulse, 0.9 * pulse, 1);
+                    }
                 }
                 o += 3;
             }
@@ -170,6 +206,7 @@ export function start(ctx){
             }
         }
 
+        flag.rotation.y = Math.sin(performance.now() / 260) * 0.35;
         const camX = playerMesh.position.x;
         camera.position.set(camX, playerMesh.position.y + 2.6, 7.2);
         camera.lookAt(camX + 1.4, playerMesh.position.y + 0.6, 0);
