@@ -15,7 +15,7 @@ function showScreen(id){
     $("pauseBtn").hidden = id !== "s-play";
 }
 
-// ---------- 入力（キーボード＋画面ボタン） ----------
+// ---------- 入力（キーボード＋画面ボタン。プロコンは下の「ゲームパッド」） ----------
 export const Input = {left: false, right: false, jump: false, jumpEdge: false};
 const KEYMAP = {ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right", ArrowUp: "jump", KeyW: "jump", Space: "jump"};
 let jumpHeldPrev = false;
@@ -116,6 +116,39 @@ function openPause(){
 function closePause(){ paused = false; $("pauseBox").hidden = true; }
 $("pauseBtn").addEventListener("click", () => { if(paused) closePause(); else openPause(); });
 $("exitBtn").addEventListener("click", () => { if(window.AREExit) window.AREExit.open(); else location.href = "../index.html"; });
+
+// ---------- ゲームパッド（Switch プロコンなど） ----------
+// 十字キー／左スティック＝左右、A・B・X・Y＝ジャンプ、＋＝いちじ停止。タイトル・けっか・停止の箱も ボタンで 選べます。
+const gp = {left: false, right: false, jump: false, prev: {}};
+function setPad(k, on){
+    if(gp[k] === on) return;
+    gp[k] = on;
+    if(on){ if(k === "jump" && !Input.jump) Input.jumpEdge = true; Input[k] = true; }
+    else Input[k] = false;
+}
+function padPoll(){
+    requestAnimationFrame(padPoll);
+    let pads = [];
+    try{ pads = navigator.getGamepads ? Array.prototype.slice.call(navigator.getGamepads()) : []; }catch(_e){}
+    const p = pads.find((x) => x && x.connected);
+    if(!p){ setPad("left", false); setPad("right", false); setPad("jump", false); gp.prev = {}; return; }
+    const b = (i) => !!(p.buttons[i] && p.buttons[i].pressed);
+    const ax = p.axes && p.axes.length ? p.axes[0] : 0;
+    const playing = scrs["s-play"].classList.contains("on") && !paused;
+    setPad("left", playing && (b(14) || ax < -0.45));
+    setPad("right", playing && (b(15) || ax > 0.45));
+    setPad("jump", playing && (b(0) || b(1) || b(2) || b(3) || b(12)));
+    const now = {a: b(0), b: b(1), x: b(2), st: b(9)};
+    const hit = (k) => now[k] && !gp.prev[k];
+    const on = (id) => scrs[id].classList.contains("on");
+    if(hit("st") && on("s-play")){ if(paused) closePause(); else openPause(); }
+    else if(paused){ if(hit("a") || hit("b")) closePause(); }
+    else if(on("s-title")){ if(hit("a") && !$("bAction").disabled) $("bAction").click(); else if(hit("x") && !$("bRace").disabled) $("bRace").click(); }
+    else if(on("s-how")){ if(hit("a") || hit("b")) $("howBack").click(); }
+    else if(on("s-res")){ if(hit("a")) $("rAgain").click(); else if(hit("b")) $("rTitleBtn").click(); }
+    gp.prev = now;
+}
+requestAnimationFrame(padPoll);
 
 // ---------- タイトル・あそびかた ----------
 let activeMode = null; // {stop()}
