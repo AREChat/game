@@ -239,7 +239,7 @@ async function startMatch(){
     $("foeName").textContent = "CPU　" + foeDeck.name; $("meName").textContent = "主人公　" + mine.name; msg("対戦開始！"); updateHud(); renderHand(); Snd.play("battle");
     busy = true; busySince = performance.now();
     try{ await G.start(); if(!G.over && G.turn === 1){ let guard = 0; while(!G.over && G.turn === 1 && guard++ < 3) await cpuTurn(G, 1, {level, after: () => wait(320)}); } }catch(e){ if(!aborted) console.error(e); }
-    busy = false; renderHand(); updateHud(); if(G.over) showResult(); else { msg("あなたの ターン"); checkAutoEnd(); }
+    busy = false; if(!G) return; renderHand(); updateHud(); if(G.over) showResult(); else { msg("あなたの ターン"); checkAutoEnd(); }
 }
 function lastAttacker(){ if(!G) return null; for(let i = G.log.length - 1; i >= 0; i--){ const e = G.log[i]; if(e.type === "attack"){ const u = G.p[e.p].board[e.slot]; return u || null; } } return null; }
 function showResult(){
