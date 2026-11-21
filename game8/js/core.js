@@ -172,7 +172,7 @@ export function showResult(title, bodyHtml, again, backToTitle){
     onAgain = again; onTitle = backToTitle;
     showScreen("s-res");
 }
-$("rAgain").addEventListener("click", () => { if(onAgain) onAgain(); });
+$("rAgain").addEventListener("click", () => { showScreen("s-play"); if(onAgain) onAgain(); });
 $("rTitleBtn").addEventListener("click", () => { if(onTitle) onTitle(); toTitle(); });
 
 // ---------- 一時停止・出口 ----------
