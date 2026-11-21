@@ -165,6 +165,46 @@ export function start(ctx){
     const carColors = [0xff3b3b, 0x2e7bff, 0x2fe08a, 0xffcf2e];
     const cars = carColors.map((c) => { const m = makeCar(c); scene.add(m); return m; });
 
+    // ---------- たすけモンスター（コースから大きくはずれて 止まってしまったら、かわいいモンスターが車をコースへ運んでくれる） ----------
+    function makeRescueMonster(){
+        const g = new T.Group();
+        const body = new T.Mesh(new T.SphereGeometry(0.22, 16, 12), new T.MeshStandardMaterial({color: 0xffb3e6, roughness: 0.55, emissive: 0x4a1a3a, emissiveIntensity: 0.25}));
+        body.scale.set(1, 0.92, 1); g.add(body);
+        const eyeWhite = new T.Mesh(new T.SphereGeometry(0.1, 14, 10), new T.MeshStandardMaterial({color: 0xffffff, roughness: 0.3}));
+        eyeWhite.position.set(0, 0.03, 0.18); g.add(eyeWhite);
+        const pupil = new T.Mesh(new T.SphereGeometry(0.05, 10, 8), new T.MeshStandardMaterial({color: 0x241a33}));
+        pupil.position.set(0, 0.03, 0.26); g.add(pupil);
+        // ほっぺ
+        [[-0.13, -0.02], [0.13, -0.02]].forEach(([x, y]) => {
+            const cheek = new T.Mesh(new T.CircleGeometry(0.045, 10), new T.MeshBasicMaterial({color: 0xff8fc7, transparent: true, opacity: 0.8}));
+            cheek.position.set(x, y, 0.2); g.add(cheek);
+        });
+        // ちいさなプロペラ帽子
+        const cap = new T.Mesh(new T.ConeGeometry(0.07, 0.1, 10), new T.MeshStandardMaterial({color: 0xffe36e, roughness: 0.5}));
+        cap.position.set(0, 0.26, 0); g.add(cap);
+        const prop = new T.Mesh(new T.BoxGeometry(0.26, 0.02, 0.05), new T.MeshStandardMaterial({color: 0x6ecfff, roughness: 0.4}));
+        prop.position.set(0, 0.33, 0); g.add(prop);
+        // ふわふわ ちいさな羽（布っぽい、虫の羽ではなく リボンのような形）
+        [-1, 1].forEach((side) => {
+            const wing = new T.Mesh(new T.CircleGeometry(0.13, 12, 0, Math.PI), new T.MeshStandardMaterial({color: 0xffffff, roughness: 0.6, side: T.DoubleSide, transparent: true, opacity: 0.9}));
+            wing.position.set(side * 0.2, 0.04, -0.02);
+            wing.rotation.y = side * 0.5;
+            wing.rotation.z = Math.PI / 2;
+            wing.userData.side = side;
+            g.add(wing);
+            g.userData['wing' + side] = wing;
+        });
+        // 車とつながる ひも
+        const rope = new T.Mesh(new T.CylinderGeometry(0.012, 0.012, 1, 6), new T.MeshBasicMaterial({color: 0xffffff}));
+        rope.userData.isRope = true;
+        g.add(rope);
+        g.userData.prop = prop; g.userData.rope = rope;
+        g.visible = false;
+        scene.add(g);
+        return g;
+    }
+    const rescueAnim = cars.map(() => ({active: false, fromX: 0, fromZ: 0, toX: 0, toZ: 0, toHeading: 0, monster: makeRescueMonster()}));
+
     // ---------- HUD ----------
     function paintHud(lap, rank, carN, speedKmh){
         setHud('<span>🏁 Lap ' + Math.min(lap + 1, LAPS) + '/' + LAPS + '</span><span>順位 ' + rank + '/' + carN + '</span><span>' + Math.round(speedKmh) + ' km/h</span>');
@@ -181,15 +221,48 @@ export function start(ctx){
             const steer = (Input.left ? -1 : 0) + (Input.right ? 1 : 0);
             G8.race_step(dt, steer, 1, 0);
             const ptr = G8.race_get_buffer();
-            const buf = new Float32Array(G8.heap().buffer, ptr, 4 + 4 * 9);
+            const buf = new Float32Array(G8.heap().buffer, ptr, 4 + 4 * 10);
             const carN = buf[0] | 0;
             const progress = [];
             for(let i = 0; i < carN; i++){
-                const o = 4 + i * 9;
+                const o = 4 + i * 10;
                 const x = buf[o], z = buf[o + 1], heading = buf[o + 2], speed = buf[o + 3];
                 const lap = buf[o + 4], finished = buf[o + 5], rank = buf[o + 6], prog = buf[o + 7];
-                cars[i].position.set(x * SCALE, 0, z * SCALE);
-                cars[i].rotation.y = heading;
+                const rescue = buf[o + 9]; // 1→0：かわいいモンスターが 運んでいる残り（0なら 通常どおり）
+                const wx = x * SCALE, wz = z * SCALE;
+                const ra = rescueAnim[i];
+                if(rescue > 0){
+                    if(!ra.active){
+                        // 運ばれはじめ：いまの見た目の位置を「はこぶ前」として覚える
+                        ra.active = true;
+                        ra.fromX = cars[i].position.x; ra.fromZ = cars[i].position.z;
+                        ra.fromHeading = cars[i].rotation.y;
+                        ra.toX = wx; ra.toZ = wz; ra.toHeading = heading;
+                        ra.monster.visible = true;
+                    }
+                    const t = 1 - rescue; // 0→1
+                    const ease = t * t * (3 - 2 * t); // スムーズに
+                    const cx = ra.fromX + (ra.toX - ra.fromX) * ease, cz = ra.fromZ + (ra.toZ - ra.fromZ) * ease;
+                    const lift = Math.sin(Math.min(t, 1) * Math.PI) * 1.1; // ふわっと持ち上がって おりる
+                    let hd = ra.fromHeading + (ra.toHeading - ra.fromHeading) * ease;
+                    cars[i].position.set(cx, lift * 0.18, cz);
+                    cars[i].rotation.set(0, hd, Math.sin(performance.now() / 160 + i) * 0.08);
+                    const m = ra.monster;
+                    m.position.set(cx, lift + 0.55, cz);
+                    m.position.y += Math.sin(performance.now() / 120) * 0.03;
+                    const w1 = m.userData.wing1, w2 = m.userData['wing-1'];
+                    const flap = Math.sin(performance.now() / 70) * 0.5;
+                    if(w1) w1.rotation.x = flap; if(w2) w2.rotation.x = -flap;
+                    m.userData.prop.rotation.y += 0.9;
+                    const rope = m.userData.rope;
+                    const dy = m.position.y - cars[i].position.y;
+                    rope.scale.y = Math.max(0.05, lift + 0.55);
+                    rope.position.set(0, -(lift + 0.55) / 2, 0);
+                }else{
+                    if(ra.active){ ra.active = false; ra.monster.visible = false; }
+                    cars[i].position.set(wx, 0, wz);
+                    cars[i].rotation.set(0, heading, 0);
+                }
                 progress.push({i, score: lap * 10000 + prog});
                 if(i === 0){
                     progress._player = {lap, speed, finished, rank};
