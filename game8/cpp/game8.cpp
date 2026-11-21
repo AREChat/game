@@ -200,6 +200,8 @@ namespace race {
         int nearSeg; float segT;     // 直近のコース区間 と その中の位置(0..1)
         int lap; int finished; float finishTime; int rank;
         float maxSpeed, accelPow, aiSkill, aiOffset; int isCpu;
+        float stuckT;   // コース外で ほぼ止まっている時間（これがたまると 助けが来る）
+        float rescueT;  // 助け（かわいいモンスター）が コースへ運んでいる残り時間。>0の間は 見た目側で 持ち上げ演出をする
     };
     Car cars[MAX_CAR]; int carCount = 0;
     float raceTime = 0; int finishedCount = 0;
@@ -208,6 +210,9 @@ namespace race {
     const float BASE_ACCEL = 34.0f;
     const float TURN_RATE = 2.6f;
     const float OFFTRACK_DRAG = 0.55f;
+    const float RESCUE_DURATION = 1.3f;   // モンスターが コースへ もどしてくれるまでの 時間（秒）
+    const float STUCK_SPEED = 3.0f;       // これより おそい状態で コース外にいると「止まっている」とみなす
+    const float STUCK_TIME_LIMIT = 1.1f;  // これだけ 止まっていたら 助けを呼ぶ
 
     EM_KEEP void race_reset(int laps){
         wpCount = 0; carCount = 0; lapsTarget = laps > 0 ? laps : 3; raceTime = 0; finishedCount = 0;
@@ -224,6 +229,7 @@ namespace race {
         c.nearSeg = 0; c.segT = 0; c.lap = 0; c.finished = 0; c.finishTime = 0; c.rank = 0;
         c.maxSpeed = BASE_MAXSPD * speedMul; c.accelPow = BASE_ACCEL * speedMul; c.isCpu = isCpu;
         c.aiSkill = aiSkill; c.aiOffset = (float)((carCount * 37) % 11 - 5) * 0.12f;
+        c.stuckT = 0; c.rescueT = 0;
         return carCount++;
     }
 
@@ -251,6 +257,24 @@ namespace race {
         if(prevSeg > wpCount - 3 && bestSeg < 3 && !c.finished) c.lap++;
     }
 
+    // コース全体から いちばん近い点を探す（迷子になったときの「もどす先」を まちがえないための 全体さがし。重くないので ここぞという時だけ使う）
+    static void findNearestFull(Car &c){
+        int bestSeg = 0; float bestD = 1e18f, bestT = 0;
+        for(int i = 0; i < wpCount; i++){
+            int j = wrap(i + 1);
+            float ax = wpX[i], az = wpZ[i], bx = wpX[j], bz = wpZ[j];
+            float ex = bx - ax, ez = bz - az;
+            float len2 = ex * ex + ez * ez; if(len2 < 1e-6f) continue;
+            float t = ((c.x - ax) * ex + (c.z - az) * ez) / len2;
+            t = clampf(t, 0.0f, 1.0f);
+            float px = ax + ex * t, pz = az + ez * t;
+            float dx = c.x - px, dz = c.z - pz;
+            float d2 = dx * dx + dz * dz;
+            if(d2 < bestD){ bestD = d2; bestSeg = i; bestT = t; }
+        }
+        c.nearSeg = bestSeg; c.segT = bestT;
+    }
+
     static float lateralOffset(Car &c){
         int i = c.nearSeg, j = wrap(i + 1);
         float ax = wpX[i], az = wpZ[i], bx = wpX[j], bz = wpZ[j];
@@ -268,6 +292,14 @@ namespace race {
         for(int ci = 0; ci < carCount; ci++){
             Car &c = cars[ci];
             if(c.finished) continue;
+
+            // 助けてもらっている最中：モンスターが運んでいる間は 操作をうけつけず じっとしている（見た目は JS 側で 持ち上げ演出）
+            if(c.rescueT > 0){
+                c.rescueT -= dt;
+                if(c.rescueT < 0) c.rescueT = 0;
+                continue;
+            }
+
             float st = steer, ac = accel, br = brake;
             if(c.isCpu){
                 int tgt = wrap(c.nearSeg + 6);
@@ -292,15 +324,23 @@ namespace race {
             c.x += sinf(c.heading) * c.speed * dt;
             c.z += cosf(c.heading) * c.speed * dt;
 
-            // コース外に出すぎたら ゆるく押し戻す
-            if(fabsf(off) > half * 1.6f){
+            // コース外で ほとんど止まっている時間をはかる → たまったら かわいいモンスターが助けに来る
+            bool offTrack = fabsf(off) > half;
+            if(offTrack && fabsf(c.speed) < STUCK_SPEED) c.stuckT += dt; else c.stuckT = 0;
+            bool veryFarOff = fabsf(off) > half * 3.0f;
+
+            if(c.stuckT > STUCK_TIME_LIMIT || veryFarOff){
+                // 迷子状態でも まちがえずに戻せるよう、コース全体から 正しい最近点をさがし直す
+                findNearestFull(c);
                 int i = c.nearSeg, j = wrap(i + 1);
                 float ex = wpX[j] - wpX[i], ez = wpZ[j] - wpZ[i];
-                float len = sqrtf(ex * ex + ez * ez); if(len > 1e-6f){
-                    float nx = -ez / len, nz = ex / len;
-                    float sign = off > 0 ? 1.0f : -1.0f;
-                    c.x -= nx * sign * 24.0f * dt; c.z -= nz * sign * 24.0f * dt;
-                }
+                float px = wpX[i] + ex * c.segT, pz = wpZ[i] + ez * c.segT;
+                c.x = px; c.z = pz;
+                c.heading = atan2f(ex, ez);
+                c.speed = 0;
+                c.stuckT = 0;
+                c.rescueT = RESCUE_DURATION;
+                continue;
             }
 
             findNearest(c);
@@ -309,9 +349,10 @@ namespace race {
     }
 
     // 出力: [0]carCount [1]lapsTarget [2]raceTime [3]finishedCount
-    // car毎 9: x,z,heading,speed,lap,finished,rank,progress(nearSeg+segT),isCpu
+    // car毎 10: x,z,heading,speed,lap,finished,rank,progress(nearSeg+segT),isCpu,rescue(0..1 残り。0なら助けは来ていない)
     const int HEADER = 4;
-    float outBuf[HEADER + MAX_CAR * 9];
+    const int PER_CAR = 10;
+    float outBuf[HEADER + MAX_CAR * PER_CAR];
     EM_KEEP float* race_get_buffer(){
         outBuf[0] = (float)carCount; outBuf[1] = (float)lapsTarget; outBuf[2] = raceTime; outBuf[3] = (float)finishedCount;
         int o = HEADER;
@@ -321,8 +362,9 @@ namespace race {
                 outBuf[o] = c.x; outBuf[o+1] = c.z; outBuf[o+2] = c.heading; outBuf[o+3] = c.speed;
                 outBuf[o+4] = (float)c.lap; outBuf[o+5] = (float)c.finished; outBuf[o+6] = (float)c.rank;
                 outBuf[o+7] = (float)c.nearSeg + c.segT; outBuf[o+8] = (float)c.isCpu;
-            } else memset(&outBuf[o], 0, sizeof(float) * 9);
-            o += 9;
+                outBuf[o+9] = c.rescueT / RESCUE_DURATION;
+            } else memset(&outBuf[o], 0, sizeof(float) * PER_CAR);
+            o += PER_CAR;
         }
         return outBuf;
     }
