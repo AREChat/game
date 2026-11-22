@@ -193,7 +193,7 @@ export class Game{
     cosmoZ(t, a){ const T1 = a.dur * .7, T2 = a.dur * .86; const v = (u) => u < T1 ? 14 : u < T2 ? 14 + 56 * ease((u - T1) / (T2 - T1)) : 14 + 56 * (1 - ease((u - T2) / (a.dur - T2))); let z = 0; for(let u = 0; u < t; u += .1) z += v(u) * Math.min(.1, t - u); return z; }
     env(){ let z = this.zone || "center"; if(this.mode === "ride"){ const r = this.ride, e = (r.A && r.A.env) || r.a.env; if(e) z = e; } return ZONES[z] || ZONES.center; }
     stageName(){ return stageName(this); }
-    bgmKey(){ if(this.mode === "ride"){ const r = this.ride; if(r.A && r.A.music) return "score:" + r.A.music; const e = r.a.env; if(e === "ghost") return "demoncastle"; if(e === "dark") return "town"; if(e === "night") return "sea"; if(e === "space") return "field"; } return ({center: "town", grove: "cave", sky: "field", manor: "demoncastle", lagoon: "sea"})[this.zone || "center"]; }
+    bgmKey(){ if(this.mode === "ride"){ const r = this.ride; if(r.A && r.A.music){ return (r.A.music === "mars" || r.A.music === "jupiter") ? r.A.music : "score:" + r.A.music; } const e = r.a.env; if(e === "ghost") return "demoncastle"; if(e === "dark") return "town"; if(e === "night") return "sea"; if(e === "space") return "field"; } return ({center: "town", grove: "cave", sky: "field", manor: "demoncastle", lagoon: "sea"})[this.zone || "center"]; }
 
     dyn(t){
         const D = [], R = this.ride, riding = (id) => R && R.a.id === id; const T = this.t;
