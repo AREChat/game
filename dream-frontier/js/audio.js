@@ -7,6 +7,8 @@ let ac = null, bgmBus = null, seBus = null, unlocked = false, on = prefs.on !== 
 let bgmVol = clamp(prefs.bgmVol === undefined ? .48 : prefs.bgmVol), seVol = clamp(prefs.seVol === undefined ? .58 : prefs.seVol);
 let bgmTimer = null, step = 0, key = "town", activeAudio = null, activeKey = "", pendingAudio = null, fadeToken = 0;
 const tracks = {}, failedTracks = {};
+// 火星・木星（ジェット・ワールドツアー）だけは、本物のクラシック音源をこの自前フォルダから読む（他のエリアは従来どおりgame2/quest2/bgm/）
+const LOCAL_BGM = {mars: 1, jupiter: 1};
 const hz = (n) => 261.63 * Math.pow(2, n / 12);
 
 function ensure(){
@@ -60,7 +62,8 @@ function getTrack(name){
     if(failedTracks[name]) return null;
     if(tracks[name]) return tracks[name];
     try{
-        const audio = new Audio(new URL("../../game2/quest2/bgm/" + name + ".mp3", import.meta.url).href);
+        const rel = LOCAL_BGM[name] ? ("../bgm/" + name + ".mp3") : ("../../game2/quest2/bgm/" + name + ".mp3");
+        const audio = new Audio(new URL(rel, import.meta.url).href);
         audio.loop = true; audio.preload = "auto"; audio.volume = 0;
         audio.addEventListener("error", () => { failedTracks[name] = true; if(key === name){ activeAudio = null; activeKey = ""; startSynthBgm(); } });
         tracks[name] = audio;
