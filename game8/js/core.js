@@ -285,7 +285,8 @@ async function boot(){
         G8.race_add_waypoint = c("race_add_waypoint", null, ["number", "number"]);
         G8.race_set_width = c("race_set_width", null, ["number"]);
         G8.race_add_car = c("race_add_car", "number", ["number", "number", "number", "number", "number", "number"]);
-        G8.race_step = c("race_step", null, ["number", "number", "number", "number"]);
+        G8.race_add_itembox = c("race_add_itembox", "number", ["number", "number"]);
+        G8.race_step = c("race_step", null, ["number", "number", "number", "number", "number"]);
         G8.race_get_buffer = c("race_get_buffer", "number", []);
         G8.heap = () => G8mod.HEAPF32;
         window.G8 = G8; // デバッグ・動作確認用（ゲームの動きには関係しません）
