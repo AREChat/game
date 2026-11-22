@@ -38,6 +38,7 @@ namespace act {
     float facing, invuln;
     int coinsCollected;
     float respawnX, respawnY;
+    float coyoteT, jumpBufT;   // 操作しやすくするための「少しの甘さ」（下の act_step 内の説明を参照）
 
     const float GRAVITY = 1700.0f;
     const float MOVE_ACCEL = 2600.0f;
@@ -45,6 +46,8 @@ namespace act {
     const float FRICTION = 2200.0f;
     const float JUMP_VEL = 560.0f;
     const float JUMP_CUT = 0.45f;   // ボタンを早く離すと ジャンプが低くなる
+    const float COYOTE_TIME = 0.1f;   // 足場から落ちた直後も、これだけの間はジャンプを受け付ける（コヨーテタイム）
+    const float JUMP_BUFFER = 0.12f;  // 着地の少し前にジャンプを押しても、着地した瞬間にジャンプとして受け付ける（入力バッファ）
     const float PLAYER_W = 30.0f, PLAYER_H = 40.0f;
     const float ENEMY_W = 32.0f, ENEMY_H = 28.0f;
 
@@ -58,6 +61,7 @@ namespace act {
         platCount = 0; enemyCount = 0; coinCount = 0; goalSet = 0;
         px = sx; py = sy; pvx = 0; pvy = 0; onGround = 0; alive = 1; goalReached = 0;
         facing = 1; invuln = 0; coinsCollected = 0; respawnX = sx; respawnY = sy;
+        coyoteT = 0; jumpBufT = 0;
     }
     EM_KEEP int act_add_platform(float x, float y, float w, float h, int solidTop){
         if(platCount >= MAX_PLAT) return -1;
@@ -126,7 +130,11 @@ namespace act {
         }
         pvx = clampf(pvx, -MOVE_MAXSPD, MOVE_MAXSPD);
 
-        if(jumpPressed && onGround){ pvy = -JUMP_VEL; onGround = 0; }
+        // ジャンプ入力バッファ：押した瞬間を少しの間だけ覚えておく（着地の少し前に押しても ジャンプになる）
+        if(jumpPressed) jumpBufT = JUMP_BUFFER;
+        else if(jumpBufT > 0) jumpBufT -= dt;
+        // コヨーテタイム：足場を離れた直後も、少しの間はまだジャンプできる（崖の端でのミスを減らす）
+        if(jumpBufT > 0 && coyoteT > 0){ pvy = -JUMP_VEL; onGround = 0; coyoteT = 0; jumpBufT = 0; }
         if(!jumpHeld && pvy < -JUMP_VEL * JUMP_CUT) pvy = -JUMP_VEL * JUMP_CUT;
 
         pvy += GRAVITY * dt;
@@ -134,6 +142,9 @@ namespace act {
 
         moveAndCollide(pvx * dt, 0);
         moveAndCollide(0, pvy * dt);
+
+        if(onGround) coyoteT = COYOTE_TIME;
+        else if(coyoteT > 0) coyoteT -= dt;
 
         if(invuln > 0) invuln -= dt;
         if(py > 2000.0f) killPlayer(); // 落下死
