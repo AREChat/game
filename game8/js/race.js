@@ -40,19 +40,42 @@ function buildTrack(){
     return {pts, width: 22, startX: -L / 2 + 10, startZ: -R};
 }
 
+// ===== 10種のオリジナルアイテム（マリオの こうら・バナナなどは 使わない、まったく別の効果） =====
+const ITEM_INFO = {
+    1: {emoji: "🥤", name: "ダッシュドリンク"},
+    2: {emoji: "👟", name: "スプリントシューズ"},
+    3: {emoji: "🧥", name: "ガードポンチョ"},
+    4: {emoji: "🪢", name: "足止めロープ"},
+    5: {emoji: "💤", name: "眠気スプレー"},
+    6: {emoji: "💦", name: "ぬかるみ跳ね"},
+    7: {emoji: "🪨", name: "石ころばらまき"},
+    8: {emoji: "🌀", name: "こむら返りの風"},
+    9: {emoji: "📣", name: "大声援どよめき"},
+    10: {emoji: "📢", name: "応援メガホン"}
+};
+
 export function start(ctx){
-    const {Input, G8, renderer, camera, makeLitScene, setHud, toast, showResult} = ctx;
-    const scene = makeLitScene(0x9fe0ff, 0x234a2a);
+    const {Input, G8, renderer, camera, makeLitScene, consumeJumpEdge, setHud, toast, showResult} = ctx;
+    const scene = makeLitScene(0x9fe0ff, 0x234a2a, "race");
 
     const track = buildTrack();
     const N = track.pts.length;
     const LAPS = 3;
+
+    // アイテムボックスを置く場所（コースを8か所に分けて置く）
+    const ITEMBOX_N = 8;
+    const itemBoxPts = [];
+    for(let i = 0; i < ITEMBOX_N; i++){
+        const idx = Math.floor((i / ITEMBOX_N) * N);
+        itemBoxPts.push(track.pts[idx]);
+    }
 
     // ---------- C++ 側へコースとレーサーを渡す ----------
     function loadRace(){
         G8.race_reset(LAPS);
         track.pts.forEach((p) => G8.race_add_waypoint(p[0], p[1]));
         G8.race_set_width(track.width);
+        itemBoxPts.forEach((p) => G8.race_add_itembox(p[0], p[1]));
         const lanes = [-6, -2, 2, 6];
         const specs = [
             {cpu: 0, mul: 1.0}, {cpu: 1, mul: 0.93}, {cpu: 1, mul: 0.97}, {cpu: 1, mul: 1.0}
@@ -133,37 +156,50 @@ export function start(ctx){
     groundMesh.rotation.x = -Math.PI / 2; groundMesh.receiveShadow = true;
     scene.add(groundMesh);
 
-    // ---------- 車（つやのある塗装＋ヘッドライトの光） ----------
-    const headlightTex = makeGlowTexture();
-    // コース幅（約2.75 world単位）に 車がきちんと 収まるよう、小さめの寸法にする
-    function makeCar(color){
+    // ---------- ランナー（走っているキャラクター。マラソンのイメージ） ----------
+    // コース幅（約2.75 world単位）に きちんと 収まるよう、小さめの寸法にする
+    const HIP_Y = 0.46, SHOULDER_Y = 0.62;
+    function limb(len, mat, capMat){
+        const piv = new T.Group();
+        const m = new T.Mesh(new T.CapsuleGeometry(0.045, len, 4, 8), mat);
+        m.position.y = -len / 2 - 0.045; m.castShadow = true;
+        piv.add(m);
+        if(capMat){
+            const cap = new T.Mesh(new T.SphereGeometry(0.05, 10, 8), capMat);
+            cap.position.y = -len - 0.09; piv.add(cap);
+        }
+        return piv;
+    }
+    function makeRunner(color){
         const g = new T.Group();
-        const bodyMat = new T.MeshPhysicalMaterial({color, roughness: 0.25, metalness: 0.5, clearcoat: 1, clearcoatRoughness: 0.15});
-        const chassis = new T.Mesh(new T.BoxGeometry(0.46, 0.16, 0.95), bodyMat);
-        chassis.position.y = 0.14; chassis.castShadow = true; g.add(chassis);
-        const stripe = new T.Mesh(new T.BoxGeometry(0.1, 0.02, 0.97), new T.MeshStandardMaterial({color: 0xffffff, roughness: 0.3, metalness: 0.2}));
-        stripe.position.set(0, 0.225, 0); g.add(stripe);
-        const cabin = new T.Mesh(new T.BoxGeometry(0.34, 0.14, 0.42), new T.MeshPhysicalMaterial({color: 0xcfeeff, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.75, clearcoat: 1}));
-        cabin.position.set(0, 0.27, -0.03); cabin.castShadow = true; g.add(cabin);
-        const wheelMat = new T.MeshStandardMaterial({color: 0x161616, roughness: 0.75, metalness: 0.2});
-        const wheelGeo = new T.CylinderGeometry(0.1, 0.1, 0.1, 16);
-        [[-0.2, 0.32], [0.2, 0.32], [-0.2, -0.32], [0.2, -0.32]].forEach(([x, z]) => {
-            const w = new T.Mesh(wheelGeo, wheelMat);
-            w.rotation.z = Math.PI / 2;
-            w.position.set(x, 0.095, z);
-            w.castShadow = true; g.add(w);
-            const hub = new T.Mesh(new T.CylinderGeometry(0.035, 0.035, 0.11, 10), new T.MeshStandardMaterial({color: 0xcccccc, metalness: 0.8, roughness: 0.3}));
-            hub.rotation.z = Math.PI / 2; hub.position.set(x, 0.095, z); g.add(hub);
-        });
-        [[-0.15, 0.46], [0.15, 0.46]].forEach(([x, z]) => {
-            const light = new T.Sprite(new T.SpriteMaterial({map: headlightTex, transparent: true, opacity: 0.9, depthWrite: false, blending: T.AdditiveBlending}));
-            light.position.set(x, 0.14, z); light.scale.set(0.16, 0.16, 1);
-            g.add(light);
-        });
+        const skinMat = new T.MeshStandardMaterial({color: 0xffd9b3, roughness: 0.6});
+        const bodyMat = new T.MeshStandardMaterial({color, roughness: 0.5, metalness: 0.08});
+        const shoeMat = new T.MeshStandardMaterial({color: 0x222222, roughness: 0.7});
+
+        const torso = new T.Mesh(new T.CapsuleGeometry(0.14, 0.26, 4, 8), bodyMat);
+        torso.position.y = HIP_Y + 0.17; torso.castShadow = true; g.add(torso);
+        const stripe = new T.Mesh(new T.BoxGeometry(0.03, 0.26, 0.29), new T.MeshStandardMaterial({color: 0xffffff, roughness: 0.4}));
+        stripe.position.set(0.15, HIP_Y + 0.17, 0); g.add(stripe);
+        const head = new T.Mesh(new T.SphereGeometry(0.13, 16, 12), skinMat);
+        head.position.y = HIP_Y + 0.46; head.castShadow = true; g.add(head);
+        const band = new T.Mesh(new T.TorusGeometry(0.135, 0.025, 8, 16), bodyMat);
+        band.position.y = head.position.y + 0.02; band.rotation.x = Math.PI / 2; g.add(band);
+
+        const legL = limb(0.42, bodyMat, shoeMat); legL.position.set(-0.08, HIP_Y, 0.02); g.add(legL);
+        const legR = limb(0.42, bodyMat, shoeMat); legR.position.set(0.08, HIP_Y, 0.02); g.add(legR);
+        const armL = limb(0.3, skinMat, null); armL.position.set(-0.17, SHOULDER_Y, 0); g.add(armL);
+        const armR = limb(0.3, skinMat, null); armR.position.set(0.17, SHOULDER_Y, 0); g.add(armR);
+        g.userData.legL = legL; g.userData.legR = legR; g.userData.armL = armL; g.userData.armR = armR;
+
+        // ガードポンチョ（シールド）中は、まわりに うっすら光るバブルを出す
+        const shield = new T.Mesh(new T.SphereGeometry(0.56, 16, 12), new T.MeshStandardMaterial({color: 0x7ecbff, transparent: true, opacity: 0.0, roughness: 0.2, metalness: 0.1, emissive: 0x2a6fa8, emissiveIntensity: 0.3}));
+        shield.position.y = HIP_Y + 0.2; g.add(shield);
+        g.userData.shield = shield;
+        g.userData.phase = Math.random() * Math.PI * 2;
         return g;
     }
     const carColors = [0xff3b3b, 0x2e7bff, 0x2fe08a, 0xffcf2e];
-    const cars = carColors.map((c) => { const m = makeCar(c); scene.add(m); return m; });
+    const cars = carColors.map((c) => { const m = makeRunner(c); scene.add(m); return m; });
 
     // ---------- たすけモンスター（コースから大きくはずれて 止まってしまったら、かわいいモンスターが車をコースへ運んでくれる） ----------
     function makeRescueMonster(){
@@ -205,9 +241,59 @@ export function start(ctx){
     }
     const rescueAnim = cars.map(() => ({active: false, fromX: 0, fromZ: 0, toX: 0, toZ: 0, toHeading: 0, monster: makeRescueMonster()}));
 
+    // ---------- アイテムボックス（とると10種のどれかを持つ。またとれば おきかわる） ----------
+    const itemGlowTex = makeGlowTexture();
+    function makeItemBox(){
+        const g = new T.Group();
+        const core = new T.Mesh(new T.OctahedronGeometry(0.26, 0), new T.MeshStandardMaterial({color: 0xffe14a, emissive: 0xffb300, emissiveIntensity: 0.7, roughness: 0.3, metalness: 0.4}));
+        core.castShadow = true; g.add(core);
+        const glow = new T.Sprite(new T.SpriteMaterial({map: itemGlowTex, color: 0xffe79a, transparent: true, opacity: 0.8, depthWrite: false, blending: T.AdditiveBlending}));
+        glow.scale.set(1.1, 1.1, 1); g.add(glow);
+        g.userData.core = core; g.userData.glow = glow;
+        g.position.y = 0.5;
+        scene.add(g);
+        return g;
+    }
+    const itemBoxMeshes = itemBoxPts.map((p) => {
+        const m = makeItemBox();
+        m.position.x = p[0] * SCALE; m.position.z = p[1] * SCALE;
+        return m;
+    });
+
+    // ---------- わな（ぬかるみ・石ころ）：使わなかった人にも見えるよう、地面に出す ----------
+    const MAX_TRAP_VIS = 16;
+    function makeTrapMesh(){
+        const g = new T.Group();
+        const mud = new T.Mesh(new T.CircleGeometry(0.75, 20), new T.MeshStandardMaterial({color: 0x6b4a2a, roughness: 0.95, transparent: true, opacity: 0.85}));
+        mud.rotation.x = -Math.PI / 2; mud.position.y = 0.012; g.add(mud);
+        const pebbles = new T.Group();
+        for(let i = 0; i < 6; i++){
+            const pb = new T.Mesh(new T.SphereGeometry(0.09 + Math.random() * 0.05, 8, 6), new T.MeshStandardMaterial({color: 0x999288, roughness: 0.8}));
+            const a = (i / 6) * Math.PI * 2, r = 0.25 + Math.random() * 0.25;
+            pb.position.set(Math.cos(a) * r, 0.06, Math.sin(a) * r);
+            pb.castShadow = true;
+            pebbles.add(pb);
+        }
+        g.add(pebbles);
+        g.userData.mud = mud; g.userData.pebbles = pebbles;
+        g.visible = false;
+        scene.add(g);
+        return g;
+    }
+    const trapMeshes = Array.from({length: MAX_TRAP_VIS}, () => makeTrapMesh());
+
     // ---------- HUD ----------
-    function paintHud(lap, rank, carN, speedKmh){
-        setHud('<span>🏁 Lap ' + Math.min(lap + 1, LAPS) + '/' + LAPS + '</span><span>順位 ' + rank + '/' + carN + '</span><span>' + Math.round(speedKmh) + ' km/h</span>');
+    function paintHud(lap, rank, carN, speedKmh, heldItem, effects){
+        const item = heldItem ? (ITEM_INFO[heldItem].emoji + ' ' + ITEM_INFO[heldItem].name + '（決定キーで使う）') : "アイテムなし";
+        let fx = "";
+        if(effects){
+            if(effects.stagger) fx += " 😵つまずき中";
+            if(effects.slow) fx += " 🐌スロー中";
+            if(effects.shield) fx += " 🧥ガード中";
+            if(effects.speedBuff) fx += " 🥤ダッシュ中";
+            if(effects.turnBuff) fx += " 👟スプリント中";
+        }
+        setHud('<span>🏁 Lap ' + Math.min(lap + 1, LAPS) + '/' + LAPS + '</span><span>順位 ' + rank + '/' + carN + '</span><span>' + Math.round(speedKmh) + ' km/h</span><span>' + item + fx + '</span>');
     }
 
     let done = false, running = true, lastT = performance.now();
@@ -219,16 +305,23 @@ export function start(ctx){
 
         if(!ctx.isPaused() && !done){
             const steer = (Input.left ? -1 : 0) + (Input.right ? 1 : 0);
-            G8.race_step(dt, steer, 1, 0);
+            const useItemEdge = consumeJumpEdge() ? 1 : 0;
+            G8.race_step(dt, steer, 1, 0, useItemEdge);
             const ptr = G8.race_get_buffer();
-            const buf = new Float32Array(G8.heap().buffer, ptr, 4 + 4 * 10);
+            const MAX_CAR = 4, PER_CAR = 16, MAX_TRAP = 16, MAX_ITEMBOX = 8;
+            const TOTAL = 6 + MAX_CAR * PER_CAR + MAX_TRAP * 4 + MAX_ITEMBOX * 3;
+            const buf = new Float32Array(G8.heap().buffer, ptr, TOTAL);
             const carN = buf[0] | 0;
+            const trapN = buf[4] | 0, boxN = buf[5] | 0;
             const progress = [];
             for(let i = 0; i < carN; i++){
-                const o = 4 + i * 10;
+                const o = 6 + i * PER_CAR;
                 const x = buf[o], z = buf[o + 1], heading = buf[o + 2], speed = buf[o + 3];
                 const lap = buf[o + 4], finished = buf[o + 5], rank = buf[o + 6], prog = buf[o + 7];
                 const rescue = buf[o + 9]; // 1→0：かわいいモンスターが 運んでいる残り（0なら 通常どおり）
+                const heldItem = buf[o + 10] | 0;
+                const stagger = buf[o + 11] > 0, slow = buf[o + 12] > 0, shield = buf[o + 13] > 0;
+                const speedBuff = buf[o + 14] > 0, turnBuff = buf[o + 15] > 0;
                 const wx = x * SCALE, wz = z * SCALE;
                 const ra = rescueAnim[i];
                 if(rescue > 0){
@@ -260,18 +353,61 @@ export function start(ctx){
                     rope.position.set(0, -(lift + 0.55) / 2, 0);
                 }else{
                     if(ra.active){ ra.active = false; ra.monster.visible = false; }
+                    // つまずき中は がくっと前のめりに、それ以外は まっすぐ立って走る
+                    const wobble = stagger ? Math.sin(performance.now() / 90) * 0.18 : 0;
                     cars[i].position.set(wx, 0, wz);
-                    cars[i].rotation.set(0, heading, 0);
+                    cars[i].rotation.set(stagger ? 0.35 : 0, heading, wobble);
                 }
+                // 走るアニメーション（速さに合わせて 足・うでを ふる。つまずき中は止める）
+                const runner = cars[i];
+                const strideHz = stagger ? 0 : 1.2 + (speed / 20);
+                runner.userData.phase += dt * strideHz * Math.PI * 2;
+                const swing = stagger ? 0 : Math.sin(runner.userData.phase) * (0.55 + Math.min(speed / 40, 0.5));
+                runner.userData.legL.rotation.x = swing;
+                runner.userData.legR.rotation.x = -swing;
+                runner.userData.armL.rotation.x = -swing * 0.8;
+                runner.userData.armR.rotation.x = swing * 0.8;
+                // ガードポンチョ中は バブルを出す
+                const shieldMesh = runner.userData.shield;
+                shieldMesh.material.opacity = shield ? 0.32 + Math.sin(performance.now() / 150) * 0.06 : 0.0;
+
                 progress.push({i, score: lap * 10000 + prog});
                 if(i === 0){
-                    progress._player = {lap, speed, finished, rank};
+                    progress._player = {lap, speed, finished, rank, heldItem, effects: {stagger, slow, shield, speedBuff, turnBuff}};
                 }
             }
+
+            // トラップ（わな）の見た目
+            for(let i = 0; i < MAX_TRAP_VIS; i++){
+                const o = 6 + MAX_CAR * PER_CAR + i * 4;
+                const life = i < trapN ? buf[o + 3] : 0;
+                const m = trapMeshes[i];
+                if(life > 0){
+                    const kind = buf[o + 2] | 0;
+                    m.position.set(buf[o] * SCALE, 0, buf[o + 1] * SCALE);
+                    m.userData.mud.visible = kind === 0;
+                    m.userData.pebbles.visible = kind === 1;
+                    m.visible = true;
+                }else{
+                    m.visible = false;
+                }
+            }
+            // アイテムボックスの見た目（とられていたら 消え、復活したら また浮かぶ）
+            for(let i = 0; i < itemBoxMeshes.length; i++){
+                const o = 6 + MAX_CAR * PER_CAR + MAX_TRAP * 4 + i * 3;
+                const avail = i < boxN ? buf[o + 2] > 0 : true;
+                const m = itemBoxMeshes[i];
+                m.visible = avail;
+                if(avail){
+                    m.rotation.y += dt * 1.4;
+                    m.position.y = 0.5 + Math.sin(performance.now() / 300 + i) * 0.08;
+                }
+            }
+
             progress.sort((a, b) => b.score - a.score);
             const playerRank = progress.findIndex((p) => p.i === 0) + 1;
             const pinfo = progress._player;
-            paintHud(pinfo.lap, playerRank, carN, pinfo.speed * 3.2);
+            paintHud(pinfo.lap, playerRank, carN, pinfo.speed * 3.2, pinfo.heldItem, pinfo.effects);
 
             if(pinfo.finished >= 1 && !done){
                 done = true;

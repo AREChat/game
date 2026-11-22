@@ -53,3 +53,14 @@ body.nav button:focus,body.nav a:focus{outline:3px solid #ffd24a;outline-offset:
 .pausebox h2{font-size:26px}
 .pausebox button{min-width:15em;font-size:17px}
 @media (max-height:480px){.grp{transform:scale(.8)}#padL{transform-origin:left bottom}#padR{transform-origin:right bottom}}
+
+/* ---- 1枚絵（game8/img/ に絵を置いたときだけ働く。絵が無いときは 上の見た目のまま）---- */
+body.art-title #s-title,body.art-title #s-how,body.art-title #s-set{background:linear-gradient(180deg,rgba(6,16,31,.38),rgba(6,16,31,.80)),var(--g8-title) center/cover no-repeat}
+body.art-title .logo{filter:drop-shadow(0 3px 12px #000c)}
+body.art-title .sub,body.art-title .hint{color:#dbe8f8;text-shadow:0 1px 8px #000}
+body.art-card-race #bRace,body.art-card-action #bAction{position:relative;display:flex;align-items:flex-end;justify-content:center;width:min(44vw,250px);aspect-ratio:16/10;padding:0 8px 10px;color:#fff;font-size:16px;text-shadow:0 2px 8px #000;border:2px solid #9fe0ff;overflow:hidden;box-shadow:0 4px 0 #0a2d6e,0 0 22px #4a9bff88}
+body.art-card-race #bRace{background:linear-gradient(180deg,rgba(2,18,38,0) 38%,rgba(2,18,38,.9)),var(--g8-card-race) center/cover no-repeat}
+body.art-card-action #bAction{background:linear-gradient(180deg,rgba(2,18,38,0) 38%,rgba(2,18,38,.9)),var(--g8-card-action) center/cover no-repeat}
+body.art-card-race #bRace:disabled,body.art-card-action #bAction:disabled{filter:grayscale(.6) brightness(.7)}
+body.art-result #s-res{background:linear-gradient(180deg,rgba(6,16,31,.35),rgba(6,16,31,.78)),var(--g8-result) center/cover no-repeat}
+body.art-result #rBody{background:rgba(6,16,31,.66);border-radius:14px;padding:10px 20px}
