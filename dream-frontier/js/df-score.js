@@ -12,7 +12,7 @@ const TH_JUP = [[[67, 0, 2], [64, 2, 2], [67, 4, 2], [72, 6, 2]], [[69, 0, 2], [
 const LEAD_SW = [[[76, 0, 3], [79, 4, 2], [76, 6, 2], [72, 8, 4]], [[76, 0, 3], [81, 4, 2], [79, 6, 2], [76, 8, 4]], [[77, 0, 3], [81, 4, 2], [77, 6, 2], [72, 8, 4]], [[74, 0, 3], [79, 4, 2], [71, 8, 2], [74, 10, 2], [67, 12, 4]]];
 const LEAD_AU = [[[69, 0, 6], [72, 6, 2], [76, 8, 8]], [[72, 0, 6], [69, 6, 2], [65, 8, 8]], [[67, 0, 6], [72, 6, 2], [76, 8, 8]], [[74, 0, 8], [71, 8, 4], [67, 12, 4]]];
 export const SCORES = {
-    mars: {bpm: 156, beats: 5, sub: 2, bar(b, I, add){
+    mars: {bpm: 156, beats: 5, sub: 2, gain: 1, bar(b, I, add){
         const r = 36 + [0, 0, -4, -4, -7, -5, 0, -5][b % 8], hits = [0, 2, 3, 5, 7, 8], pit = [0, 0, 7, 0, 1, 7];
         hits.forEach((st, i) => add("pluck", r + 12 + pit[i], st, 1, .34 + .22 * I));
         add("bass", r, 0, 10, .5); if(I > .1){ add("string", r + 12, 0, 10, .12 + .16 * I); add("string", r + 19, 0, 10, .09 + .1 * I); }
@@ -20,7 +20,7 @@ export const SCORES = {
         if(I > .28){ TH_MARS[b % 8].forEach((m, i) => { add("brass", m, i * 2, 2, .42 + .12 * I); if(I > .8) add("brass", m - 12, i * 2, 2, .3); }); }
         if(I > .7 && b % 8 === 0) add("crash", 60, 0, 4, .5); if(I > .55 && b % 8 === 7) for(let k = 0; k < 4; k++) add("snare", 60, 6 + k, 1, .18 + k * .06);
     }},
-    jupiter: {bpm: 138, beats: 2, sub: 4, bar(b, I, add){
+    jupiter: {bpm: 138, beats: 2, sub: 4, gain: .7, bar(b, I, add){
         const rt = [0, 0, 5, 7, 0, 9, 5, 7][b % 8], root = 36 + rt, tones = (b % 8 === 5) ? [0, 3, 7, 12] : [0, 4, 7, 12], th = TH_JUP[b % 8];
         if(I >= .3){
             [0, 1, 2, 3, 2, 1, 2, 3].forEach((q, st) => add("pluck", root + 24 + tones[q], st, 1, .16 + .1 * I));
@@ -32,7 +32,7 @@ export const SCORES = {
             th.forEach(([m, st, len]) => add("string", m, st, Math.max(len, 3), .26));
         }
     }},
-    sweets: {bpm: 140, beats: 4, sub: 4, bar(b, I, add){
+    sweets: {bpm: 140, beats: 4, sub: 4, gain: 1.5, bar(b, I, add){
         const rt = [0, 9, 5, 7][b % 4], root = 36 + rt, tones = (b % 4 === 1) ? [0, 3, 7, 12] : [0, 4, 7, 12];
         add("kick", 40, 0, 1, .55); add("kick", 40, 8, 1, .5); if(I > .3){ add("kick", 40, 6, 1, .3); add("kick", 40, 14, 1, .3); } add("snare", 60, 4, 1, .32); add("snare", 60, 12, 1, .32);
         if(I > .3) for(let st = 0; st < 16; st += 2) add("hat", 80, st, 1, .16 + (st % 4 === 2 ? .06 : 0));
@@ -41,7 +41,7 @@ export const SCORES = {
         if(I > .25) LEAD_SW[b % 4].forEach(([m, st, len]) => add("bell", m, st, len, .3));
         if(I > .7) LEAD_SW[b % 4].forEach(([m, st, len]) => add("chip", m + 12, st, len, .06));
     }},
-    aurora: {bpm: 96, beats: 4, sub: 4, bar(b, I, add){
+    aurora: {bpm: 96, beats: 4, sub: 4, gain: .8, bar(b, I, add){
         const rt = [9, 5, 0, 7][b % 4], root = 36 + rt, minor = b % 4 === 0, tn = [0, 7, 12, minor ? 15 : 16, 19, minor ? 15 : 16, 12, 7];
         [0, 7, minor ? 15 : 16].forEach((q) => add("string", root + 24 + q, 0, 16, .12 + .12 * I)); add("bass", root, 0, 8, .5); add("bass", root, 8, 8, .42);
         for(let i = 0; i < 8; i++) add("bell", root + 36 + tn[i] - 12, i * 2, 2, .1 + .04 * I);
@@ -80,7 +80,7 @@ export function createScore(host){
         }
     }
     return {
-        start(n){ if(name === n && timer) return; this.stop(); const ac = host.ac(); if(!ac || !SCORES[n]) return; name = n; bar = 0; I = 0; It = 0; nextT = 0; master = ac.createGain(); master.gain.value = .9; master.connect(host.bus()); schedule(); timer = setInterval(schedule, 120); },
+        start(n){ if(name === n && timer) return; this.stop(); const ac = host.ac(); if(!ac || !SCORES[n]) return; name = n; bar = 0; I = 0; It = 0; nextT = 0; master = ac.createGain(); master.gain.value = .9 * (SCORES[n].gain || 1); master.connect(host.bus()); schedule(); timer = setInterval(schedule, 120); },
         stop(){ if(timer){ clearInterval(timer); timer = null; } if(master){ const m = master, ac = host.ac(); try{ if(ac){ m.gain.setTargetAtTime(0, ac.currentTime, .08); } setTimeout(() => { try{ m.disconnect(); }catch(e){} }, 600); }catch(e){} master = null; } name = ""; },
         setIntensity(v){ It = Math.max(0, Math.min(1, v)); },
         playing: () => !!timer, name: () => name, bars: () => bar
