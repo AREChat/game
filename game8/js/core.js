@@ -5,6 +5,7 @@
 // ・キーボード／画面ボタン／プロコン（ゲームパッド）の入力をまとめる
 // ・タイトル・あそびかた・せってい・プレイ・けっか の画面切り替え、一時停止・出口
 import * as T from "../vendor/three/build/three.module.js";
+import {art, ready as artReady, applyScreenArt, makeBackdrop} from "./art.js";   // 1枚絵（game8/img/ に絵を置いたときだけ働く）
 
 const $ = (id) => document.getElementById(id);
 const scrs = {};
@@ -124,10 +125,13 @@ function makeSkyDome(top, bottom){
     const mat = new T.MeshBasicMaterial({vertexColors: true, side: T.BackSide, fog: false});
     return new T.Mesh(geo, mat);
 }
-export function makeLitScene(skyTop, skyBottom){
+export function makeLitScene(skyTop, skyBottom, artKind){
     const scene = new T.Scene();
     scene.fog = new T.Fog(skyBottom, 70, 440);
     scene.add(makeSkyDome(skyTop, skyBottom));
+    // 空・遠くのけしきの絵があれば、その上に重ねる（artKind は "race" か "action"。アクションは走ると けしきが ゆっくり流れる）
+    const backdrop = artKind ? makeBackdrop("sky_" + artKind, artKind === "action" ? {scroll: 0.012} : {}) : null;
+    if(backdrop){ scene.add(backdrop); scene.userData.artBackdrop = true; }   // 絵の空があるときは、モード側が 手作りの遠景（山）を 出さないようにする
     const hemi = new T.HemisphereLight(skyTop, 0x3a3020, 0.9);
     scene.add(hemi);
     const sun = new T.DirectionalLight(0xfff3d8, 1.8);
@@ -272,6 +276,8 @@ let G8mod = null;
 export const G8 = {};
 async function boot(){
     try{
+        await Promise.race([artReady, new Promise((r) => setTimeout(r, 2500))]);   // 絵の有無を調べるのを、すこしだけ待つ（絵が無くても 止まらない）
+        applyScreenArt();
         G8mod = await window.Game8Module();
         const c = (name, ret, args) => G8mod.cwrap(name, ret, args);
         G8.act_reset = c("act_reset", null, ["number", "number"]);
@@ -285,7 +291,8 @@ async function boot(){
         G8.race_add_waypoint = c("race_add_waypoint", null, ["number", "number"]);
         G8.race_set_width = c("race_set_width", null, ["number"]);
         G8.race_add_car = c("race_add_car", "number", ["number", "number", "number", "number", "number", "number"]);
-        G8.race_step = c("race_step", null, ["number", "number", "number", "number"]);
+        G8.race_add_itembox = c("race_add_itembox", "number", ["number", "number"]);
+        G8.race_step = c("race_step", null, ["number", "number", "number", "number", "number"]);
         G8.race_get_buffer = c("race_get_buffer", "number", []);
         G8.heap = () => G8mod.HEAPF32;
         window.G8 = G8; // デバッグ・動作確認用（ゲームの動きには関係しません）
