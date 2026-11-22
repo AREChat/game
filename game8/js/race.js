@@ -56,7 +56,7 @@ const ITEM_INFO = {
 
 export function start(ctx){
     const {Input, G8, renderer, camera, makeLitScene, consumeJumpEdge, setHud, toast, showResult} = ctx;
-    const scene = makeLitScene(0x9fe0ff, 0x234a2a);
+    const scene = makeLitScene(0x9fe0ff, 0x234a2a, "race");
 
     const track = buildTrack();
     const N = track.pts.length;

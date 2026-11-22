@@ -22,7 +22,7 @@ function makeGlowTexture(){
 
 export function start(ctx){
     const {Input, G8, renderer, camera, makeLitScene, consumeJumpEdge, setHud, toast, showResult} = ctx;
-    const scene = makeLitScene(0x8fd3ff, 0x1a2f55);
+    const scene = makeLitScene(0x8fd3ff, 0x1a2f55, "action");
 
     // ---------- レベルデータ ----------
     const GY = 400;                 // 地面の基準 y（物理 px）
@@ -130,7 +130,7 @@ export function start(ctx){
 
     // 遠景（色違いの山並み・奥ほど あわい色にして 奥行きを 豪華に見せる）
     const farColors = [0x3a5a9a, 0x5a3a9a, 0x2a6a8a];
-    for(let i = 0; i < 18; i++){
+    for(let i = 0; i < (scene.userData.artBackdrop ? 0 : 18); i++){   // 絵の空（sky_action）があるときは、山を作らない
         const h = 6 + Math.random() * 12;
         const z = -14 - Math.random() * 10;
         const mat = new T.MeshBasicMaterial({color: farColors[i % farColors.length], transparent: true, opacity: 0.55 + 0.45 * (1 - Math.min(1, (-z - 14) / 12))});
