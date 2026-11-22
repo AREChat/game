@@ -91,3 +91,9 @@ html,body{font-family:"Cinzel","Noto Serif JP",serif;color:#fff7e4;text-shadow:0
 .soundSliders output{color:#f0d48e;font-variant-numeric:tabular-nums}
 .soundSliders input{grid-column:1/-1;width:100%;accent-color:#e8c77d;touch-action:pan-x}
 @media(max-width:640px){.soundSliders{grid-template-columns:1fr}}
+/* ===== 新アトラクション3つ：のりものの わく・G の くろ ===== */
+#gfx{position:fixed;inset:0;pointer-events:none;z-index:6}
+#vehicle.veh-jet{opacity:1;height:100%;border:0;background:linear-gradient(to bottom,rgba(16,22,44,.94) 0,rgba(16,22,44,.94) 5.5vh,rgba(16,22,44,0) 11vh),linear-gradient(to top,rgba(20,26,52,.96) 0,rgba(20,26,52,.96) 9vh,rgba(20,26,52,0) 17vh),linear-gradient(to right,rgba(16,22,44,.9) 0,rgba(16,22,44,0) 9vw),linear-gradient(to left,rgba(16,22,44,.9) 0,rgba(16,22,44,0) 9vw);box-shadow:inset 0 -3px 0 #4a7aff,inset 0 3px 0 rgba(120,160,255,.35)}
+#vehicle.veh-blaster{opacity:1;height:100%;border:0;background:linear-gradient(to top,rgba(255,154,196,.92) 0,rgba(255,154,196,.92) 6vh,rgba(255,154,196,0) 14vh),radial-gradient(ellipse at 100% 100%,rgba(255,247,251,.95) 0,rgba(255,247,251,.95) 14vw,rgba(255,247,251,0) 15vw),linear-gradient(to right,rgba(255,200,230,.5) 0,rgba(255,200,230,0) 5vw),linear-gradient(to left,rgba(255,200,230,.5) 0,rgba(255,200,230,0) 5vw)}
+#vehicle.veh-wing{opacity:1;height:100%;border:0;background:linear-gradient(115deg,rgba(74,255,216,.55) 0,rgba(74,255,216,.0) 22%) left bottom/46% 40% no-repeat,linear-gradient(245deg,rgba(154,138,255,.55) 0,rgba(154,138,255,0) 22%) right bottom/46% 40% no-repeat,linear-gradient(to top,rgba(10,16,40,.8) 0,rgba(10,16,40,0) 8vh)}
+

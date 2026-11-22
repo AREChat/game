@@ -8,6 +8,7 @@ import {UI} from "./ui.js";
 import {Controls} from "./controls.js";
 import {Snd} from "./audio.js";
 import {ATTRACTIONS} from "./df-data.js";
+import {STAGE_LAYERS} from "./df-stages.js";
 
 const $ = (id) => document.getElementById(id);
 const info = window.__dfInfo = {backend: null, threeStatus: "未確認", tried: []};
@@ -42,18 +43,20 @@ async function main(){
     const resize = () => { const dpr = Math.max(1, window.devicePixelRatio || 1), qualityScale = q.levels[q.i][1]; B.resize(Math.floor(innerWidth), Math.floor(innerHeight), qualityScale * (B.name === "webgl2" ? Math.min(dpr, 2) : 1)); };
     addEventListener("resize", resize); resize();
     const inEmbed = window.parent !== window;
-    const game = new Game(world, ui, {emit: (ev, d) => { if(inEmbed){ try{ parent.postMessage({source: "dream-frontier", ev, data: d}, "*"); }catch(e){} } }, sfx: (n) => Snd.sfx(n), zone: () => Snd.setBgm(game.bgmKey())});
+    const game = new Game(world, ui, {emit: (ev, d) => { if(inEmbed){ try{ parent.postMessage({source: "dream-frontier", ev, data: d}, "*"); }catch(e){} } }, sfx: (n) => Snd.sfx(n), zone: () => Snd.setBgm(game.bgmKey()), ride: (o) => Snd.ride(o), clack: (v, c) => Snd.clack(v, c), rideEnd: () => Snd.rideStop()});
     $("engineTag").textContent = "描画: " + info.backend + "　v" + DF.version;
     window.__df = {game, B, ui, controls, info, world, att: ATTRACTIONS};
     const menuCb = {stamps: () => ui.showStamps(game), help: () => ui.help(), snd: () => { Snd.setOn(!Snd.isOn()); ui.toast("おと：" + (Snd.isOn() ? "ON" : "OFF")); }, sndOn: () => Snd.isOn(), bgmVolume: () => Snd.getVol(), seVolume: () => Snd.getSeVol(), setBgmVolume: (v) => Snd.setVol(v), setSeVolume: (v) => Snd.setSeVol(v), q: () => { q.i = (q.i + 1) % 3; resize(); ui.toast("がしつ：" + q.levels[q.i][0]); }, quality: () => q.levels[q.i][0], diag: () => window.__showDiag && window.__showDiag(), save: () => { game.save(); ui.toast("セーブしました"); }, reset: () => { if(confirm("ほんとうに はじめから やりなおしますか？")){ game.reset(); location.reload(); } }, engine: () => info.backend, back: inEmbed ? () => parent.postMessage({source: "dream-frontier", ev: "exit"}, "*") : null};
-    let last = performance.now(), started = false, acc = 0;
+    let last = performance.now(), started = false, acc = 0, curStage = null, lastBgm = null;
     function frame(now){
         requestAnimationFrame(frame); const dt = Math.min(.1, (now - last) / 1000); last = now; if(!started) { B.frame({eye: [0, 12, 40], yaw: Math.PI + Math.sin(now / 6000) * .5, pitch: -.12, fov: 65}, game.env(), game.dyn(now / 1000), now / 1000); return; }
-        let inp = controls.read(); controls.wantClickAct = game.mode === "ride" && game.ride && game.ride.a.kind === "shoot";
+        let inp = controls.read(); controls.wantClickAct = !!(game.mode === "ride" && game.ride && (game.ride.a.kind === "shoot" || (game.ride.A && game.ride.A.shoot)));
         if(ui.modal){ if(inp.esc || inp.act2) ui.close(); inp = {mx: 0, my: 0, lx: 0, ly: 0}; }
         else if(ui.dlg){ if(inp.act || inp.act2) ui.advance(); inp = {mx: 0, my: 0, lx: 0, ly: 0}; }
         else if(game.mode === "walk" && inp.esc){ ui.menu(game, menuCb); inp = {mx: 0, my: 0, lx: 0, ly: 0}; }
         game.update(dt, inp); ui.hud(game);
+        const sg = game.stageName(); if(sg !== curStage){ if(curStage) for(const id of STAGE_LAYERS[curStage] || []) B.setHidden(id, true); if(sg) for(const id of STAGE_LAYERS[sg] || []) B.setHidden(id, false); curStage = sg; }   // 新アトラクションの 舞台は のっている あいだだけ 見せる
+        const bk = game.bgmKey(); if(bk !== lastBgm){ lastBgm = bk; Snd.setBgm(bk); }
         B.frame(game.camera(), game.env(), game.dyn(game.t), game.t);
         acc += dt; if(acc > 1){ acc = 0; window.__dfFps = Math.round(1 / Math.max(dt, .001)); }
     }
