@@ -84,6 +84,12 @@ html,body{font-family:"Cinzel","Noto Serif JP",serif;color:#fff7e4;text-shadow:0
 .mn button:active{filter:brightness(1.2)}
 .hint{color:#e7deca}
 #loading{background:radial-gradient(ellipse at 50% 27%,#4a6381,#171e39 65%,#090f20);color:#fff3d8}
+/* タイトル画面：きれいな 1枚絵（img/title.webp）の うえに、題名は 空に、ボタンは 下に ならべる（絵が よみこめない ときは 下の 暗い グラデーションに もどる） */
+#loading{background:url("../img/title.webp") center 42%/cover no-repeat,radial-gradient(ellipse at 50% 27%,#4a6381,#171e39 65%,#090f20);justify-content:flex-start;padding:8vh 14px 6vh;box-sizing:border-box;gap:8px}
+#loading h1{color:#2b2350;font-size:clamp(30px,7.5vw,60px);line-height:1.15;text-align:center;text-shadow:0 0 6px #fff,0 0 18px rgba(255,255,255,.9),0 3px 0 #fff}
+#loading #loadMsg{margin-top:auto}
+#loading p{background:rgba(23,30,57,.62);color:#fff3d8;border-radius:12px;padding:4px 14px;text-shadow:none;text-align:center}
+#loading p:empty{display:none}
 #startBtn{font-family:"Cinzel","Noto Serif JP",serif;color:#2c2635;background:linear-gradient(180deg,#f8e8bc,#c9a665);border:1px solid #fff0c8;box-shadow:0 .8em 1.8em rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.75)}
 .tb{font-family:"Cinzel","Noto Serif JP",serif;background:linear-gradient(145deg,rgba(61,75,112,.92),rgba(22,32,57,.96));border-color:rgba(238,214,155,.88);box-shadow:0 .6em 1.2em rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.24)}
 .soundSliders{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;padding:12px;border:1px solid rgba(238,214,155,.38);border-radius:14px;background:rgba(4,10,24,.28)}
