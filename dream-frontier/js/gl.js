@@ -161,7 +161,7 @@ export function createRenderer(canvas, opts){
     R.begin = (cam, env) => {
         if(env) R.env = Object.assign({}, R.env, env);
         const asp = R.w / R.h; const fov = cam.fov || 0.9;
-        const proj = M4.persp(fov, asp, 0.1, 220); const view = M4.look(cam.eye, cam.target, [0,1,0]);
+        const proj = M4.persp(fov, asp, 0.1, 560); const view = M4.look(cam.eye, cam.target, cam.up || [0,1,0]);
         R.vp = M4.mul(proj, view); R.view = view; R.cam = cam.eye; R.queue.length = 0; R.stats.draws = 0; R.stats.tris = 0;
         const e = R.env; gl.clearColor(e.fogC[0], e.fogC[1], e.fogC[2], 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

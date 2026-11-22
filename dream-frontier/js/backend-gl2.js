@@ -30,7 +30,8 @@ export async function create(canvas, opts){
     B.setHidden = (id, hidden) => { for(const l of B.layers) if(l.id === id) l.hidden = !!hidden; };
     B.frame = (cam, env, dyn, t) => {
         const cp = Math.cos(cam.pitch), eye = cam.eye; const tgt = [eye[0] + Math.sin(cam.yaw) * cp, eye[1] + Math.sin(cam.pitch), eye[2] + Math.cos(cam.yaw) * cp];
-        R.begin({eye, target: tgt, fov: cam.fov * Math.PI / 180}, {fogC: env.fog, fogNear: env.near, fogFar: env.far, amb: env.amb, light: env.light});
+        const up = cam.roll ? (() => { const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw), sp = Math.sin(cam.pitch), cq = Math.cos(cam.pitch), F = [sy * cq, sp, cy * cq], u0 = [-sy * sp, cq, -cy * sp], r0 = [F[1] * u0[2] - F[2] * u0[1], F[2] * u0[0] - F[0] * u0[2], F[0] * u0[1] - F[1] * u0[0]], c = Math.cos(cam.roll), s = Math.sin(cam.roll); return [u0[0] * c + r0[0] * s, u0[1] * c + r0[1] * s, u0[2] * c + r0[2] * s]; })() : [0, 1, 0];
+        R.begin({eye, target: tgt, up, fov: cam.fov * Math.PI / 180}, {fogC: env.fog, fogNear: env.near, fogFar: env.far, amb: env.amb, light: env.light});
         for(const l of B.layers){ if(l.hidden) continue; R.draw(l.mesh, l.scroll ? Object.assign({}, l.opt, {uv: [t * l.scroll[0], t * l.scroll[1]]}) : l.opt); }
         for(const d of dyn){
             if(d.p && spriteReady(d.p)){   // 1枚絵の人（画像が そろっていれば）

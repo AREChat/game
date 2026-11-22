@@ -2,6 +2,7 @@
 //   prim: {t:"b"|"c"|"s"|"p", x,y,z, ry,rx,rz, c(色)}  b:はこ(w,h,d) c:えんちゅう(rt,rb,h,seg) s:きゅう(r,sx,sy,sz) p:いた(w,d,ux,uy)
 import {SKY_PTS, MINE_PTS, BOAT_PTS, SPLASH_PTS, GHOST_PTS, SAFARI_PTS, FAIRY_PTS, SHIP_PTS, ATTRACTIONS, QUARTET} from "./df-data.js";
 import {makePath, yawOf, pitchOf} from "./df-path.js";
+import {buildStages} from "./df-stages.js";
 
 let sd = 99; const rnd = () => { sd = (sd * 1664525 + 1013904223) >>> 0; return sd / 4294967296; };
 const box = (P, x, y, z, w, h, d, c, ry, rx, rz) => P.push({t: "b", x, y, z, w, h, d, c, ry: ry || 0, rx: rx || 0, rz: rz || 0});
@@ -202,6 +203,7 @@ export function buildWorld(){
         const dr = model("drone"); sph(dr.prims, 0, 0, 0, .8, "#ff6a6a", .6, 8); box(dr.prims, 0, 0, 0, 3, .15, .8, "#c04040"); sph(dr.prims, 0, 0, .6, .2, "#ffe34a"); }
     { const h = model("horse"); const P = h.prims; box(P, 0, 1.0, 0, .8, .8, 1.7, "#fff4f8"); for(const [x, z] of [[-.28, -.65], [.28, -.65], [-.28, .65], [.28, .65]]) box(P, x, 0, z, .2, 1.05, .2, "#f0dce6"); box(P, 0, 1.55, .85, .36, .95, .5, "#fff4f8", 0, -.45); box(P, 0, 2.2, 1.15, .34, .4, .72, "#fff4f8"); box(P, 0, 1.75, .6, .1, .8, .5, "#ff6a9a", 0, -.2); box(P, 0, 1.75, -.9, .14, .12, .9, "#ff6a9a"); box(P, 0, 1.9, .98, .02, .02, .02, "#222"); sph(P, .18, 2.42, 1.2, .05, "#222"); sph(P, -.18, 2.42, 1.2, .05, "#222"); box(P, 0, .9, 0, .9, .1, .9, "#ffd24a"); }
     { const m = model("sparkle"); sph(m.prims, 0, 0, 0, .12, "#fff6b0"); m.add = true; }
+    buildStages({layer, model, box, cyl, sph, pln, sol});   // 新アトラクション3つの 舞台（ふだんは かくれている）と のりば
     const layers = Object.values(Ls); return {layers, models, solids, bounds: {x0: -115, x1: 115, z0: -118, z1: 108}};
 }
 export {makePath};

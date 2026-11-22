@@ -1,3 +1,4 @@
+import {createScore} from "./df-score.js";
 const PREF_KEY = "dreamFrontierSound_v1";
 const SCALES = {town: [0, 2, 4, 7, 9, 12, 9, 7], cave: [0, 3, 7, 10, 12, 10, 7, 3], field: [0, 4, 7, 9, 12, 9, 7, 4], demoncastle: [0, 1, 4, 5, 7, 5, 4, 1], sea: [0, 2, 5, 7, 9, 7, 5, 2]};
 const clamp = (v) => Math.max(0, Math.min(1, Number(v) || 0));
@@ -20,6 +21,18 @@ function ensure(){
     return ac;
 }
 
+const score = createScore({ac: () => (unlocked && on && ensure()) ? ac : null, bus: () => bgmBus});
+let wind = null;
+function ensureWind(){
+    if(wind || !unlocked || !on || !ensure()) return wind;
+    const n = ac.sampleRate * 2, buf = ac.createBuffer(1, n, ac.sampleRate), d = buf.getChannelData(0); let s = 987654; for(let i = 0; i < n; i++){ s = (s * 1664525 + 1013904223) >>> 0; d[i] = s / 2147483648 - 1; }
+    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true; const fl = ac.createBiquadFilter(); fl.type = "bandpass"; fl.frequency.value = 500; fl.Q.value = .6; const gn = ac.createGain(); gn.gain.value = 0;
+    src.connect(fl); fl.connect(gn); gn.connect(seBus); src.start(); return wind = {src, fl, gn};
+}
+function burst(freq, dur, vol, q){
+    if(!unlocked || !on || !ensure()) return; const n = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, n, ac.sampleRate), d = buf.getChannelData(0); for(let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const src = ac.createBufferSource(); src.buffer = buf; const fl = ac.createBiquadFilter(); fl.type = "bandpass"; fl.frequency.value = freq; fl.Q.value = q || 1.2; const gn = ac.createGain(); gn.gain.value = vol; src.connect(fl); fl.connect(gn); gn.connect(seBus); src.start();
+}
 function savePrefs(){ try{ localStorage.setItem(PREF_KEY, JSON.stringify({on, bgmVol, seVol})); }catch(_e){} }
 
 function tone(f, d, type, v, when, bus){
@@ -56,8 +69,10 @@ function getTrack(name){
 }
 
 async function syncBgm(){
-    if(!on || document.hidden){ fadeToken++; pendingAudio = null; if(activeAudio) activeAudio.pause(); stopSynthBgm(); return; }
+    if(!on || document.hidden){ fadeToken++; pendingAudio = null; if(activeAudio) activeAudio.pause(); stopSynthBgm(); score.stop(); return; }
     if(!unlocked) return;
+    if(key.indexOf("score:") === 0){ fadeToken++; pendingAudio = null; if(activeAudio){ activeAudio.pause(); activeAudio = null; activeKey = ""; } stopSynthBgm(); score.start(key.slice(6)); return; }
+    score.stop();
     const requestKey = key, next = getTrack(requestKey);
     if(!next){ startSynthBgm(); return; }
     if(next === activeAudio && !next.paused){ next.volume = bgmVol; stopSynthBgm(); return; }
@@ -84,12 +99,12 @@ export const Snd = {
     init(){
         if(seBus){ bgmBus.gain.value = bgmVol; seBus.gain.value = seVol; }
         document.addEventListener("visibilitychange", () => {
-            if(document.hidden){ fadeToken++; pendingAudio = null; if(activeAudio) activeAudio.pause(); stopSynthBgm(); }
+            if(document.hidden){ fadeToken++; pendingAudio = null; if(activeAudio) activeAudio.pause(); stopSynthBgm(); score.stop(); if(wind) wind.gn.gain.value = 0; }
             else syncBgm();
         });
     },
     resume(){ unlocked = true; if(ensure() && ac.state === "suspended") ac.resume(); syncBgm(); },
-    setOn(value){ on = !!value; savePrefs(); if(!on){ fadeToken++; pendingAudio = null; Object.values(tracks).forEach((audio) => { audio.pause(); audio.volume = 0; }); activeAudio = null; activeKey = ""; stopSynthBgm(); } else syncBgm(); },
+    setOn(value){ on = !!value; savePrefs(); if(!on){ fadeToken++; pendingAudio = null; Object.values(tracks).forEach((audio) => { audio.pause(); audio.volume = 0; }); activeAudio = null; activeKey = ""; stopSynthBgm(); score.stop(); if(wind) wind.gn.gain.value = 0; } else syncBgm(); },
     isOn: () => on,
     setVol(value){ bgmVol = clamp(value); if(bgmBus) bgmBus.gain.value = bgmVol; if(activeAudio) activeAudio.volume = bgmVol; savePrefs(); },
     getVol: () => bgmVol,
@@ -109,11 +124,17 @@ export const Snd = {
             splash: () => tone(90, .6, "sawtooth", .2),
             boo: () => { tone(180, .6, "sawtooth", .1); tone(150, .8, "triangle", .1, .1); },
             shot: () => tone(1400, .08, "square", .1),
-            hit: () => { tone(880, .12, "triangle", .2); tone(1320, .2, "triangle", .2, .06); }
+            hit: () => { tone(880, .12, "triangle", .2); tone(1320, .2, "triangle", .2, .06); },
+            gold: () => [784, 988, 1319, 1568, 2093].forEach((f, i) => tone(f, .26, "triangle", .2, i * .06))
         };
         if(sounds[name]) sounds[name]();
     },
+    // のりもの：かぜの おと・レールの おと・きょくの つよさ
+    ride(o){ const w = ensureWind(); if(!w) return; const t = ac.currentTime, v = Math.max(0, Math.min(1, o.v || 0)); w.gn.gain.setTargetAtTime(Math.min(.45, v * v * .5 + .015), t, .15); w.fl.frequency.setTargetAtTime(340 + v * 2300, t, .2); score.setIntensity(o.music === undefined ? v : o.music); },
+    rideStop(){ if(wind && ac) wind.gn.gain.setTargetAtTime(0, ac.currentTime, .12); score.setIntensity(0); },
+    clack(v, chain){ if(chain){ tone(2300, .03, "square", .035); burst(1500, .03, .09, 2); } else { burst(700 + v * 500, .05, .06 + .1 * v, 1.4); tone(62, .08, "square", .05 * v); } },
     setBgm(name){ key = name; syncBgm(); },
     startBgm(){ syncBgm(); },
-    stopBgm(){ fadeToken++; pendingAudio = null; if(activeAudio) activeAudio.pause(); stopSynthBgm(); }
+    stopBgm(){ fadeToken++; pendingAudio = null; if(activeAudio) activeAudio.pause(); stopSynthBgm(); score.stop(); },
+    _score: score
 };

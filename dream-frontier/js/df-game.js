@@ -3,6 +3,8 @@ import {DF} from "./config.js";
 import {ZONES, AREA_NAMES, zoneAt, ATTRACTIONS, STAMPS, byId, QUARTET, BOAT_PTS} from "./df-data.js";
 import {yawOf, pitchOf} from "./df-path.js";
 import {pathOf} from "./df-world.js";
+import {coasterInit, coasterUpdate, coasterCamera, stageName} from "./df-ride.js";
+import {stageDyn} from "./df-stages.js";
 
 const lerpv = (a, b, t) => a + (b - a) * t;
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t, ease = (t) => t * t * (3 - 2 * t);
@@ -77,17 +79,25 @@ export class Game{
         if(this.sv.coins < (a.coin || 0) && a.coin) { return this.ui.toast("コインが たりない… (" + a.coin + "コイン ひつよう)"); }
         const R = {a, t: 0, s: 0, lap: 0, text: null, texts: {}, alt: .3, spd: 1, hits: 0, targets: [], fire: 0, spawn: 0, done: false, fade: 1};
         if(a.coin){ this.sv.coins -= a.coin; }
-        this.sv.played++; this.ride = R; this.mode = "ride"; this.lookYaw = 0; this.lookPitch = 0; this.pitch = 0; this.sfx("start");
+        this.sv.played++; this.ride = R; if(a.kind === "coaster") coasterInit(this, R); this.mode = "ride"; this.lookYaw = 0; this.lookPitch = 0; this.pitch = 0; this.sfx("start");
         this.ui.rideStart(a); this.emit("ride", {id: a.id});
         if(a.kind === "shoot"){ this.yaw = 0; this.pitch = 0; }
         if(a.kind === "wheel") this.yaw = -Math.PI / 4;
     }
     endRide(ok){
-        const R = this.ride; if(!R) return; const a = R.a; this.ride = null; this.mode = "walk"; this.ui.rideEnd();
+        const R = this.ride; if(!R) return; const a = R.a; this.ride = null; this.mode = "walk"; this.ui.rideEnd(); this.hooks.rideEnd && this.hooks.rideEnd();
         const b = a.board; if(a.kind === "drop"){ this.x = a.board.x; this.z = a.board.z; } else { this.x = b.x; this.z = b.z; }
         this.yaw = Math.atan2(this.x - (a.c ? a.c[0] : this.x), this.z - (a.c ? a.c[1] : this.z)) || Math.PI; this.yaw = Math.PI; this.pitch = 0; this.lookYaw = this.lookPitch = 0;
         if(ok){
-            if(a.kind === "shoot"){ this.sv.shoot = Math.max(this.sv.shoot, R.hits); if(R.hits >= 8){ this.ui.toast("ヒット " + R.hits + "こ！ すごい うで まえ！"); this.stamp(a.id); if(R.hits >= 14){ this.sv.coins += 50; this.ui.toast("ぜんぶ ちかく あてた！ ボーナス +50コイン"); } } else this.ui.toast("ヒット " + R.hits + "こ…（8こ いじょうで スタンプ）"); }
+            if(a.kind === "coaster"){
+                if(a.pass){
+                    const sc = R.score, rank = (a.rank || []).filter((q) => sc >= q).length, nm = ["", "ブロンズ", "シルバー", "ゴールド"][rank] || "";
+                    this.sv["best_" + a.id] = Math.max(this.sv["best_" + a.id] || 0, sc);
+                    if(sc >= a.pass){ this.ui.toast("スコア " + sc + "！ " + nm + "ランク！  （ヒット " + R.hits + "こ）", 4200); this.stamp(a.id); if(rank >= 3){ this.sv.coins += 40; this.ui.toast("ゴールドランク ボーナス +40コイン"); } }
+                    else this.ui.toast("スコア " + sc + "…。 あと " + (a.pass - sc) + "てんで スタンプ！ もういちど ちょうせん！", 4800);
+                } else this.stamp(a.id);
+            }
+            else if(a.kind === "shoot"){ this.sv.shoot = Math.max(this.sv.shoot, R.hits); if(R.hits >= 8){ this.ui.toast("ヒット " + R.hits + "こ！ すごい うで まえ！"); this.stamp(a.id); if(R.hits >= 14){ this.sv.coins += 50; this.ui.toast("ぜんぶ ちかく あてた！ ボーナス +50コイン"); } } else this.ui.toast("ヒット " + R.hits + "こ…（8こ いじょうで スタンプ）"); }
             else this.stamp(a.id);
         } else this.ui.toast("のりものから おりた。");
         this.save();
@@ -112,7 +122,10 @@ export class Game{
             if(ps.on && !this._pshow){ this._pshow = true; this.ui.toast("🎉 ドリーム・パレードが はじまったよ！ ひろばに あつまれ！"); this.sfx("fan"); } if(!ps.on) this._pshow = false;
             if(this.t - (this._sv || 0) > 10){ this._sv = this.t; this.save(); }
         } else if(this.mode === "ride") this.updateRide(dt, inp);
-        const z = zoneAt(this.x, this.z); if(z !== this.zone){ this.zone = z; this.ui.area(AREA_NAMES[z]); this.hooks.zone && this.hooks.zone(z); }
+        // 別の 舞台（火星・木星・スイーツ・オーロラ）を 走っている 間は、パークの 地名（ファンタジー・グローブ など）を 出さない
+        if(!(this.mode === "ride" && this.ride && this.ride.A && this.ride.A.stage)){
+            const z = zoneAt(this.x, this.z); if(z !== this.zone){ this.zone = z; this.ui.area(AREA_NAMES[z]); this.hooks.zone && this.hooks.zone(z); }
+        }
     }
     move(dx, dz){
         const W = this.world, r = .38; let x = this.x + dx, z = this.z + dz;
@@ -125,7 +138,7 @@ export class Game{
         const R = this.ride, a = R.a; R.t += dt; this.ui.rideSet && this.ui.rideSet(R, a);
         this.lookYaw = clamp(this.lookYaw - inp.lx, -1.5, 1.5); this.lookPitch = clamp(this.lookPitch - inp.ly, -.9, .9);
         if(inp.esc || inp.act2){ return this.endRide(false); }
-        const free = (R.a.kind === "shoot");
+        const free = (R.a.kind === "shoot") || !!(R.A && R.A.shoot);
         if(!free && !inp.looking){ this.lookYaw *= Math.pow(.4, dt); this.lookPitch *= Math.pow(.4, dt); }
         const ev = (list, frac) => { for(const e of list || []){ if(!R.texts[e.s] && frac >= e.s){ R.texts[e.s] = 1; this.ui.toast(e.text, 3200); if(e.ev === "drop") this.shake = .6; if(e.ev === "splash"){ this.shake = 1; this.fxSplash = this.t; } if(e.ev === "climb" || e.ev === "drop" || e.ev === "splash") this.sfx(e.ev); } } };
         if(a.kind === "track"){
@@ -139,6 +152,7 @@ export class Game{
             ev(a.events, frac); if(a.scares) for(const sc of a.scares){ if(!R.texts[sc.s] && frac >= sc.s - .02){ R.texts[sc.s] = 1; this.ui.toast(sc.text, 2600); this.sfx("boo"); } }
             R.frac = frac; if(R.done || (a.closed && R.lap + 1 >= a.laps && R.s >= tot - .1)){ if(!R.fin){ R.fin = this.t; this.ui.toast("おつかれさま！ ぶじ とうちゃく！"); } if(this.t - R.fin > 1.2) this.endRide(true); }
         } else if(a.kind === "orbit"){ R.frac = R.t / a.dur; if(a.mode === "cup"){ R.spinV = lerpv(R.spinV === undefined ? 1 : R.spinV, 1.0 - inp.mx * 2.8, 1 - Math.pow(.15, dt)); R.spin = (R.spin || 0) + R.spinV * dt; } if(a.mode === "balloon"){ R.alt = clamp(R.alt + (inp.my > .3 ? 1 : inp.my < -.3 ? -1 : 0) * dt * .25, 0, 1); } if(R.t >= a.dur) this.endRide(true); }
+        else if(a.kind === "coaster") coasterUpdate(this, dt, inp);
         else if(a.kind === "wheel"){ R.frac = R.t / a.dur; if(R.t > a.dur) this.endRide(true); }
         else if(a.kind === "sim"){ R.frac = R.t / a.dur; ev(a.events, R.frac); if(!R.texts.w && R.frac > .7){ R.texts.w = 1; this.ui.fade(); this.sfx("fan"); } if(!R.texts.s && R.frac > .34){ R.texts.s = 1; this.sfx("drop"); } this.shake = (R.frac > .34 && R.frac < .52) ? .5 : (R.frac > .7 && R.frac < .86 ? .3 : .08); if(R.t > a.dur) this.endRide(true); }
         else if(a.kind === "drop"){ if(R.t > 16.2) this.endRide(true); else if(R.t > 9 && !R.texts[1]){ R.texts[1] = 1; this.ui.toast("てっぺんだ…！ いくよ…！", 2000); } else if(R.t > 11.6 && !R.texts[2]){ R.texts[2] = 1; this.shake = .7; this.sfx("drop"); } }
@@ -167,6 +181,7 @@ export class Game{
             else { const f = t / a.dur, rise = ease(clamp(f / .25, 0, 1)) * (1 - ease(clamp((f - .85) / .15, 0, 1))); const r = lerp(a.r, a.r1, rise), w2 = lerp(a.w, a.w1, rise), ph = (this._sw = (this._sw || 0)), h = lerp(a.h0, a.h1, rise); this._sw = (t < .05 ? 0 : this._sw) + w2 * (1 / 60); const [cx, cz] = a.c; const phi = this.swPhase(t, a); cam = {eye: [cx + Math.sin(phi) * r, h - 3.2 + 1.2, cz + Math.cos(phi) * r], yaw: phi + Math.PI / 2 + this.lookYaw, pitch: this.lookPitch - .05 - rise * .1, fov: 76}; } }
         else if(a.kind === "wheel"){ const ang = this.wheelAng(t, a); const R0 = a.R; const gy = a.cy + Math.cos(ang) * R0, gz = a.c[1] + Math.sin(ang) * R0; cam = {eye: [a.c[0], gy - .7, gz], yaw: this.yaw + this.lookYaw, pitch: this.lookPitch - .08, fov: 72}; }
         else if(a.kind === "drop"){ const y = this.dropY(t, a); cam = {eye: [a.c[0] + 2.5, y + 1.3, a.c[1]], yaw: Math.PI / 2 + this.lookYaw, pitch: this.lookPitch - .05, fov: 76 + (t > 11.6 && t < 13.2 ? 10 : 0)}; cam.eye[1] += shake; }
+        else if(a.kind === "coaster") cam = coasterCamera(this);
         else if(a.kind === "shoot"){ cam = {eye: [a.board.x, 1.7, a.board.z + 1.4], yaw: this.yaw + this.lookYaw, pitch: this.pitch + this.lookPitch, fov: 62}; }
         return cam;
     }
@@ -176,8 +191,9 @@ export class Game{
     wheelAng(t, a){ return Math.PI + t / a.dur * TAU; }
     dropY(t, a){ const H = a.H, y0 = a.y0; if(t < 2) return y0; if(t < 9) return lerp(y0, H, ease((t - 2) / 7)); if(t < 11.6) return H; const F = 1.6, hF = H - 6 - y0, g = 2 * hF / (F * F); if(t < 11.6 + F){ const u = t - 11.6; return H - .5 * g * u * u; } if(t < 14.4) return lerp(y0 + 6, y0, 1 - Math.pow(1 - (t - 11.6 - F) / 1.2, 2)); return y0; }
     cosmoZ(t, a){ const T1 = a.dur * .7, T2 = a.dur * .86; const v = (u) => u < T1 ? 14 : u < T2 ? 14 + 56 * ease((u - T1) / (T2 - T1)) : 14 + 56 * (1 - ease((u - T2) / (a.dur - T2))); let z = 0; for(let u = 0; u < t; u += .1) z += v(u) * Math.min(.1, t - u); return z; }
-    env(){ let z = this.zone || "center"; if(this.mode === "ride" && this.ride.a.env) z = this.ride.a.env; return ZONES[z] || ZONES.center; }
-    bgmKey(){ if(this.mode === "ride"){ const e = this.ride.a.env; if(e === "ghost") return "demoncastle"; if(e === "dark") return "town"; if(e === "night") return "sea"; if(e === "space") return "field"; } return ({center: "town", grove: "cave", sky: "field", manor: "demoncastle", lagoon: "sea"})[this.zone || "center"]; }
+    env(){ let z = this.zone || "center"; if(this.mode === "ride"){ const r = this.ride, e = (r.A && r.A.env) || r.a.env; if(e) z = e; } return ZONES[z] || ZONES.center; }
+    stageName(){ return stageName(this); }
+    bgmKey(){ if(this.mode === "ride"){ const r = this.ride; if(r.A && r.A.music) return "score:" + r.A.music; const e = r.a.env; if(e === "ghost") return "demoncastle"; if(e === "dark") return "town"; if(e === "night") return "sea"; if(e === "space") return "field"; } return ({center: "town", grove: "cave", sky: "field", manor: "demoncastle", lagoon: "sea"})[this.zone || "center"]; }
 
     dyn(t){
         const D = [], R = this.ride, riding = (id) => R && R.a.id === id; const T = this.t;
@@ -230,6 +246,11 @@ export class Game{
             for(let i = 0; i < 150; i++){ const sx = ((i * 73 % 180) - 90), sy = ((i * 41 % 120) - 60), sz = (i * 29 % 200); const rel = (((sz - cz) % 200) + 200) % 200; D.push({s: "glow", x: sx, y: Y + sy, z: cz + rel, w: .6, h: warp ? .6 + 3 : .6, c: warp ? [.7, .85, 1] : [1, 1, 1], a: .9}); } }
         // 自分のりもの
         if(riding("balloon")){ const a = R.a, ph = R.t * a.w, h = lerp(a.h0, a.h1, R.alt); D.push({m: "balloon", x: a.c[0] + Math.sin(ph) * a.r, y: h, z: a.c[1] + Math.cos(ph) * a.r}); }
+        if(R && R.a.kind === "coaster") stageDyn(this, D);
+        // のりばに とまっている のりもの
+        if(!riding("worldjet")) D.push({m: "jetplane", x: 91, y: 0, z: -43.5, yaw: Math.PI / 2});
+        if(!riding("sweets")) D.push({m: "blastercar", x: -43.6, y: .9 + Math.sin(T * 1.6) * .12, z: 68, yaw: Math.PI / 2 + Math.sin(T * .5) * .08});
+        if(!riding("aurora")) D.push({m: "skywing", x: 52.6, y: 2.4 + Math.sin(T * 1.2) * .25, z: -74, yaw: -Math.PI / 2 + Math.sin(T * .4) * .1, sx: 1.4, sy: 1.4, sz: 1.4});
         return D;
     }
     camPos(){ return this.camera().eye; }
