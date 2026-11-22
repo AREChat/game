@@ -30,14 +30,74 @@ function makeGlowTexture(){
     return new T.CanvasTexture(c);
 }
 
-function buildTrack(){
-    const L = 150, R = 46, pts = [];
-    const push = (x, z) => pts.push([x, z]);
-    for(let i = 0; i < 16; i++) push(-L / 2 + (L * i) / 16, -R);                 // 下の直線
-    for(let i = 0; i < 20; i++){ const t = -Math.PI / 2 + (Math.PI * i) / 20; push(L / 2 + R * Math.cos(t), R * Math.sin(t)); } // 右カーブ
-    for(let i = 0; i < 16; i++) push(L / 2 - (L * i) / 16, R);                   // 上の直線
-    for(let i = 0; i < 20; i++){ const t = Math.PI / 2 + (Math.PI * i) / 20; push(-L / 2 + R * Math.cos(t), R * Math.sin(t)); } // 左カーブ
-    return {pts, width: 22, startX: -L / 2 + 10, startZ: -R};
+// ===== コース生成（全32コース、くねくねした道をシード値から毎回同じ形で作る） =====
+const COURSE_COUNT = 32;
+function mulberry32(seed){
+    return function(){
+        seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+// 閉じたループの Catmull-Rom スプライン（制御点どうしを なめらかな曲線でつなぐ）
+function catmullRomClosed(ctrl, seg){
+    const n = ctrl.length, out = [];
+    for(let i = 0; i < n; i++){
+        const p0 = ctrl[(i - 1 + n) % n], p1 = ctrl[i], p2 = ctrl[(i + 1) % n], p3 = ctrl[(i + 2) % n];
+        for(let s = 0; s < seg; s++){
+            const t = s / seg, t2 = t * t, t3 = t2 * t;
+            const x = 0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3);
+            const z = 0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3);
+            out.push([x, z]);
+        }
+    }
+    return out;
+}
+const COURSE_THEMES = [
+    {ground: 0x234a2a, curbA: 0xd43a3a, curbB: 0xeeeeee, name: "グリーンフィールド"},
+    {ground: 0x1a2a4a, curbA: 0xffcf2e, curbB: 0x222222, name: "ナイトサーキット"},
+    {ground: 0x3a2050, curbA: 0x7ecbff, curbB: 0xffffff, name: "トワイライトロード"},
+    {ground: 0x4a3414, curbA: 0xff7a1a, curbB: 0xffffff, name: "デザートダッシュ"},
+    {ground: 0x123a3a, curbA: 0x4af0c8, curbB: 0x0a1a1a, name: "ラグーンループ"},
+    {ground: 0x3a1414, curbA: 0xffffff, curbB: 0xd43a3a, name: "キャニオンコース"},
+    {ground: 0x14281a, curbA: 0xffe14a, curbB: 0x2a2a2a, name: "ミステリーウッズ"},
+    {ground: 0x241a3a, curbA: 0xff6fae, curbB: 0xffffff, name: "スターライトアベニュー"}
+];
+// コース番号(0〜31)を元に、毎回同じ形の「くねくねコース」をひとつ作る
+function buildTrack(seed){
+    const rnd = mulberry32(seed * 97531 + 12345);
+    const ctrlN = 11 + Math.floor(rnd() * 4);   // 11〜14の制御点
+    const baseR = 95 + rnd() * 35;
+    const ctrl = [];
+    let theta = 0;
+    for(let i = 0; i < ctrlN; i++){
+        theta += (Math.PI * 2 / ctrlN) * (0.65 + rnd() * 0.7);   // 角度は必ず増える＝輪が交差しない
+        const wobble = Math.sin(theta * 2.3 + seed * 1.7) * baseR * 0.14;   // 「ぐにゃぐにゃ」感を足す
+        const r = baseR * (0.55 + rnd() * 0.85) + wobble;
+        ctrl.push([Math.cos(theta) * r, Math.sin(theta) * r]);
+    }
+    const pts = catmullRomClosed(ctrl, 14);
+    const width = 18 + rnd() * 8;
+    return {pts, width, startX: pts[0][0], startZ: pts[0][1], theme: COURSE_THEMES[seed % COURSE_THEMES.length], courseNo: seed + 1};
+}
+// 障害物（コースのあちこちに置く。ぶつかると つまずく。アイテムとはちがい、消費されず ずっと残る）
+function placeObstacles(track, seed){
+    const rnd = mulberry32(seed * 51913 + 777);
+    const N = track.pts.length, half = track.width / 2;
+    const count = 16 + Math.floor(rnd() * 10);
+    const gap = Math.max(3, Math.floor(N / (count + 3)));
+    const obstacles = [];
+    let idx = Math.floor(rnd() * gap);
+    while(idx < N && obstacles.length < count){
+        const p = track.pts[idx], q = track.pts[(idx + 1) % N];
+        const dx = q[0] - p[0], dz = q[1] - p[1], len = Math.hypot(dx, dz) || 1;
+        const nx = -dz / len, nz = dx / len;
+        const off = (rnd() * 2 - 1) * (half * 0.62);
+        obstacles.push({x: p[0] + nx * off, z: p[1] + nz * off, r: 1.0 + rnd() * 0.5});
+        idx += gap + Math.floor(rnd() * gap * 0.6);
+    }
+    return obstacles;
 }
 
 // ===== 10種のオリジナルアイテム（マリオの こうら・バナナなどは 使わない、まったく別の効果） =====
@@ -58,9 +118,12 @@ export function start(ctx){
     const {Input, G8, renderer, camera, makeLitScene, consumeJumpEdge, setHud, toast, showResult} = ctx;
     const scene = makeLitScene(0x9fe0ff, 0x234a2a, "race");
 
-    const track = buildTrack();
+    const courseSeed = Math.floor(Math.random() * COURSE_COUNT);
+    const track = buildTrack(courseSeed);
+    const obstacleList = placeObstacles(track, courseSeed);
     const N = track.pts.length;
     const LAPS = 3;
+    toast("🏁 コース " + track.courseNo + " / " + COURSE_COUNT + "：" + track.theme.name);
 
     // アイテムボックスを置く場所（コースを8か所に分けて置く）
     const ITEMBOX_N = 8;
@@ -76,6 +139,7 @@ export function start(ctx){
         track.pts.forEach((p) => G8.race_add_waypoint(p[0], p[1]));
         G8.race_set_width(track.width);
         itemBoxPts.forEach((p) => G8.race_add_itembox(p[0], p[1]));
+        obstacleList.forEach((ob) => G8.race_add_obstacle(ob.x, ob.z, ob.r));
         const lanes = [-6, -2, 2, 6];
         const specs = [
             {cpu: 0, mul: 1.0}, {cpu: 1, mul: 0.93}, {cpu: 1, mul: 0.97}, {cpu: 1, mul: 1.0}
@@ -136,8 +200,8 @@ export function start(ctx){
     // 縁石（赤白の目印）：立体の箱だと、カメラがコースの はしに近づいたときに すぐそばの箱が 画面いっぱいに
     // 大きく見えてしまう（近くのものほど大きく映る、カメラごしの錯覚）。そのため、地面にはりつく「平たい模様」にする。
     const curbGeo = new T.PlaneGeometry(0.34, 1);
-    const curbMatA = new T.MeshStandardMaterial({color: 0xd43a3a, roughness: 0.75});
-    const curbMatB = new T.MeshStandardMaterial({color: 0xeeeeee, roughness: 0.75});
+    const curbMatA = new T.MeshStandardMaterial({color: track.theme.curbA, roughness: 0.75});
+    const curbMatB = new T.MeshStandardMaterial({color: track.theme.curbB, roughness: 0.75});
     for(let i = 0; i < N; i += 2){
         [left, right].forEach((side) => {
             const p = side[i], q = side[(i + 1) % N];
@@ -152,9 +216,22 @@ export function start(ctx){
             scene.add(m);
         });
     }
-    const groundMesh = new T.Mesh(new T.PlaneGeometry(260, 220), new T.MeshStandardMaterial({color: 0x234a2a, roughness: 1}));
+    const groundMesh = new T.Mesh(new T.PlaneGeometry(260, 220), new T.MeshStandardMaterial({color: track.theme.ground, roughness: 1}));
     groundMesh.rotation.x = -Math.PI / 2; groundMesh.receiveShadow = true;
     scene.add(groundMesh);
+
+    // ---------- 障害物（コース上にランダムに置かれる。ぶつかると ふらついて少しの間おくれる） ----------
+    const obstacleMat = new T.MeshStandardMaterial({color: 0xff8a1a, roughness: 0.55, emissive: 0x4a2000, emissiveIntensity: 0.25});
+    const obstacleBandMat = new T.MeshStandardMaterial({color: 0xffffff, roughness: 0.6});
+    obstacleList.forEach((ob) => {
+        const g = new T.Group();
+        const cone = new T.Mesh(new T.ConeGeometry(ob.r * SCALE, ob.r * SCALE * 1.8, 12), obstacleMat);
+        cone.position.y = ob.r * SCALE * 0.9; cone.castShadow = true; g.add(cone);
+        const band = new T.Mesh(new T.CylinderGeometry(ob.r * SCALE * 0.72, ob.r * SCALE * 0.78, ob.r * SCALE * 0.3, 12), obstacleBandMat);
+        band.position.y = ob.r * SCALE * 0.55; g.add(band);
+        g.position.set(ob.x * SCALE, 0, ob.z * SCALE);
+        scene.add(g);
+    });
 
     // ---------- ランナー（走っているキャラクター。マラソンのイメージ） ----------
     // コース幅（約2.75 world単位）に きちんと 収まるよう、小さめの寸法にする
@@ -293,7 +370,7 @@ export function start(ctx){
             if(effects.speedBuff) fx += " 🥤ダッシュ中";
             if(effects.turnBuff) fx += " 👟スプリント中";
         }
-        setHud('<span>🏁 Lap ' + Math.min(lap + 1, LAPS) + '/' + LAPS + '</span><span>順位 ' + rank + '/' + carN + '</span><span>' + Math.round(speedKmh) + ' km/h</span><span>' + item + fx + '</span>');
+        setHud('<span>C' + track.courseNo + ' 🏁 Lap ' + Math.min(lap + 1, LAPS) + '/' + LAPS + '</span><span>順位 ' + rank + '/' + carN + '</span><span>' + Math.round(speedKmh) + ' km/h</span><span>' + item + fx + '</span>');
     }
 
     let done = false, running = true, lastT = performance.now();

@@ -20,6 +20,27 @@ function makeGlowTexture(){
     return new T.CanvasTexture(c);
 }
 
+// ===== 10種のオリジナルアイテム（アクションモード。マリオのキノコ・スター等は使わない、まったく別の効果）=====
+const ITEM_INFO = {
+    1: {emoji: "👟", name: "ばねブーツ", desc: "ジャンプ力さらにアップ！"},
+    2: {emoji: "🚀", name: "ジェットパック", desc: "空中でもう一度ジャンプできる！"},
+    3: {emoji: "🧲", name: "じしゃくリング", desc: "コインを自動で引きよせる！"},
+    4: {emoji: "🛡️", name: "ガードオーラ", desc: "次の1回のダメージを防ぐ！"},
+    5: {emoji: "🥤", name: "ダッシュソーダ", desc: "移動速度アップ！"},
+    6: {emoji: "❄️", name: "こおりスプレー", desc: "敵の動きがゆっくりに！"},
+    7: {emoji: "🥊", name: "グローブパンチ", desc: "ふれるだけで敵を倒せる！"},
+    8: {emoji: "💗", name: "ハートのかけら", desc: "ライフ+1！"},
+    9: {emoji: "🌈", name: "レインボーオーラ", desc: "無敵＆敵をふっとばす！"},
+    10: {emoji: "👜", name: "ボーナスコインぶくろ", desc: "コイン+15！"}
+};
+function makeItemIconTexture(emoji){
+    const c = document.createElement("canvas"); c.width = c.height = 96;
+    const ctx = c.getContext("2d");
+    ctx.font = "72px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(emoji, 48, 54);
+    return new T.CanvasTexture(c);
+}
+
 export function start(ctx){
     const {Input, G8, renderer, camera, makeLitScene, consumeJumpEdge, setHud, toast, showResult} = ctx;
     const scene = makeLitScene(0x8fd3ff, 0x1a2f55, "action");
@@ -42,6 +63,12 @@ export function start(ctx){
     const coinDefs = [];
     groundSegs.forEach((s) => { for(let i = 0; i < 4; i++) coinDefs.push([s[0] + 60 + i * (s[1] - 120) / 3, GY - 70]); });
     floatPlats.forEach((p) => coinDefs.push([p.x + p.w / 2, p.y - 40]));
+    // 10種のアイテム（1つずつ、レベル全体に散らして配置。高くなったジャンプで届く場所も活用）
+    const itemDefs = [
+        [260, GY - 60, 1], [620, GY - 190, 2], [900, GY - 60, 6], [1020, GY - 60, 7],
+        [1255, GY - 190, 3], [1420, GY - 60, 4], [1595, GY - 300, 5],
+        [1900, GY - 60, 8], [1835, GY - 190, 9], [2300, GY - 60, 10]
+    ];
     const GOAL = {x: 2560, y: GY - 260, w: 70, h: 260};
     const LEVEL_END = GOAL.x + 120;
 
@@ -53,6 +80,7 @@ export function start(ctx){
         floatPlats.forEach((p) => G8.act_add_platform(p.x, p.y, p.w, p.h, p.oneWay));
         enemyDefs.forEach((e) => G8.act_add_enemy(e[0], e[1], e[2], e[3]));
         coinDefs.forEach((c) => G8.act_add_coin(c[0], c[1]));
+        itemDefs.forEach((it) => G8.act_add_item(it[0], it[1], it[2]));
         G8.act_set_goal(GOAL.x, GOAL.y, GOAL.w, GOAL.h);
     }
     loadLevel();
@@ -120,6 +148,24 @@ export function start(ctx){
         return {coin: m, glow};
     });
 
+    // アイテム：丸い台座＋浮かぶ絵文字アイコン（ふわふわ上下に浮く）
+    const itemGlowTex2 = makeGlowTexture();
+    const itemMeshes = itemDefs.map((it) => {
+        const type = it[2], info = ITEM_INFO[type];
+        const g = new T.Group();
+        const base = new T.Mesh(new T.CylinderGeometry(0.26, 0.26, 0.07, 18), new T.MeshStandardMaterial({color: 0xffffff, roughness: 0.25, metalness: 0.5, emissive: 0x8899ff, emissiveIntensity: 0.4}));
+        base.rotation.x = Math.PI / 2 * 0 + 0; base.castShadow = true;
+        g.add(base);
+        const glow = new T.Sprite(new T.SpriteMaterial({map: itemGlowTex2, color: 0xaad4ff, transparent: true, opacity: 0.7, depthWrite: false, blending: T.AdditiveBlending}));
+        glow.scale.set(1.1, 1.1, 1); g.add(glow);
+        const icon = new T.Sprite(new T.SpriteMaterial({map: makeItemIconTexture(info.emoji), transparent: true}));
+        icon.scale.set(0.5, 0.5, 1); icon.position.y = 0.3; g.add(icon);
+        g.position.set(toX(it[0]), toY(it[1]), 0);
+        g.userData.phase = Math.random() * Math.PI * 2;
+        scene.add(g);
+        return g;
+    });
+
     const flagGroup = new T.Group();
     const pole = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, GOAL.h * SCALE, 8), new T.MeshStandardMaterial({color: 0xdddddd, roughness: 0.4, metalness: 0.5}));
     pole.position.set(toX(GOAL.x) + 0.1, toY(GOAL.y) - (GOAL.h * SCALE) / 2, 0);
@@ -143,8 +189,21 @@ export function start(ctx){
     scene.add(bigGround);
 
     // ---------- HUD・状態 ----------
-    let lives = 3, score = 0, done = false, wasAlive = true, elapsed = 0;
-    function paintHud(){ setHud('<span>❤️ ' + lives + '</span><span>🪙 ' + score + '</span>'); }
+    let lives = 3, score = 0, done = false, wasAlive = true, elapsed = 0, lastLivesGained = 0, lastBuffKey = "";
+    function paintHud(buffs){
+        let fx = "";
+        if(buffs){
+            if(buffs.spring > 0) fx += " 👟";
+            if(buffs.jetpack > 0) fx += " 🚀";
+            if(buffs.magnet > 0) fx += " 🧲";
+            if(buffs.shield > 0) fx += " 🛡️×" + buffs.shield;
+            if(buffs.dash > 0) fx += " 🥤";
+            if(buffs.freeze > 0) fx += " ❄️";
+            if(buffs.punch > 0) fx += " 🥊";
+            if(buffs.invincible > 0) fx += " 🌈";
+        }
+        setHud('<span>❤️ ' + lives + '</span><span>🪙 ' + score + '</span>' + (fx ? '<span>' + fx + '</span>' : ''));
+    }
     paintHud();
 
     let running = true, lastT = performance.now();
@@ -157,16 +216,21 @@ export function start(ctx){
             const jumpEdge = consumeJumpEdge();
             G8.act_step(dt, Input.left ? 1 : 0, Input.right ? 1 : 0, jumpEdge ? 1 : 0, Input.jump ? 1 : 0);
             const ptr = G8.act_get_buffer();
-            const buf = new Float32Array(G8.heap().buffer, ptr, 12 + 32 * 6 + 64 * 3);
+            const HEADER = 22;
+            const buf = new Float32Array(G8.heap().buffer, ptr, HEADER + 32 * 6 + 64 * 3 + 32 * 4);
             const px = buf[0], py = buf[1], onGround = buf[4], alive = buf[5], facing = buf[6];
             const coins = buf[8] | 0, goalReached = buf[9] >= 1;
             const enemyN = buf[10] | 0, coinN = buf[11] | 0;
+            const itemN = buf[12] | 0, livesGained = buf[13] | 0;
+            const buffs = {spring: buf[14], jetpack: buf[15], magnet: buf[16], shield: buf[17] | 0, dash: buf[18], freeze: buf[19], punch: buf[20], invincible: buf[21]};
+
+            if(livesGained > lastLivesGained){ lives += (livesGained - lastLivesGained); lastLivesGained = livesGained; toast("💗 ライフ+1！"); }
 
             playerMesh.position.set(toX(px) + 0.3, toY(py) + 0.45, 0);
             playerMesh.rotation.y = facing < 0 ? Math.PI : 0;
 
             elapsed += dt;
-            let o = 12;
+            let o = HEADER;
             for(let i = 0; i < 32; i++){
                 if(i < enemyN){
                     const ex = buf[o], ey = buf[o + 1], ew = buf[o + 2], eh = buf[o + 3], ealive = buf[o + 4];
@@ -193,9 +257,23 @@ export function start(ctx){
                 }
                 o += 3;
             }
+            for(let i = 0; i < 32; i++){
+                if(i < itemN){
+                    const collected = buf[o + 3] > 0;
+                    const g = itemMeshes[i];
+                    g.visible = !collected;
+                    if(g.visible){
+                        const bob = Math.sin(elapsed * 2.4 + g.userData.phase) * 0.08;
+                        g.position.y = toY(itemDefs[i][1]) + bob;
+                        g.rotation.y += dt * 1.5;
+                    }
+                }
+                o += 4;
+            }
 
-            if(coins !== score){ score = coins; paintHud(); }
-            if(alive < 1 && wasAlive){ wasAlive = false; lives--; paintHud(); toast(lives > 0 ? "やられた！" : "ゲームオーバー"); }
+            const buffKey = (buffs.spring > 0) + "" + (buffs.jetpack > 0) + (buffs.magnet > 0) + buffs.shield + (buffs.dash > 0) + (buffs.freeze > 0) + (buffs.punch > 0) + (buffs.invincible > 0);
+            if(coins !== score || buffKey !== lastBuffKey){ score = coins; lastBuffKey = buffKey; paintHud(buffs); }
+            if(alive < 1 && wasAlive){ wasAlive = false; lives--; paintHud(buffs); toast(lives > 0 ? "やられた！" : "ゲームオーバー"); }
             else if(alive >= 1) wasAlive = true;
             if(lives <= 0 && !done){
                 done = true;
@@ -215,7 +293,9 @@ export function start(ctx){
     requestAnimationFrame(frame);
 
     function restart(){
-        lives = 3; score = 0; done = false; wasAlive = true; paintHud();
+        lives = 3; score = 0; done = false; wasAlive = true; lastLivesGained = 0; lastBuffKey = "";
+        itemMeshes.forEach((g) => { g.visible = true; });
+        paintHud();
         loadLevel();
     }
 
