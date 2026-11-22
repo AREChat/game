@@ -38,6 +38,7 @@ namespace act {
     float facing, invuln;
     int coinsCollected;
     float respawnX, respawnY;
+    float coyoteT, jumpBufT;   // 操作しやすくするための「少しの甘さ」（下の act_step 内の説明を参照）
 
     const float GRAVITY = 1700.0f;
     const float MOVE_ACCEL = 2600.0f;
@@ -45,6 +46,8 @@ namespace act {
     const float FRICTION = 2200.0f;
     const float JUMP_VEL = 560.0f;
     const float JUMP_CUT = 0.45f;   // ボタンを早く離すと ジャンプが低くなる
+    const float COYOTE_TIME = 0.1f;   // 足場から落ちた直後も、これだけの間はジャンプを受け付ける（コヨーテタイム）
+    const float JUMP_BUFFER = 0.12f;  // 着地の少し前にジャンプを押しても、着地した瞬間にジャンプとして受け付ける（入力バッファ）
     const float PLAYER_W = 30.0f, PLAYER_H = 40.0f;
     const float ENEMY_W = 32.0f, ENEMY_H = 28.0f;
 
@@ -58,6 +61,7 @@ namespace act {
         platCount = 0; enemyCount = 0; coinCount = 0; goalSet = 0;
         px = sx; py = sy; pvx = 0; pvy = 0; onGround = 0; alive = 1; goalReached = 0;
         facing = 1; invuln = 0; coinsCollected = 0; respawnX = sx; respawnY = sy;
+        coyoteT = 0; jumpBufT = 0;
     }
     EM_KEEP int act_add_platform(float x, float y, float w, float h, int solidTop){
         if(platCount >= MAX_PLAT) return -1;
@@ -126,7 +130,11 @@ namespace act {
         }
         pvx = clampf(pvx, -MOVE_MAXSPD, MOVE_MAXSPD);
 
-        if(jumpPressed && onGround){ pvy = -JUMP_VEL; onGround = 0; }
+        // ジャンプ入力バッファ：押した瞬間を少しの間だけ覚えておく（着地の少し前に押しても ジャンプになる）
+        if(jumpPressed) jumpBufT = JUMP_BUFFER;
+        else if(jumpBufT > 0) jumpBufT -= dt;
+        // コヨーテタイム：足場を離れた直後も、少しの間はまだジャンプできる（崖の端でのミスを減らす）
+        if(jumpBufT > 0 && coyoteT > 0){ pvy = -JUMP_VEL; onGround = 0; coyoteT = 0; jumpBufT = 0; }
         if(!jumpHeld && pvy < -JUMP_VEL * JUMP_CUT) pvy = -JUMP_VEL * JUMP_CUT;
 
         pvy += GRAVITY * dt;
@@ -134,6 +142,9 @@ namespace act {
 
         moveAndCollide(pvx * dt, 0);
         moveAndCollide(0, pvy * dt);
+
+        if(onGround) coyoteT = COYOTE_TIME;
+        else if(coyoteT > 0) coyoteT -= dt;
 
         if(invuln > 0) invuln -= dt;
         if(py > 2000.0f) killPlayer(); // 落下死
@@ -185,11 +196,13 @@ namespace act {
 }
 
 // ---------------------------------------------------------------------------
-// レースモード（マリオカート風）
+// レースモード（マラソン風ランナー・10種のオリジナルアイテムつき）
 // ---------------------------------------------------------------------------
 namespace race {
     const int MAX_WP = 96;
     const int MAX_CAR = 4;
+    const int MAX_TRAP = 16;
+    const int MAX_ITEMBOX = 8;
 
     float wpX[MAX_WP], wpZ[MAX_WP]; int wpCount = 0;
     float trackWidth = 10.0f;
@@ -202,9 +215,23 @@ namespace race {
         float maxSpeed, accelPow, aiSkill, aiOffset; int isCpu;
         float stuckT;   // コース外で ほぼ止まっている時間（これがたまると 助けが来る）
         float rescueT;  // 助け（かわいいモンスター）が コースへ運んでいる残り時間。>0の間は 見た目側で 持ち上げ演出をする
+        int heldItem;        // 持っているアイテム（0=なし, 1〜10）
+        float speedBuffT;    // ダッシュドリンク：残り時間（スピードアップ）
+        float turnBuffT;     // スプリントシューズ：残り時間（まわりやすさアップ）
+        float shieldT;       // ガードポンチョ：残り時間（次の1回の いやがらせを ふせぐ）
+        float staggerT;      // つまずき：残り時間（その間は 加速できない）
+        float slowT;         // スロー：残り時間（最高速が下がる）
     };
     Car cars[MAX_CAR]; int carCount = 0;
     float raceTime = 0; int finishedCount = 0;
+
+    // トラップ（うしろに置く わな）：mud=0 スロー／pebble=1 つまずき
+    struct Trap { float x, z; int kind; float life; int active; };
+    Trap traps[MAX_TRAP]; int trapCount = 0;
+
+    // アイテムボックス（コース上に置く、とると ランダムで 10種のどれかを持つ）
+    struct ItemBox { float x, z; float respawnT; };
+    ItemBox itemboxes[MAX_ITEMBOX]; int itemboxCount = 0;
 
     const float BASE_MAXSPD = 46.0f;
     const float BASE_ACCEL = 34.0f;
@@ -214,14 +241,40 @@ namespace race {
     const float STUCK_SPEED = 3.0f;       // これより おそい状態で コース外にいると「止まっている」とみなす
     const float STUCK_TIME_LIMIT = 1.1f;  // これだけ 止まっていたら 助けを呼ぶ
 
+    // ---- アイテムのバランス調整値（10種、すべて このゲームだけの オリジナル効果） ----
+    const float PICKUP_RADIUS = 2.4f;
+    const float ITEMBOX_RESPAWN = 5.0f;
+    const float TRAP_RADIUS = 1.6f;
+    const float TRAP_LIFE = 6.0f;
+    const float SLOW_MULT = 0.55f;
+    const float DASH_SPEED_MULT = 1.35f;   // 1: ダッシュドリンク
+    const float DASH_TIME = 3.5f;
+    const float SPRINT_TURN_MULT = 1.55f;  // 2: スプリントシューズ
+    const float SPRINT_TIME = 4.0f;
+    const float SHIELD_TIME = 8.0f;        // 3: ガードポンチョ
+    const float STAGGER_TRIP = 1.2f;       // 4: 足止めロープ
+    const float SLOW_DROWSY = 3.0f;        // 5: 眠気スプレー
+    const float STAGGER_PEBBLE = 1.1f;     // 7: 石ころばらまき（6はスロー扱い）
+    const float CRAMP_STAGGER = 1.0f;      // 8: こむら返りの風（1位をねらう）
+    const float CRAMP_SLOW = 2.0f;
+    const float STAGGER_CROWD = 0.8f;      // 9: 大声援どよめき（全員）
+    const float STAGGER_CHEER = 0.9f;      // 10: 応援メガホン（前方の広い範囲）
+
     EM_KEEP void race_reset(int laps){
         wpCount = 0; carCount = 0; lapsTarget = laps > 0 ? laps : 3; raceTime = 0; finishedCount = 0;
+        trapCount = 0; itemboxCount = 0;
+        for(int i = 0; i < MAX_TRAP; i++) traps[i].active = 0;
     }
     EM_KEEP void race_add_waypoint(float x, float z){
         if(wpCount >= MAX_WP) return;
         wpX[wpCount] = x; wpZ[wpCount] = z; wpCount++;
     }
     EM_KEEP void race_set_width(float w){ trackWidth = w; }
+    EM_KEEP int race_add_itembox(float x, float z){
+        if(itemboxCount >= MAX_ITEMBOX) return -1;
+        itemboxes[itemboxCount] = {x, z, 0.0f};
+        return itemboxCount++;
+    }
     EM_KEEP int race_add_car(float x, float z, float heading, int isCpu, float speedMul, float aiSkill){
         if(carCount >= MAX_CAR) return -1;
         Car &c = cars[carCount];
@@ -230,6 +283,7 @@ namespace race {
         c.maxSpeed = BASE_MAXSPD * speedMul; c.accelPow = BASE_ACCEL * speedMul; c.isCpu = isCpu;
         c.aiSkill = aiSkill; c.aiOffset = (float)((carCount * 37) % 11 - 5) * 0.12f;
         c.stuckT = 0; c.rescueT = 0;
+        c.heldItem = 0; c.speedBuffT = 0; c.turnBuffT = 0; c.shieldT = 0; c.staggerT = 0; c.slowT = 0;
         return carCount++;
     }
 
@@ -285,7 +339,110 @@ namespace race {
         return (c.x - px) * nx + (c.z - pz) * nz;
     }
 
-    EM_KEEP void race_step(float dt, float steer, float accel, float brake){
+    // ---- アイテム効果のたすけ関数 ----
+    static float progressOf(Car &c){ return (float)c.nearSeg + c.segT; }
+    // from から to までの「前方への」距離（コースを1周する分でラップする）
+    static float aheadDiff(float from, float to){
+        float d = to - from;
+        float n = (float)wpCount;
+        while(d < 0) d += n;
+        while(d >= n) d -= n;
+        return d;
+    }
+    // いやがらせ効果：ガードポンチョ(shieldT>0)を持っていたら 1回だけ ふせぐ
+    static void applyStagger(Car &c, float t){
+        if(c.shieldT > 0){ c.shieldT = 0; return; }
+        if(t > c.staggerT) c.staggerT = t;
+        c.speed = 0;
+    }
+    static void applySlow(Car &c, float t){
+        if(c.shieldT > 0){ c.shieldT = 0; return; }
+        if(t > c.slowT) c.slowT = t;
+    }
+    // じぶんより前にいる、いちばん近いランナーを探す（単体ねらいのアイテム用。見つからなければ -1）
+    static int findAheadTarget(int from, float maxDiff){
+        float fromP = progressOf(cars[from]);
+        int best = -1; float bestDiff = 1e18f;
+        for(int i = 0; i < carCount; i++){
+            if(i == from || cars[i].finished) continue;
+            float diff = aheadDiff(fromP, progressOf(cars[i]));
+            if(diff > 0.0f && diff <= maxDiff && diff < bestDiff){ bestDiff = diff; best = i; }
+        }
+        return best;
+    }
+    // 現在、いちばん先に進んでいる（1位の）ランナーを探す
+    static int leaderIndex(){
+        int best = -1; float bestScore = -1e18f;
+        for(int i = 0; i < carCount; i++){
+            float score = (float)cars[i].lap * 100000.0f + progressOf(cars[i]);
+            if(score > bestScore){ bestScore = score; best = i; }
+        }
+        return best;
+    }
+    // うしろに わな（トラップ）を置く
+    static void addTrap(Car &c, int kind){
+        float bx = c.x - sinf(c.heading) * 4.0f, bz = c.z - cosf(c.heading) * 4.0f;
+        int slot = -1;
+        for(int i = 0; i < trapCount; i++) if(!traps[i].active){ slot = i; break; }
+        if(slot < 0){ if(trapCount < MAX_TRAP) slot = trapCount++; else slot = 0; }
+        traps[slot] = {bx, bz, kind, TRAP_LIFE, 1};
+    }
+
+    // 持っているアイテムを使う（10種、すべて マリオカートの こうら・バナナなどとは まったく別のオリジナル効果）
+    //  1 ダッシュドリンク：自分が 少しのあいだ 速くなる（自己バフ）
+    //  2 スプリントシューズ：自分が 少しのあいだ まわりやすくなる（自己：まわりやすさ）
+    //  3 ガードポンチョ：次の1回の いやがらせを ふせぐ（自己シールド）
+    //  4 足止めロープ：前方の いちばん近いランナーを つまずかせる（単体・前方）
+    //  5 眠気スプレー：前方の いちばん近いランナーを スローにする（単体・前方）
+    //  6 ぬかるみ跳ね：うしろに スローのわなを置く（わな・後方）
+    //  7 石ころばらまき：うしろに つまずきのわなを置く（わな・後方）
+    //  8 こむら返りの風：現在1位のランナーを ねらって つまずかせ、そのあとスローにする（1位ねらい）
+    //  9 大声援どよめき：自分以外 全員を いっせいに つまずかせる（全体）
+    // 10 応援メガホン：前方の広いはんいにいる ランナーたちを まとめて つまずかせる（前方・複数）
+    static void fireItem(int ci){
+        Car &c = cars[ci];
+        int item = c.heldItem;
+        if(item <= 0) return;
+        c.heldItem = 0;
+        const float AHEAD_NEAR = (float)wpCount * 0.35f;
+        const float AHEAD_WIDE = (float)wpCount * 0.5f;
+        switch(item){
+            case 1: c.speedBuffT = DASH_TIME; break;
+            case 2: c.turnBuffT = SPRINT_TIME; break;
+            case 3: c.shieldT = SHIELD_TIME; break;
+            case 4: { int t = findAheadTarget(ci, AHEAD_NEAR); if(t >= 0) applyStagger(cars[t], STAGGER_TRIP); break; }
+            case 5: { int t = findAheadTarget(ci, AHEAD_NEAR); if(t >= 0) applySlow(cars[t], SLOW_DROWSY); break; }
+            case 6: addTrap(c, 0); break;
+            case 7: addTrap(c, 1); break;
+            case 8: {
+                int L = leaderIndex();
+                if(L >= 0 && L != ci){
+                    Car &tc = cars[L];
+                    if(tc.shieldT > 0) tc.shieldT = 0;
+                    else {
+                        if(CRAMP_STAGGER > tc.staggerT) tc.staggerT = CRAMP_STAGGER;
+                        float slowTotal = CRAMP_STAGGER + CRAMP_SLOW;
+                        if(slowTotal > tc.slowT) tc.slowT = slowTotal;
+                        tc.speed = 0;
+                    }
+                }
+                break;
+            }
+            case 9: for(int i = 0; i < carCount; i++){ if(i != ci && !cars[i].finished) applyStagger(cars[i], STAGGER_CROWD); } break;
+            case 10: {
+                float fromP = progressOf(c);
+                for(int i = 0; i < carCount; i++){
+                    if(i == ci || cars[i].finished) continue;
+                    float diff = aheadDiff(fromP, progressOf(cars[i]));
+                    if(diff > 0.0f && diff <= AHEAD_WIDE) applyStagger(cars[i], STAGGER_CHEER);
+                }
+                break;
+            }
+            default: break;
+        }
+    }
+
+    EM_KEEP void race_step(float dt, float steer, float accel, float brake, int useItem){
         if(dt > 0.05f) dt = 0.05f;
         if(wpCount < 3 || carCount < 1) return;
         raceTime += dt;
@@ -300,6 +457,13 @@ namespace race {
                 continue;
             }
 
+            // アイテム効果の残り時間を減らす
+            if(c.staggerT > 0){ c.staggerT -= dt; if(c.staggerT < 0) c.staggerT = 0; }
+            if(c.slowT > 0){ c.slowT -= dt; if(c.slowT < 0) c.slowT = 0; }
+            if(c.speedBuffT > 0){ c.speedBuffT -= dt; if(c.speedBuffT < 0) c.speedBuffT = 0; }
+            if(c.turnBuffT > 0){ c.turnBuffT -= dt; if(c.turnBuffT < 0) c.turnBuffT = 0; }
+            if(c.shieldT > 0){ c.shieldT -= dt; if(c.shieldT < 0) c.shieldT = 0; }
+
             float st = steer, ac = accel, br = brake;
             if(c.isCpu){
                 int tgt = wrap(c.nearSeg + 6);
@@ -310,19 +474,54 @@ namespace race {
                 while(diff < -3.14159265f) diff += 6.2831853f;
                 st = clampf(diff * 1.6f, -1.0f, 1.0f);
                 ac = 1.0f; br = 0.0f;
-                // 性能差（アイテムなし。speedMul/aiSkillで 強さに差を付ける）
+                // CPUは、持っていたら ごくまれに自分でアイテムを使う（シールドなどのバフはいつでも使う）
+                if(c.heldItem != 0 && (rand() % 240) == 0) fireItem(ci);
+            } else if(useItem && c.heldItem != 0){
+                fireItem(ci);
             }
+
             float off = lateralOffset(c);
             float half = trackWidth * 0.5f;
             float grip = (fabsf(off) > half) ? OFFTRACK_DRAG : 1.0f;
+            float speedMul = (c.speedBuffT > 0 ? DASH_SPEED_MULT : 1.0f) * (c.slowT > 0 ? SLOW_MULT : 1.0f);
+            float turnMul = (c.turnBuffT > 0 ? SPRINT_TURN_MULT : 1.0f);
+            float effMaxSpeed = c.maxSpeed * grip * speedMul;
 
-            c.speed += (ac * c.accelPow - br * c.accelPow * 2.2f) * dt * grip;
-            c.speed -= 8.0f * dt; // 自然減速
-            c.speed = clampf(c.speed, 0.0f, c.maxSpeed * grip);
-
-            c.heading += st * TURN_RATE * dt * (0.4f + 0.6f * (c.speed / c.maxSpeed));
+            if(c.staggerT > 0.0f){
+                // つまずいて、少しのあいだ 加速できない（いきおいだけで すっと止まっていく）
+                c.speed -= 30.0f * dt;
+                if(c.speed < 0) c.speed = 0;
+            } else {
+                c.speed += (ac * c.accelPow * speedMul - br * c.accelPow * 2.2f) * dt * grip;
+                c.speed -= 8.0f * dt; // 自然減速
+                c.speed = clampf(c.speed, 0.0f, effMaxSpeed);
+                c.heading += st * TURN_RATE * turnMul * dt * (0.4f + 0.6f * (c.speed / c.maxSpeed));
+            }
             c.x += sinf(c.heading) * c.speed * dt;
             c.z += cosf(c.heading) * c.speed * dt;
+
+            // アイテムボックス：まだ何も持っていないときに 近づくと、10種のどれかをランダムで持つ
+            for(int bi = 0; bi < itemboxCount; bi++){
+                ItemBox &b = itemboxes[bi];
+                if(b.respawnT > 0){ b.respawnT -= dt; continue; }
+                if(c.heldItem != 0) continue;
+                float dx = c.x - b.x, dz = c.z - b.z;
+                if(dx * dx + dz * dz < PICKUP_RADIUS * PICKUP_RADIUS){
+                    c.heldItem = 1 + (rand() % 10);
+                    b.respawnT = ITEMBOX_RESPAWN;
+                }
+            }
+
+            // わな（トラップ）に ふれたら発動して消える（1回だけ効く）
+            for(int ti = 0; ti < trapCount; ti++){
+                Trap &tr = traps[ti];
+                if(!tr.active) continue;
+                float dx = c.x - tr.x, dz = c.z - tr.z;
+                if(dx * dx + dz * dz < TRAP_RADIUS * TRAP_RADIUS){
+                    if(tr.kind == 0) applySlow(c, SLOW_DROWSY); else applyStagger(c, STAGGER_PEBBLE);
+                    tr.active = 0;
+                }
+            }
 
             // コース外で ほとんど止まっている時間をはかる → たまったら かわいいモンスターが助けに来る
             bool offTrack = fabsf(off) > half;
@@ -346,15 +545,24 @@ namespace race {
             findNearest(c);
             if(c.lap >= lapsTarget && !c.finished){ c.finished = 1; c.finishTime = raceTime; finishedCount++; c.rank = finishedCount; }
         }
+        // わなの寿命（使われなかったわなは、やがて自然に消える）
+        for(int ti = 0; ti < trapCount; ti++){
+            if(!traps[ti].active) continue;
+            traps[ti].life -= dt;
+            if(traps[ti].life <= 0) traps[ti].active = 0;
+        }
     }
 
-    // 出力: [0]carCount [1]lapsTarget [2]raceTime [3]finishedCount
-    // car毎 10: x,z,heading,speed,lap,finished,rank,progress(nearSeg+segT),isCpu,rescue(0..1 残り。0なら助けは来ていない)
-    const int HEADER = 4;
-    const int PER_CAR = 10;
-    float outBuf[HEADER + MAX_CAR * PER_CAR];
+    // 出力: [0]carCount [1]lapsTarget [2]raceTime [3]finishedCount [4]trapCount [5]itemboxCount
+    // car毎 16: x,z,heading,speed,lap,finished,rank,progress(nearSeg+segT),isCpu,rescue(0..1 残り),
+    //           heldItem(0〜10), stagger(0/1), slow(0/1), shield(0/1), speedBuff(0/1), turnBuff(0/1)
+    // そのあと わな(MAX_TRAP)×4: x,z,kind,life(0..1 残り。0なら無し) → アイテムボックス(MAX_ITEMBOX)×3: x,z,avail(0/1)
+    const int HEADER = 6;
+    const int PER_CAR = 16;
+    float outBuf[HEADER + MAX_CAR * PER_CAR + MAX_TRAP * 4 + MAX_ITEMBOX * 3];
     EM_KEEP float* race_get_buffer(){
         outBuf[0] = (float)carCount; outBuf[1] = (float)lapsTarget; outBuf[2] = raceTime; outBuf[3] = (float)finishedCount;
+        outBuf[4] = (float)trapCount; outBuf[5] = (float)itemboxCount;
         int o = HEADER;
         for(int i = 0; i < MAX_CAR; i++){
             if(i < carCount){
@@ -363,8 +571,26 @@ namespace race {
                 outBuf[o+4] = (float)c.lap; outBuf[o+5] = (float)c.finished; outBuf[o+6] = (float)c.rank;
                 outBuf[o+7] = (float)c.nearSeg + c.segT; outBuf[o+8] = (float)c.isCpu;
                 outBuf[o+9] = c.rescueT / RESCUE_DURATION;
+                outBuf[o+10] = (float)c.heldItem;
+                outBuf[o+11] = c.staggerT > 0 ? 1.0f : 0.0f;
+                outBuf[o+12] = c.slowT > 0 ? 1.0f : 0.0f;
+                outBuf[o+13] = c.shieldT > 0 ? 1.0f : 0.0f;
+                outBuf[o+14] = c.speedBuffT > 0 ? 1.0f : 0.0f;
+                outBuf[o+15] = c.turnBuffT > 0 ? 1.0f : 0.0f;
             } else memset(&outBuf[o], 0, sizeof(float) * PER_CAR);
             o += PER_CAR;
+        }
+        for(int i = 0; i < MAX_TRAP; i++){
+            if(i < trapCount && traps[i].active){
+                outBuf[o] = traps[i].x; outBuf[o+1] = traps[i].z; outBuf[o+2] = (float)traps[i].kind; outBuf[o+3] = traps[i].life / TRAP_LIFE;
+            } else memset(&outBuf[o], 0, sizeof(float) * 4);
+            o += 4;
+        }
+        for(int i = 0; i < MAX_ITEMBOX; i++){
+            if(i < itemboxCount){
+                outBuf[o] = itemboxes[i].x; outBuf[o+1] = itemboxes[i].z; outBuf[o+2] = itemboxes[i].respawnT <= 0 ? 1.0f : 0.0f;
+            } else memset(&outBuf[o], 0, sizeof(float) * 3);
+            o += 3;
         }
         return outBuf;
     }
