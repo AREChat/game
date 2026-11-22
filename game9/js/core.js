@@ -250,7 +250,7 @@ function startStage(idx){
     scene.background = new T.Color(G.stage.sky[0]);
     scene.fog = new T.Fog(G.stage.fog, 8, 30);
     floorMat.color.setHex(G.stage.sky[1]);
-    $("playTitle").textContent = "Stage " + (idx + 1) + "：" + G.stage.title;
+    $("playTitle").textContent = G.stage.title;
     $("playSub").textContent = G.stage.composer;
     paintHud();
     showScreen("s-play");
@@ -285,7 +285,7 @@ function paintStageSelect(){
     box.innerHTML = STAGES.map((s, i) => {
         const lock = i > unlocked;
         return '<button type="button" class="stagebtn' + (lock ? " locked" : "") + '" data-i="' + i + '"' + (lock ? " disabled" : "") + '>' +
-            '<span class="sn">Stage ' + (i + 1) + '</span><span class="st">' + (lock ? "🔒 未開放" : s.title) + '</span>' +
+            '<span class="st">' + (lock ? "🔒 未開放" : s.title) + '</span>' +
             (lock ? "" : '<span class="sc">' + s.composer + '</span>') + '</button>';
     }).join("");
 }
