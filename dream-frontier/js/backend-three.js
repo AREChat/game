@@ -50,13 +50,13 @@ export async function create(canvas, opts){
     B.setScene = (sc) => {
         for(const l of B.layers){ root.remove(l.mesh); l.mesh.geometry.dispose(); l.mesh.material.dispose(); } B.layers = [];
         for(const p of Object.values(B.pools)) for(const m of p){ root.remove(m); } for(const p of Object.values(B.protos)) p.mat.dispose(); B.pools = {}; B.protos = {};
-        for(const L of sc.layers){ const g = build(L.prims); if(!g.n) continue; const mesh = new T.Mesh(toGeom(g), mkMat(L)); mesh.frustumCulled = false; mesh.castShadow = L.id === "solid"; mesh.receiveShadow = L.id === "solid" || L.id === "ground" || L.id === "paths" || L.id === "water"; if(L.add || L.blend) mesh.renderOrder = 2; root.add(mesh); B.layers.push({id: L.id, mesh, scroll: L.scroll, map: mesh.material.map}); }
+        for(const L of sc.layers){ const g = build(L.prims); if(!g.n) continue; const mesh = new T.Mesh(toGeom(g), mkMat(L)); mesh.frustumCulled = false; mesh.castShadow = L.id === "solid"; mesh.receiveShadow = L.id === "solid" || L.id === "ground" || L.id === "paths" || L.id === "water"; if(L.add || L.blend) mesh.renderOrder = 2; mesh.visible = !L.hidden; root.add(mesh); B.layers.push({id: L.id, mesh, scroll: L.scroll, map: mesh.material.map}); }
         for(const [name, M] of Object.entries(sc.models)){ const g = build(M.prims); if(g.n) B.protos[name] = {geo: toGeom(g), mat: mkMat(M)}; }
     };
     B.setHidden = (id, h) => { for(const l of B.layers) if(l.id === id) l.mesh.visible = !h; };
     const smat = (n, add) => new T.SpriteMaterial({map: tex(n), transparent: true, depthWrite: false, blending: add ? T.AdditiveBlending : T.NormalBlending});
     B.frame = (cam, env, dyn, t) => {
-        camera.fov = cam.fov; camera.updateProjectionMatrix(); camera.position.set(cam.eye[0], cam.eye[1], cam.eye[2]); camera.rotation.set(cam.pitch, cam.yaw + Math.PI, 0, "YXZ");
+        camera.fov = cam.fov; camera.updateProjectionMatrix(); camera.position.set(cam.eye[0], cam.eye[1], cam.eye[2]); camera.rotation.set(cam.pitch, cam.yaw + Math.PI, -(cam.roll || 0), "YXZ");
         const c = new T.Color().setRGB(env.fog[0], env.fog[1], env.fog[2]), density = Math.max(.003, Math.min(.055, 1.4 / Math.max(1, env.far || 120))); scene.background = c; if(!scene.fog || !scene.fog.isFogExp2) scene.fog = new T.FogExp2(c, density); scene.fog.color.copy(c); scene.fog.density = density;
         amb.color.setRGB(env.amb[0], env.amb[1], env.amb[2]); amb.intensity = .48; hemi.color.setRGB(Math.min(1, env.amb[0] * 1.12), Math.min(1, env.amb[1] * 1.12), Math.min(1, env.amb[2] * 1.12)); hemi.groundColor.setRGB(env.amb[0] * .42, env.amb[1] * .34, env.amb[2] * .28); sun.color.setRGB(1, .94, .82); sun.intensity = 1.45;
         const light = env.light || [.4, .8, .45], lightLen = Math.hypot(light[0], light[1], light[2]) || 1, tx = cam.eye[0], tz = cam.eye[2]; sun.target.position.set(tx, 0, tz); sun.position.set(tx + light[0] / lightLen * 135, light[1] / lightLen * 135, tz + light[2] / lightLen * 135);
