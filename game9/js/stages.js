@@ -105,12 +105,12 @@ export const STAGES = [
         ]
     },
     {
-        key:"s12", title:"第12皿　ハンガリーの食卓", composer:"ブラームス：ハンガリー舞曲第5番", track:"bgm/12-hungarian-dance-5.mp3",
-        sky:[0x5a1a1a,0x2a0a1a], fog:0x3a1212, target:24, spawnMs:900, speed:1.35,
+        key:"s12", title:"第12皿　シェフの剣舞", composer:"ハチャトゥリアン：剣の舞", track:"bgm/12-sabre-dance.mp3",
+        sky:[0x6a0a1a,0x2a0510], fog:0x3a0a16, target:26, spawnMs:800, speed:1.5,
         cast:[
-            {shape:"box", color:0xaa3a1a, label:"グヤーシュなべ", r:0.48},
-            {shape:"sphere", color:0xd92a1a, label:"パプリカ", r:0.38},
-            {shape:"cylinder", color:0x7a8a3a, label:"ピクルス", r:0.3}
+            {shape:"cone", color:0xc0c0c0, label:"飛び散る包丁", r:0.3},
+            {shape:"box", color:0x8a5a2a, label:"まな板", r:0.42},
+            {shape:"cylinder", color:0xd9442a, label:"回転ローストチキン", r:0.4}
         ]
     },
     {

@@ -12,6 +12,6 @@
 09-dance-of-the-sugar-plum-fairy.mp3 … チャイコフスキー：くるみ割り人形　金平糖の精の踊り
 10-can-can.mp3                 … オッフェンバック：天国と地獄（カンカン）
 11-william-tell.mp3            … ロッシーニ：ウィリアムテル序曲
-12-hungarian-dance-5.mp3       … ブラームス：ハンガリー舞曲第5番
+12-sabre-dance.mp3             … ハチャトゥリアン：剣の舞
 13-pomp-and-circumstance.mp3   … エルガー：威風堂々第1番
 14-csikos-post.mp3            … ネッケ：クシコスポスト
