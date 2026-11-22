@@ -78,12 +78,12 @@ export const STAGES = [
         ]
     },
     {
-        key:"s09", title:"第9皿　トルコの屋台めぐり", composer:"モーツァルト：トルコ行進曲", track:"bgm/09-turkish-march.mp3",
-        sky:[0xc97a2a,0x6a3a10], fog:0x7a4414, target:24, spawnMs:950, speed:1.3,
+        key:"s09", title:"第9皿　金平糖の精の舞踏会", composer:"チャイコフスキー：くるみ割り人形　金平糖の精の踊り", track:"bgm/金平糖の精の踊り.mp3",
+        sky:[0x3a1a4a,0x1a0a30], fog:0x2a1240, target:24, spawnMs:950, speed:1.3,
         cast:[
-            {shape:"cylinder", color:0x8a4a1f, label:"ケバブ", r:0.42},
-            {shape:"box", color:0xd9b36b, label:"バクラヴァ", r:0.4},
-            {shape:"sphere", color:0xaa2a2a, label:"チャイポット", r:0.4}
+            {shape:"icosahedron", color:0xffb3e0, label:"金平糖の精", r:0.34},
+            {shape:"cone", color:0xff8fc0, label:"シュガーケーン", r:0.4},
+            {shape:"sphere", color:0xffe3f0, label:"砂糖がけアーモンド", r:0.3}
         ]
     },
     {
