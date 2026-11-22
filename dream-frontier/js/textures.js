@@ -16,4 +16,18 @@ const MAKE = {
     puff: () => mkc(64, 64, (x, w, h) => { x.fillStyle = "#fff"; for(let i = 0; i < 6; i++){ x.beginPath(); x.arc(32 + (rnd() - .5) * 26, 32 + (rnd() - .5) * 20, 12 + rnd() * 8, 0, 6.283); x.fill(); } })
 };
 export const TEX_NAMES = Object.keys(MAKE);
-export function texCanvas(name){ seed = 7 + name.length * 977; return (MAKE[name] || MAKE.grass)(); }
+// ===== 絵のタイル（img/tex/<名前>.webp）：読みこめたら、コードで描いた模様の かわりに つかう。読めなければ 今までどおり =====
+//   preloadTexImages() を 描画エンジンを つくる「前」に 待つ（時間切れ・失敗しても そのまま すすむ）
+const IMG_TEX = {};
+export const TEX_IMAGES = ["grass", "cobble", "water", "dirt", "tile", "wood"];
+export function preloadTexImages(timeoutMs){
+    const one = (n) => new Promise((res) => {
+        const im = new Image(); im.decoding = "async";
+        im.onload = () => { try{ const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d").drawImage(im, 0, 0); if(c.width >= 64 && c.height >= 64) IMG_TEX[n] = c; }catch(_e){} res(); };
+        im.onerror = () => res();
+        im.src = new URL("../img/tex/" + n + ".webp", import.meta.url).href;
+    });
+    return Promise.race([Promise.all(TEX_IMAGES.map(one)), new Promise((res) => setTimeout(res, timeoutMs || 6000))]);
+}
+export const texImageNames = () => Object.keys(IMG_TEX);
+export function texCanvas(name){ if(IMG_TEX[name]) return IMG_TEX[name]; seed = 7 + name.length * 977; return (MAKE[name] || MAKE.grass)(); }

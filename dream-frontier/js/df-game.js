@@ -5,6 +5,9 @@ import {yawOf, pitchOf} from "./df-path.js";
 import {pathOf} from "./df-world.js";
 import {coasterInit, coasterUpdate, coasterCamera, stageName} from "./df-ride.js";
 import {stageDyn} from "./df-stages.js";
+import {spriteReady} from "./df-sprites.js";
+// どうぶつ・おばけ・ほしのこ：絵（img/chara/<名前>_f|r|l|b.webp）が そろって いれば 絵で、なければ 今までの 手作りの 3D モデルで 出す
+const SPRITE_MODELS = {giraffe: 0, elephant: 0, fluffy: 0, lion: 0, ghost: .3, starkid: 0};   // 値：絵の 足もとを ずらす 高さ（モデルの 原点が 足もとでは ないもの）
 
 const lerpv = (a, b, t) => a + (b - a) * t;
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t, ease = (t) => t * t * (3 - 2 * t);
@@ -251,6 +254,7 @@ export class Game{
         if(!riding("worldjet")) D.push({m: "jetplane", x: 91, y: 0, z: -43.5, yaw: Math.PI / 2});
         if(!riding("sweets")) D.push({m: "blastercar", x: -43.6, y: .9 + Math.sin(T * 1.6) * .12, z: 68, yaw: Math.PI / 2 + Math.sin(T * .5) * .08});
         if(!riding("aurora")) D.push({m: "skywing", x: 52.6, y: 2.4 + Math.sin(T * 1.2) * .25, z: -74, yaw: -Math.PI / 2 + Math.sin(T * .4) * .1, sx: 1.4, sy: 1.4, sz: 1.4});
+        for(const d of D){ if(d.m && !d.p && SPRITE_MODELS[d.m] !== undefined && spriteReady(d.m)){ d.p = d.m; d.y = Math.max(0, (d.y || 0) + SPRITE_MODELS[d.m]); } }
         return D;
     }
     camPos(){ return this.camera().eye; }

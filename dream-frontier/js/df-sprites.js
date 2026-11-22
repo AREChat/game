@@ -1,7 +1,7 @@
 // ===== 人（NPC・ゲスト）を 1枚絵で ひょうじする ための 共通部品 =====
 // 画像は img/chara/<名前>_f|r|l|b.webp（前・右むき・左むき・後ろ）。どちらの描画エンジンでも 同じ 選びかたを つかう。
 // 読みこめない あいだ／失敗した ときは、呼ぶ側が 手作りの3Dモデルで 表示する（なので 画像が なくても ゲームは 動く）。
-export const SPRITE_H = {rihito: 2.35, satoshi: 2.3, akane: 2.25, maika: 2.2, staff_jet: 2.3, staff_sweets: 2.3, staff_aurora: 2.4, guest0: 1.9, guest1: 1.9, guest2: 2.4, guest3: 2.3, guest4: 1.9, guest5: 1.9};
+export const SPRITE_H = {rihito: 2.35, satoshi: 2.3, akane: 2.25, maika: 2.2, staff_jet: 2.3, staff_sweets: 2.3, staff_aurora: 2.4, giraffe: 6.4, elephant: 3.7, fluffy: 2.6, lion: 2.5, ghost: 2.4, starkid: 1.35, guest0: 1.9, guest1: 1.9, guest2: 2.4, guest3: 2.3, guest4: 1.9, guest5: 1.9};
 const cache = {};
 export function spriteImage(name, view){
     const k = name + "_" + view; if(cache[k]) return cache[k];
@@ -18,4 +18,4 @@ export function pickView(eye, x, z, yaw){
     return {view: Math.abs(a) < Math.PI / 4 ? "f" : Math.abs(a) > Math.PI * 3 / 4 ? "b" : a > 0 ? "r" : "l", face};
 }
 // その人が 今 画像で 描けるか（4面 そろって 読みこみ ずみ）
-export function spriteReady(name){ for(const v of "frlb"){ const r = spriteImage(name, v); if(!r.ok) return false; } return true; }
+export function spriteReady(name){ let ok = true; for(const v of "frlb"){ if(!spriteImage(name, v).ok) ok = false; } return ok; }   // 4方向の 絵を いっぺんに よみはじめる（1まいずつ 待たない）
