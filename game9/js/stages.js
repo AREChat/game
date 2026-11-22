@@ -78,7 +78,7 @@ export const STAGES = [
         ]
     },
     {
-        key:"s09", title:"第9皿　金平糖の精の舞踏会", composer:"チャイコフスキー：くるみ割り人形　金平糖の精の踊り", track:"bgm/金平糖の精の踊り.mp3",
+        key:"s09", title:"第9皿　金平糖の精の舞踏会", composer:"チャイコフスキー：くるみ割り人形　金平糖の精の踊り", track:"bgm/09-dance-of-the-sugar-plum-fairy.mp3",
         sky:[0x3a1a4a,0x1a0a30], fog:0x2a1240, target:24, spawnMs:950, speed:1.3,
         cast:[
             {shape:"icosahedron", color:0xffb3e0, label:"金平糖の精", r:0.34},
@@ -123,11 +123,11 @@ export const STAGES = [
         ]
     },
     {
-        key:"s14", title:"第14皿　宇宙の晩さん会（最終決戦）", composer:"ホルスト：組曲「惑星」より 木星", track:"bgm/14-jupiter.mp3",
-        sky:[0x0a0a2a,0x000010], fog:0x08082a, target:20, spawnMs:900, speed:1.3, boss:true,
+        key:"s14", title:"第14皿　全力配膳レース（最終決戦）", composer:"ネッケ：クシコスポスト", track:"bgm/14-csikos-post.mp3",
+        sky:[0xff9a4a,0x5a1e10], fog:0x6a2a14, target:20, spawnMs:900, speed:1.3, boss:true,
         cast:[
-            {shape:"sphere", color:0xffd84a, label:"星屑スパイス", r:0.36},
-            {shape:"icosahedron", color:0xb0a0ff, label:"流星プリン", r:0.4}
+            {shape:"sphere", color:0xffd84a, label:"爆走ワゴンの皿", r:0.36},
+            {shape:"icosahedron", color:0xb0a0ff, label:"猛スピードデザート", r:0.4}
         ],
         bossCast:{shape:"icosahedron", color:0xffe08a, label:"グランド・プディング", r:1.5, hp:16}
     }
