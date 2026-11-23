@@ -12,18 +12,88 @@
   function drawP(x, list){ list.forEach(function(p){ x.globalAlpha = clamp(p.t * 2, 0, 1); x.fillStyle = p.c; x.fillRect(p.x - 2, p.y - 2, 4, 4); }); x.globalAlpha = 1; }
   function accessory(x, px, py, size){ var e = C.equip(); if(e) emoji(x, e, px, py, size); }
 
+  // ---------- ①ネオン・サイバーダッシュ の物理コア（C++/WebAssembly）----------
+  // js/game7.wasm.js（<script>で先に読みこみ）が window.Game7Module を置く。読みこみは非同期なので、
+  // まだ準備できていない間（または失敗した時）は、同じ内容の JS 版（dashStepJS）に自動フォールバックする。
+  var G7W = {mod: null, ready: false, failed: false};
+  (function bootG7Wasm(){
+    if(typeof window === "undefined" || typeof window.Game7Module !== "function") return;
+    try{
+      window.Game7Module().then(function(M){
+        G7W.mod = M;
+        G7W.reset = M.cwrap("dash_reset", null, ["number"]);
+        G7W.tap = M.cwrap("dash_tap", null, []);
+        G7W.slide = M.cwrap("dash_slide", null, []);
+        G7W.step = M.cwrap("dash_step", null, ["number", "number"]);
+        G7W.getBuf = M.cwrap("dash_get_buffer", "number", []);
+        G7W.consumeCoins = M.cwrap("dash_consume_gotcoins", null, []);
+        G7W.consumeObs = M.cwrap("dash_consume_obsevents", null, []);
+        G7W.ready = true;
+      }, function(err){ G7W.failed = true; try{ console.warn("game7: WASM読みこみ失敗。JS版にフォールバックします。", err); }catch(_e){} });
+    }catch(_e){ G7W.failed = true; }
+  })();
+
   // ===== ① ネオン・サイバーダッシュ =====
   var D = {id: "dash", icon: "🏃", name: "ネオン・サイバーダッシュ", chance: 25, dur: 45, coinRate: .7, desc: "ジャンプとスライディングで、ネオンの街を駆けぬけろ！",
     help: "タップ＝ジャンプ ／ 下にスワイプ＝スライディング"};
   var GROUND = 520;
-  D.init = function(){ D.y = 0; D.vy = 0; D.slide = 0; D.obs = []; D.coins = []; D.next = 400; D.dist = 0; D.fever = 0; D.inv = 0; D.shake = 0; D.parts = []; D.bx = 0; D.flash = 0; C.S.combo = 0; };
-  D.onTap = function(){ if(D.y === 0 && D.slide <= 0){ D.vy = -740; C.SFX.jump(); } };
-  D.onSwipe = function(d){ if(d === "up") D.onTap(); else if(d === "down"){ D.slide = .55; if(D.y > 0) D.vy = Math.max(D.vy, 600); } };
-  D.update = function(dt){
+  D.init = function(){
+    D._mode = G7W.ready ? "wasm" : "js";
+    D.y = 0; D.vy = 0; D.slide = 0; D.obs = []; D.coins = []; D.next = 400; D.dist = 0; D.fever = 0; D.inv = 0; D.shake = 0; D.parts = []; D.bx = 0; D.flash = 0; C.S.combo = 0;
+    if(D._mode === "wasm") G7W.reset((Math.random() * 4294967295) >>> 0);
+  };
+  D.onTap = function(){
+    if(D._mode === "wasm"){ G7W.tap(); C.SFX.jump(); return; }
+    if(D.y === 0 && D.slide <= 0){ D.vy = -740; C.SFX.jump(); }
+  };
+  D.onSwipe = function(d){
+    if(d === "up"){ D.onTap(); return; }
+    if(d !== "down") return;
+    if(D._mode === "wasm"){ G7W.slide(); return; }
+    D.slide = .55; if(D.y > 0) D.vy = Math.max(D.vy, 600);
+  };
+  // ---- WASM版：C++コアを1ステップ進め、出力バッファから D.* / S.* を組み立てる ----
+  D.updateWasm = function(dt){
+    var prevFever = D.fever;
+    G7W.step(dt, C.time());
+    var M = G7W.mod, ptr = G7W.getBuf() / 4, F = M.HEAPF32;
+    D.y = F[ptr]; D.vy = F[ptr + 1]; D.slide = F[ptr + 2]; D.dist = F[ptr + 3]; D.bx = F[ptr + 4];
+    D.fever = F[ptr + 5]; D.inv = F[ptr + 6]; D.shake = F[ptr + 7]; D.flash = F[ptr + 8];
+    var prevCombo = S.combo;
+    S.combo = F[ptr + 9]; S.score = F[ptr + 10];
+    var maxObs = F[ptr + 11], maxCoin = F[ptr + 12], o = ptr + 13;
+    var obs = [], anyHit = false, anyFeverBreak = false, ptop0 = GROUND - D.y - (D.slide > 0 ? 22 : 44);
+    for(var i = 0; i < maxObs; i++){
+      var ox = F[o], ow = F[o + 1], oh = F[o + 2], oy = F[o + 3], otype = F[o + 4], odone = F[o + 5], oevt = F[o + 6];
+      if(ow > 0 || oh > 0 || ox !== 0 || odone){
+        obs.push({x: ox, type: otype === 0 ? "low" : "high", w: ow, h: oh, y: oy, done: !!odone});
+        if(oevt === 1){ addP(D.parts, ox, GROUND - oy - oh, 14, "#ffd84a", 260); C.SFX.good(); }
+        else if(oevt === 2){ C.bonusTime -= 2; C.SFX.hit(); addP(D.parts, 64, ptop0, 10, "#ff4fa0"); }
+      }
+      o += 7;
+    }
+    D.obs = obs;
+    var coins = [];
+    for(var j = 0; j < maxCoin; j++){
+      var kx = F[o], ky = F[o + 1], kgot = F[o + 2];
+      if(kx !== 0 || ky !== 0 || kgot){
+        if(!kgot) coins.push({x: kx, y: ky});
+        else { C.SFX.coin(); addP(D.parts, kx, GROUND - ky, 4, "#ffe27a", 120); }
+      }
+      o += 3;
+    }
+    D.coins = coins;
+    if(S.combo > prevCombo) C.SFX.coin();
+    if(D.fever > 0 && prevFever <= 0){ C.cutin("🔥 フィーバー！ 全部ふっとばせ！", 1200); C.SFX.fan(); }
+    G7W.consumeCoins(); G7W.consumeObs();
+    stepP(D.parts, dt);
+    C.setIntensity(D.fever > 0 ? 3 : S.combo >= 8 ? 2 : 1);
+  };
+  D.updateJS = function(dt){
     var v = (300 + C.time() * 4) * (D.fever > 0 ? 1.5 : 1);
     D.dist += v * dt; S.score += v * dt / 25; D.bx += v * dt;
     if(D.fever > 0) D.fever -= dt; if(D.inv > 0) D.inv -= dt; if(D.slide > 0) D.slide -= dt; if(D.shake > 0) D.shake -= dt; if(D.flash > 0) D.flash -= dt;
-    D.vy += 2300 * dt; D.y -= D.vy * dt; if(D.y <= 0){ D.y = 0; D.vy = 0; } else if(D.y > 0 && D.vy < 0 && false) D.y = 0;
+    D.vy += 2300 * dt; D.y -= D.vy * dt; if(D.y <= 0){ D.y = 0; D.vy = 0; }
     if(D.y < 0) D.y = 0;
     D.next -= v * dt;
     if(D.next <= 0){
@@ -49,6 +119,7 @@
     stepP(D.parts, dt);
     C.setIntensity(D.fever > 0 ? 3 : S.combo >= 8 ? 2 : 1);
   };
+  D.update = function(dt){ if(D._mode === "wasm") D.updateWasm(dt); else D.updateJS(dt); };
   D.draw = function(x){
     var f = D.fever > 0;
     x.save(); if(D.shake > 0) x.translate(rnd(-4, 4), rnd(-4, 4));
