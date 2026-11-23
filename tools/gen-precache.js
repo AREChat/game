@@ -1,6 +1,9 @@
 // オフライン用の一覧（precache-manifest.js / precache.json）を作る。ファイルを足したり消したりしたら実行する:  node tools/gen-precache.js
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
-const SKIP_DIR = new Set([".git", "node_modules", "docs", "tools", ".github", "sql", "edge-functions", "desktop", "3ds"]);
+// csharp-achievements は .NET/Blazor WASM ランタイム一式（約14MB）を含むため、
+// オフライン事前キャッシュ（shell）からは除外する。使う画面（実績パネルを開いた時）
+// だけ そのとき 読みこむ（遅延ロード）ので、ふだんの ゲームの起動は 重くならない。
+const SKIP_DIR = new Set([".git", "node_modules", "docs", "tools", ".github", "sql", "edge-functions", "desktop", "3ds", "csharp-achievements"]);
 const SHELL = /\.(html|js|css|json|webmanifest|txt|wasm)$/i;
 const MEDIA = /\.(webp|png|jpg|jpeg|gif|svg|ico)$/i, AUDIO = /\.(mp3|ogg|wav|m4a)$/i;
 const SKIP_FILE = /^(sw\.js|precache-manifest\.js|precache\.json|googlea.*\.html|robots\.txt|sitemap\.xml)$/;

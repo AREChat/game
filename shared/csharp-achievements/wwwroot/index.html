@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>AchievementsEngine (hidden host frame)</title>
+</head>
+<body>
+<!--
+  This page is loaded by each game inside a hidden <iframe>, from
+  shared/feature-panel.js. It exists only so that the Blazor WebAssembly
+  runtime (C#) can boot with its own correct base URL (avoiding the need to
+  rewrite every framework/asset path when the host page lives in a different
+  directory, e.g. /game9/), and exposes the headless AchievementsEngine
+  methods to the parent page over postMessage.
+-->
+<script src="_framework/blazor.webassembly.js" autostart="false"></script>
+<script>
+  var ready = false;
+  var startPromise = Blazor.start().then(function(){ ready = true; parent.postMessage({ arefp: true, type: "ready" }, "*"); });
+
+  window.addEventListener("message", function(ev){
+    var msg = ev.data;
+    if(!msg || !msg.arefp || msg.type !== "call") return;
+    startPromise.then(function(){
+      return DotNet.invokeMethodAsync("AchievementsEngine", msg.method, msg.a, msg.b, msg.c);
+    }).then(function(result){
+      parent.postMessage({ arefp: true, type: "result", id: msg.id, result: result }, "*");
+    }).catch(function(err){
+      parent.postMessage({ arefp: true, type: "result", id: msg.id, error: String(err && err.message || err) }, "*");
+    });
+  });
+</script>
+</body>
+</html>
