@@ -284,6 +284,7 @@ async function boot(){
         G8.act_add_platform = c("act_add_platform", "number", ["number", "number", "number", "number", "number"]);
         G8.act_add_enemy = c("act_add_enemy", "number", ["number", "number", "number", "number"]);
         G8.act_add_coin = c("act_add_coin", "number", ["number", "number"]);
+        G8.act_add_item = c("act_add_item", "number", ["number", "number", "number"]);
         G8.act_set_goal = c("act_set_goal", null, ["number", "number", "number", "number"]);
         G8.act_step = c("act_step", null, ["number", "number", "number", "number", "number"]);
         G8.act_get_buffer = c("act_get_buffer", "number", []);
@@ -292,6 +293,7 @@ async function boot(){
         G8.race_set_width = c("race_set_width", null, ["number"]);
         G8.race_add_car = c("race_add_car", "number", ["number", "number", "number", "number", "number", "number"]);
         G8.race_add_itembox = c("race_add_itembox", "number", ["number", "number"]);
+        G8.race_add_obstacle = c("race_add_obstacle", "number", ["number", "number", "number"]);
         G8.race_step = c("race_step", null, ["number", "number", "number", "number", "number"]);
         G8.race_get_buffer = c("race_get_buffer", "number", []);
         G8.heap = () => G8mod.HEAPF32;

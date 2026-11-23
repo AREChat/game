@@ -218,6 +218,7 @@ body.sab .side.left .help{display:none}
 <audio id="bgm" src="bgm/casino.mp3" loop preload="auto"></audio>
 <script src="../../shared/are-guard.js"></script>
 <script src="../../shared/are-pad.js"></script>
+<script src="js/blocks.wasm.js"></script>
 <script>
 (function(){
 "use strict";
@@ -227,6 +228,27 @@ body.sab .side.left .help{display:none}
    ============================================================ */
 var COLS=10, ROWS=22, VIS=20, HID=ROWS-VIS, CELL=30;
 var $=function(id){return document.getElementById(id);};
+
+/* ===== 判定・AIの計算は C++(WebAssembly) 側（cpp/blocks.cpp）で行う。描画・入力はこのJSのまま。 =====
+   衝突判定・ライン消し・おじゃまブロック追加・じゃま役AIの評価（evalGrid）を wasm に移し、
+   wasmが使えない時だけ 元のJS計算（フォールバック）に自動できりかわる。 */
+var WM=null, wmFailed=false, wmGridPtr=0, wmTmpPtr=0, wmMPtr=0;
+(function bootWasm(){
+  try{
+    if(typeof window.BlocksModule!=="function") throw new Error("BlocksModule がありません");
+    window.BlocksModule().then(function(m){
+      WM=m;
+      wmGridPtr=WM._malloc(ROWS*COLS*4);
+      wmTmpPtr=WM._malloc(ROWS*COLS*4);
+      wmMPtr=WM._malloc(4*4*4);
+      WM._blk_seed((Date.now()^0x2545F491)>>>0);
+    }).catch(function(e){ wmFailed=true; console.warn("blocks wasm 読みこみ失敗。JS計算にきりかえます。", e); });
+  }catch(e){ wmFailed=true; console.warn("blocks wasm 読みこみ失敗。JS計算にきりかえます。", e); }
+})();
+function wmReady(){ return !!WM && !wmFailed; }
+function wmWriteGrid(g,ptr){ var v=new Int32Array(WM.HEAPU8.buffer,ptr,ROWS*COLS); for(var y=0;y<ROWS;y++) for(var x=0;x<COLS;x++) v[y*COLS+x]=g[y][x]; }
+function wmReadGrid(g,ptr){ var v=new Int32Array(WM.HEAPU8.buffer,ptr,ROWS*COLS); for(var y=0;y<ROWS;y++) for(var x=0;x<COLS;x++) g[y][x]=v[y*COLS+x]; }
+function wmWriteM(m){ var sz=m.length; var v=new Int32Array(WM.HEAPU8.buffer,wmMPtr,sz*sz); for(var y=0;y<sz;y++) for(var x=0;x<sz;x++) v[y*sz+x]=m[y][x]?1:0; return sz; }
 var COLORS={1:"#5ec8e5",2:"#ffd447",3:"#b57edc",4:"#7bd88f",5:"#ff7a7a",6:"#5b8def",7:"#ff9f5a",8:"#b9a99a"};
 var INK="#4a3728";
 var NAMES=["","I","O","T","S","Z","J","L"];
@@ -245,23 +267,46 @@ function clone(m){return m.map(function(r){return r.slice();});}
 function rotCW(m){var n=m.length,o=[];for(var y=0;y<n;y++){o.push([]);for(var x=0;x<n;x++)o[y][x]=m[n-1-x][y];}return o;}
 function rotCCW(m){var n=m.length,o=[];for(var y=0;y<n;y++){o.push([]);for(var x=0;x<n;x++)o[y][x]=m[x][n-1-y];}return o;}
 function newGrid(){var g=[];for(var y=0;y<ROWS;y++){g.push(new Array(COLS).fill(0));}return g;}
-function collide(g,m,px,py){
+function collideJS(g,m,px,py){
   for(var y=0;y<m.length;y++)for(var x=0;x<m[y].length;x++){
     if(!m[y][x])continue; var gx=px+x, gy=py+y;
     if(gx<0||gx>=COLS||gy>=ROWS)return true;
     if(gy>=0&&g[gy][gx])return true;
   } return false;
 }
-function merge(g,m,px,py,t){for(var y=0;y<m.length;y++)for(var x=0;x<m[y].length;x++)if(m[y][x]&&py+y>=0)g[py+y][px+x]=t;}
+function mergeJS(g,m,px,py,t){for(var y=0;y<m.length;y++)for(var x=0;x<m[y].length;x++)if(m[y][x]&&py+y>=0)g[py+y][px+x]=t;}
+function collide(g,m,px,py){
+  if(!wmReady()) return collideJS(g,m,px,py);
+  var sz=wmWriteM(m); wmWriteGrid(g,wmGridPtr);
+  return !!WM._blk_collide(wmGridPtr,wmMPtr,sz,px,py);
+}
+function merge(g,m,px,py,t){
+  if(!wmReady()) return mergeJS(g,m,px,py,t);
+  var sz=wmWriteM(m); wmWriteGrid(g,wmGridPtr);
+  WM._blk_merge(wmGridPtr,wmMPtr,sz,px,py,t);
+  wmReadGrid(g,wmGridPtr);
+}
 function clearLines(g){
-  var n=0;for(var y=ROWS-1;y>=0;y--){ if(g[y].every(function(c){return c;})){g.splice(y,1);g.unshift(new Array(COLS).fill(0));n++;y++;} } return n;
+  if(!wmReady()){
+    var n=0;for(var y=ROWS-1;y>=0;y--){ if(g[y].every(function(c){return c;})){g.splice(y,1);g.unshift(new Array(COLS).fill(0));n++;y++;} } return n;
+  }
+  wmWriteGrid(g,wmGridPtr);
+  var n=WM._blk_clear_lines(wmGridPtr);
+  wmReadGrid(g,wmGridPtr);
+  return n;
 }
 function addGarbage(g,n){
-  var over=false;
-  for(var i=0;i<n;i++){
-    var top=g.shift(); if(top.some(function(c){return c;}))over=true;
-    var hole=Math.floor(Math.random()*COLS), row=new Array(COLS).fill(8); row[hole]=0; g.push(row);
-  } return over;
+  if(!wmReady()){
+    var over=false;
+    for(var i=0;i<n;i++){
+      var top=g.shift(); if(top.some(function(c){return c;}))over=true;
+      var hole=Math.floor(Math.random()*COLS), row=new Array(COLS).fill(8); row[hole]=0; g.push(row);
+    } return over;
+  }
+  wmWriteGrid(g,wmGridPtr);
+  var over=!!WM._blk_add_garbage(wmGridPtr,n,0);
+  wmReadGrid(g,wmGridPtr);
+  return over;
 }
 function shuffled(){var b=[1,2,3,4,5,6,7];for(var i=6;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}return b;}
 function Bag(){this.q=[];}
@@ -452,12 +497,21 @@ function aiSpawn(){
 function aiPlan(grid,cur){
   var cfg=AI_CFG[diff], cands=[], m=cur.m;
   for(var r=0;r<4;r++){
+    var sz=wmReady()?wmWriteM(m):0;
+    if(wmReady()) wmWriteGrid(grid,wmGridPtr);
     for(var x=-2;x<COLS;x++){
-      if(collide(grid,m,x,0))continue;
-      var y=0;while(!collide(grid,m,x,y+1))y++;
-      var g=grid.map(function(row){return row.slice();}); merge(g,m,x,y,cur.t);
-      var lines=0;for(var yy=0;yy<ROWS;yy++){if(g[yy].every(function(c){return c;}))lines++;}
-      cands.push({r:r,x:x,sc:evalGrid(g,lines)});
+      var sc;
+      if(wmReady()){
+        sc=WM._blk_try_placement(wmGridPtr,wmMPtr,sz,x,cur.t,wmTmpPtr);
+        if(sc<=-1e17) continue;
+      } else {
+        if(collideJS(grid,m,x,0))continue;
+        var y=0;while(!collideJS(grid,m,x,y+1))y++;
+        var g=grid.map(function(row){return row.slice();}); mergeJS(g,m,x,y,cur.t);
+        var lines=0;for(var yy=0;yy<ROWS;yy++){if(g[yy].every(function(c){return c;}))lines++;}
+        sc=evalGrid(g,lines);
+      }
+      cands.push({r:r,x:x,sc:sc});
     }
     if(cur.t===2)break; m=rotCW(m);
   }

@@ -5,6 +5,7 @@ import {T, source} from "./engine.js";          // ここで Three.js の 読み
 import {Geo} from "./gl.js";
 import {texCanvas} from "./textures.js";
 import {SPRITE_H, spriteImage, pickView, spriteReady} from "./df-sprites.js";
+import {propImg} from "./df-props.js";
 import {addPrim} from "./backend-gl2.js";
 
 export async function create(canvas, opts){
@@ -44,14 +45,19 @@ export async function create(canvas, opts){
     };
     const B = {name: "three", info: "Three.js r" + source.revision + "（" + source.used + "）", layers: [], protos: {}, pools: {}, sprites: [], used: 0};
     const root = new T.Group(); scene.add(root);
+    B.props = []; B.propMat = {}; B.propsOn = true; B.pGeoB = new T.PlaneGeometry(1, 1).translate(0, .5, 0);
+    const pmat = (d) => { const key = d.img + (d.two ? "*" : ""); if(B.propMat[key]) return B.propMat[key]; const tx = new T.Texture(propImg(d.img)); tx.colorSpace = T.SRGBColorSpace; tx.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); tx.needsUpdate = true; return B.propMat[key] = new T.MeshBasicMaterial({map: tx, transparent: false, alphaTest: .42, side: d.two ? T.DoubleSide : T.FrontSide}); };
+    B.showProps = (on) => { B.propsOn = !!on; for(const p of B.props) if(!on) p.m.visible = false; };
     B.pMats = {}; B.pSprites = []; B.pGeo = new T.PlaneGeometry(1, 1); B.sGeo = new T.CircleGeometry(1, 20); B.sMat = new T.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: .25, depthWrite: false});
     B.resize = (w, h, scale) => { const s = scale || 1; renderer.setPixelRatio(window.devicePixelRatio || 1); renderer.setSize(Math.max(2, Math.floor(w * s)), Math.max(2, Math.floor(h * s)), false); camera.aspect = w / h; camera.updateProjectionMatrix(); B.w = renderer.domElement.width; B.h = renderer.domElement.height; };
     B.getSize = () => [B.w || canvas.clientWidth, B.h || canvas.clientHeight];
     B.setScene = (sc) => {
+        for(const p of B.props) root.remove(p.m); B.props = [];
         for(const l of B.layers){ root.remove(l.mesh); l.mesh.geometry.dispose(); l.mesh.material.dispose(); } B.layers = [];
         for(const p of Object.values(B.pools)) for(const m of p){ root.remove(m); } for(const p of Object.values(B.protos)) p.mat.dispose(); B.pools = {}; B.protos = {};
         for(const L of sc.layers){ const g = build(L.prims); if(!g.n) continue; const mesh = new T.Mesh(toGeom(g), mkMat(L)); mesh.frustumCulled = false; mesh.castShadow = L.id === "solid"; mesh.receiveShadow = L.id === "solid" || L.id === "ground" || L.id === "paths" || L.id === "water"; if(L.add || L.blend) mesh.renderOrder = 2; mesh.visible = !L.hidden; root.add(mesh); B.layers.push({id: L.id, mesh, scroll: L.scroll, map: mesh.material.map}); }
         for(const [name, M] of Object.entries(sc.models)){ const g = build(M.prims); if(g.n) B.protos[name] = {geo: toGeom(g), mat: mkMat(M)}; }
+        for(const d of (sc.props || [])){ const im = propImg(d.img); if(!im) continue; const H = d.h, W = d.w || H * im.naturalWidth / im.naturalHeight; const m = new T.Mesh(B.pGeoB, pmat(d)); m.scale.set(W, H, 1); m.position.set(d.x, d.y || 0, d.z); if(d.yaw !== undefined) m.rotation.y = d.yaw; root.add(m); B.props.push({m, d}); }
     };
     B.setHidden = (id, h) => { for(const l of B.layers) if(l.id === id) l.mesh.visible = !h; };
     const smat = (n, add) => new T.SpriteMaterial({map: tex(n), transparent: true, depthWrite: false, blending: add ? T.AdditiveBlending : T.NormalBlending});
@@ -62,6 +68,11 @@ export async function create(canvas, opts){
         const light = env.light || [.4, .8, .45], lightLen = Math.hypot(light[0], light[1], light[2]) || 1, tx = cam.eye[0], tz = cam.eye[2]; sun.target.position.set(tx, 0, tz); sun.position.set(tx + light[0] / lightLen * 135, light[1] / lightLen * 135, tz + light[2] / lightLen * 135);
         for(const l of B.layers) if(l.scroll && l.map){ l.map.offset.set(t * l.scroll[0], t * l.scroll[1]); }
         for(const p of Object.values(B.pools)) for(const m of p) m.visible = false; for(const s of B.sprites) s.visible = false;
+        if(B.propsOn){   // たてえ（木・花・岩・街灯・雲・山・建物の正面）：近くの ものだけ ひょうじ。カメラの 方を 向く（正面の 絵は 向き 固定）
+            const kk = Math.max(.45, Math.min(1, (env.amb[0] + env.amb[1] + env.amb[2]) / 3 * 1.5)); for(const mt of Object.values(B.propMat)) mt.color.setRGB(kk, kk, kk);
+            const fr = (env.far || 150) * 1.12, ex = cam.eye[0], ez = cam.eye[2];
+            for(const p of B.props){ const d = p.d, dx = ex - d.x, dz = ez - d.z; if(!d.far && dx * dx + dz * dz > fr * fr){ p.m.visible = false; continue; } p.m.visible = true; if(d.yaw === undefined) p.m.rotation.y = Math.atan2(dx, dz); }
+        }
         const used = {}; let si = 0, ps = 0; for(const pm of B.pSprites) pm.body.visible = pm.shadow.visible = false;
         for(const d of dyn){
             if(d.p && spriteReady(d.p)){   // 1枚絵の人（画像が そろっていれば）。上下は まっすぐ、左右だけ カメラの方を向く

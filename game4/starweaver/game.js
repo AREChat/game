@@ -1,5 +1,14 @@
 (() => {
   'use strict';
+  // ===== 戦闘のダメージ計算・レベルアップ判定は C++(WebAssembly) 側（cpp/battle.cpp）で行う。=====
+  // 物語の進行・会話・画面表示は このファイル（JS）のまま。wasmが使えない時はJS計算にフォールバックする。
+  let BM = null, bmFailed = false;
+  (async () => {
+    try{
+      if(typeof window.BattleModule !== 'function') throw new Error('BattleModule がありません');
+      BM = await window.BattleModule();
+    }catch(e){ bmFailed = true; console.warn('battle wasm 読みこみ失敗。JS計算にきりかえます。', e); }
+  })();
   const SAVE_KEY = 'game6-starweaver-save-v1';
   const $ = (id) => document.getElementById(id);
   const state = {
@@ -109,7 +118,13 @@
     log('星のかけらを取り戻した！ 夜空に、ひとつ星が灯った。');
     modal('第1章クリア！',`${e.name}を倒し、星のかけらを取り戻した。\n夜空に、ひとつ星が灯った…。\n\n星砂 +5　ルーン銭 +10\n\nこれで第1章はおしまい。\nこのあとは自由に冒険して、レベルや実績（📊記録）を伸ばそう！`,[{label:'冒険を続ける',primary:true,action:closeModal}],'CHAPTER CLEAR');
   }
-  function checkLevel(){while(state.xp>=state.level*20){state.xp-=state.level*20;state.level++;state.maxHp+=8;state.maxMp+=3;state.atk+=2;state.def+=1;state.hp=state.maxHp;state.mp=state.maxMp;log(`ルカはレベル${state.level}に上がった！ HPとMPが全回復した。`);}}
+  function checkLevel(){
+    let ups=0;
+    if(BM&&!bmFailed){ ups=BM._battle_level_up(state.level,state.xp); if(ups>0){ state.level=BM._battle_lvup_level(); state.xp=BM._battle_lvup_xp(); } }
+    else { while(state.xp>=state.level*20){state.xp-=state.level*20;state.level++;ups++;} }
+    for(let i=0;i<ups;i++){state.maxHp+=8;state.maxMp+=3;state.atk+=2;state.def+=1;}
+    if(ups>0){state.hp=state.maxHp;state.mp=state.maxMp;log(`ルカはレベル${state.level}に上がった！ HPとMPが全回復した。`);}
+  }
   // ---- モンスターが出る場所／出ない場所 ----
   function isSafeSpot(){
     if(state.location===2) return true;
@@ -150,8 +165,8 @@
   const enemies=[{name:'苔玉スライム',icon:'◉',hp:24,atk:5,def:1,xp:9,coins:4,desc:'苔をまとった、ころころした小さな魔物。'},{name:'夜鳴きコウモリ',icon:'♧',hp:20,atk:7,def:0,xp:11,coins:5,desc:'薄明の空を飛ぶ、音に敏感な魔物。'},{name:'石肌のこびと',icon:'♜',hp:31,atk:6,def:3,xp:14,coins:7,desc:'石の欠片を身につけた、頑丈な魔物。'}];
   function startBattle(forced){if(!$('modal').hidden||state.enemy)return;const base=(forced&&forced.name)?forced:enemies[Math.floor(Math.random()*enemies.length)];const sc=base.boss?0:Math.max(0,state.battles-1)*3;state.enemy={...base,hp:base.hp+sc,maxHp:base.hp+sc};state.battles++;renderBattle(base.boss?'石段の番人が立ちはだかった！':'野生の魔物が立ちはだかった！');}
   function renderBattle(message){const e=state.enemy;if(!e)return;modal('コマンドバトル',message,[{label:'逃げる',action:()=>{if(Math.random()<0.7){state.enemy=null;closeModal();log('ルカは距離をとり、戦いを避けた。');}else{log('逃げ道を ふさがれた！');state.battleTurn='player';enemyTurn(0);}}}],'TURN BATTLE');const body=$('modalBody');body.replaceChildren();const enemy=document.createElement('div');enemy.className='battle-enemy';const icon=document.createElement('div');icon.className='enemy-symbol';icon.textContent=e.icon;{const fa=FOE_ART[e.name];if(fa){icon.textContent='';const im=new Image();im.src='img/'+fa+'.webp';im.alt='';im.className='foe-art';im.onerror=()=>{icon.textContent=e.icon;};icon.append(im);icon.classList.add('has-art');}}const txt=document.createElement('div');const name=document.createElement('b');name.textContent=e.name;const desc=document.createElement('p');desc.textContent=e.desc;txt.append(name,desc);const hp=document.createElement('div');hp.className='enemy-hp';hp.textContent=`HP ${e.hp}/${e.maxHp}`;enemy.append(icon,txt,hp);body.append(enemy);const note=document.createElement('p');note.textContent=`${state.name}　HP ${state.hp}/${state.maxHp}　MP ${state.mp}/${state.maxMp}`;body.append(note);{const tip=document.createElement('p');tip.className='battle-tip';tip.textContent=battleTip();body.append(tip);}const opts=document.createElement('div');opts.className='battle-options';body.append(opts);const actions=[['⚔','攻撃','剣で一撃を与える',()=>playerAttack(false)],['✧','星斬り','MP 4を使って強い一撃',()=>playerAttack(true)],['✿','木の実薬',`HPを22回復（所持 ${state.potions}）`,usePotion],['✦','防御','次の攻撃のダメージを抑える',defend]];for(const [i,title,sub,fn] of actions){const b=document.createElement('button');const t=document.createElement('b');t.textContent=`${i} ${title}`;const s=document.createElement('small');s.textContent=sub;b.append(t,s);b.disabled=(title==='木の実薬'&&state.potions<=0)||(title==='星斬り'&&state.mp<4)||state.battleTurn!=='player';b.addEventListener('click',fn);opts.append(b);}}
-  function enemyTurn(reduction=0){if(!state.enemy)return;const e=state.enemy;const damage=Math.max(1,e.atk-state.def+Math.floor(Math.random()*3)-reduction);state.hp=Math.max(0,state.hp-damage);log(`${e.name}の攻撃。ルカは${damage}のダメージを受けた。`);if(state.hp<=0){state.hp=1;state.enemy=null;closeModal();update();modal('辛くも逃げ切った','ルカは最後の力を振り絞り、魔物から離れた。HPが1残った。',[{label:'立ち上がる',primary:true,action:()=>{closeModal();log('ルカは息を整えた。');}}],'BATTLE END');return;}update();renderBattle(`${e.name}の攻撃！ ${damage}ダメージを受けた。`);}
-  function playerAttack(skill){const e=state.enemy;if(!e||state.battleTurn!=='player')return;if(skill&&state.mp<4)return;let damage=Math.max(1,state.atk-e.def+Math.floor(Math.random()*4));if(skill){state.mp-=4;damage=Math.floor(damage*1.9)+3;}e.hp=Math.max(0,e.hp-damage);log(skill?`ルカは星斬りを放った！ ${e.name}に${damage}ダメージ。`:`ルカの攻撃！ ${e.name}に${damage}ダメージ。`);update();if(e.hp<=0){winBattle();return;}state.battleTurn='enemy';renderBattle(`${e.name}に${damage}ダメージ！`);setTimeout(()=>{if(state.enemy){state.battleTurn='player';enemyTurn();}},420);}
+  function enemyTurn(reduction=0){if(!state.enemy)return;const e=state.enemy;const damage=(BM&&!bmFailed)?BM._battle_enemy_attack(e.atk,state.def,reduction,Math.random()):Math.max(1,e.atk-state.def+Math.floor(Math.random()*3)-reduction);state.hp=Math.max(0,state.hp-damage);log(`${e.name}の攻撃。ルカは${damage}のダメージを受けた。`);if(state.hp<=0){state.hp=1;state.enemy=null;closeModal();update();modal('辛くも逃げ切った','ルカは最後の力を振り絞り、魔物から離れた。HPが1残った。',[{label:'立ち上がる',primary:true,action:()=>{closeModal();log('ルカは息を整えた。');}}],'BATTLE END');return;}update();renderBattle(`${e.name}の攻撃！ ${damage}ダメージを受けた。`);}
+  function playerAttack(skill){const e=state.enemy;if(!e||state.battleTurn!=='player')return;if(skill&&state.mp<4)return;let damage;if(BM&&!bmFailed){if(skill)state.mp-=4;damage=BM._battle_player_attack(state.atk,e.def,skill?1:0,Math.random());}else{damage=Math.max(1,state.atk-e.def+Math.floor(Math.random()*4));if(skill){state.mp-=4;damage=Math.floor(damage*1.9)+3;}}e.hp=Math.max(0,e.hp-damage);log(skill?`ルカは星斬りを放った！ ${e.name}に${damage}ダメージ。`:`ルカの攻撃！ ${e.name}に${damage}ダメージ。`);update();if(e.hp<=0){winBattle();return;}state.battleTurn='enemy';renderBattle(`${e.name}に${damage}ダメージ！`);setTimeout(()=>{if(state.enemy){state.battleTurn='player';enemyTurn();}},420);}
   function usePotion(){if(!state.enemy||state.potions<=0)return;state.potions--;const amount=Math.min(22,state.maxHp-state.hp);state.hp+=amount;log(`木の実薬を使い、HPが${amount}回復した。`);update();state.battleTurn='player';enemyTurn(1);}
   function defend(){if(!state.enemy)return;log('ルカは身構えた。');state.battleTurn='player';enemyTurn(3);}
   function winBattle(){const e=state.enemy;state.wins=(state.wins||0)+1;state.enemy=null;state.coins+=e.coins;state.xp+=e.xp;checkLevel();update();log(`${e.name}を倒した！ 経験値${e.xp}、ルーン銭${e.coins}枚を手に入れた。`);if(e.boss){bossClear(e);return;}modal('勝利！',`${e.name}を倒した。\n\n経験値 +${e.xp}\nルーン銭 +${e.coins}\n${state.level>1?`レベル ${state.level}　`:''}HP ${state.hp}/${state.maxHp}`,[{label:'冒険を続ける',primary:true,action:()=>{closeModal();}}],'BATTLE CLEAR');}

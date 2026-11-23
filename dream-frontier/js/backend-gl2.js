@@ -2,6 +2,7 @@
 //  Three.js が 使えない時の 代替として そのまま ゲームが うごく。
 import {createRenderer, M4, Geo} from "./gl.js";
 import {texCanvas} from "./textures.js";
+import {propImg} from "./df-props.js";
 import {SPRITE_H, spriteImage, pickView, spriteReady} from "./df-sprites.js";
 
 const mat = (p) => { let m = M4.T(p.x || 0, p.y || 0, p.z || 0); if(p.ry) m = M4.mul(m, M4.RY(p.ry)); if(p.rx) m = M4.mul(m, M4.RX(p.rx)); if(p.rz) m = M4.mul(m, M4.RZ(p.rz)); return m; };
@@ -18,7 +19,10 @@ export async function create(canvas, opts){
     if(!R){ const e = new Error("WebGL2 を 取得できませんでした（この ブラウザ／端末では 3D が 使えません）"); e.code = "NO_WEBGL2"; throw e; }
     const pTex = {}; const texCache = {}; const tex = (n) => texCache[n] || (texCache[n] = R.tex(texCanvas(n), {repeat: true}));
     const sg = new Geo(); sg.sprite(1, 1, [1, 1, 1], M4.id()); const spr = R.mesh(sg);
-    const B = {name: "webgl2", info: "自作 WebGL2（外部ライブラリなし）", R, layers: [], models: {}, spr};
+    const B = {name: "webgl2", info: "自作 WebGL2（外部ライブラリなし）", R, layers: [], models: {}, spr, props: [], propsOn: true};
+    B.showProps = (on) => { B.propsOn = !!on; };
+    const nearPot = (n) => Math.max(64, Math.min(1024, Math.pow(2, Math.round(Math.log2(Math.max(2, n))))));
+    const propTex = {}; const ptex = (name) => propTex[name] || (propTex[name] = (() => { const im = propImg(name); const c = document.createElement("canvas"); c.width = nearPot(im.naturalWidth); c.height = nearPot(im.naturalHeight); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); return R.tex(c, {}); })());
     B.resize = (w, h, scale) => R.resize(w, h, scale);
     B.getSize = () => [R.w, R.h];
     const build = (prims) => { const g = new Geo(); for(const p of prims) addPrim(g, p); return g; };
@@ -26,6 +30,7 @@ export async function create(canvas, opts){
         for(const l of B.layers) R.free(l.mesh); for(const k of Object.keys(B.models)) R.free(B.models[k].mesh); B.layers = []; B.models = {};
         for(const L of scene.layers){ const g = build(L.prims); if(!g.n) continue; B.layers.push({id: L.id, mesh: R.mesh(g), hidden: !!L.hidden, scroll: L.scroll, opt: {mode: L.tex ? 1 : 0, tex: L.tex ? tex(L.tex) : undefined, tint: L.tint, blend: !!(L.blend || L.add), add: !!L.add, cull: L.cull}}); }
         for(const [name, M] of Object.entries(scene.models)){ const g = build(M.prims); if(g.n) B.models[name] = {mesh: R.mesh(g), opt: {mode: 0, tint: M.tint, blend: !!(M.blend || M.add), add: !!M.add}}; }
+        B.props = []; for(const d of (scene.props || [])){ const im = propImg(d.img); if(!im) continue; const H = d.h, W = d.w || H * im.naturalWidth / im.naturalHeight; B.props.push({d, tex: ptex(d.img), W, H, rad: Math.hypot(W, H) / 2}); }
     };
     B.setHidden = (id, hidden) => { for(const l of B.layers) if(l.id === id) l.hidden = !!hidden; };
     B.frame = (cam, env, dyn, t) => {
@@ -33,6 +38,12 @@ export async function create(canvas, opts){
         const up = cam.roll ? (() => { const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw), sp = Math.sin(cam.pitch), cq = Math.cos(cam.pitch), F = [sy * cq, sp, cy * cq], u0 = [-sy * sp, cq, -cy * sp], r0 = [F[1] * u0[2] - F[2] * u0[1], F[2] * u0[0] - F[0] * u0[2], F[0] * u0[1] - F[1] * u0[0]], c = Math.cos(cam.roll), s = Math.sin(cam.roll); return [u0[0] * c + r0[0] * s, u0[1] * c + r0[1] * s, u0[2] * c + r0[2] * s]; })() : [0, 1, 0];
         R.begin({eye, target: tgt, up, fov: cam.fov * Math.PI / 180}, {fogC: env.fog, fogNear: env.near, fogFar: env.far, amb: env.amb, light: env.light});
         for(const l of B.layers){ if(l.hidden) continue; R.draw(l.mesh, l.scroll ? Object.assign({}, l.opt, {uv: [t * l.scroll[0], t * l.scroll[1]]}) : l.opt); }
+        if(B.propsOn){   // たてえ（木・花・岩・街灯・雲・山・建物の正面）
+            const kk = Math.max(.45, Math.min(1, (env.amb[0] + env.amb[1] + env.amb[2]) / 3 * 1.5)), fr = (env.far || 150) * 1.12, fx = Math.sin(cam.yaw) * cp, fz = Math.cos(cam.yaw) * cp;
+            for(const p of B.props){ const d = p.d, dx = eye[0] - d.x, dz = eye[2] - d.z; if(!d.far && dx * dx + dz * dz > fr * fr) continue; if(-dx * fx - dz * fz < -p.rad - 2) continue;
+                const face = d.yaw !== undefined ? d.yaw : Math.atan2(dx, dz);
+                R.draw(spr, {m: M4.mul(M4.T(d.x, d.y || 0, d.z), M4.mul(M4.RY(face), M4.S(p.W, p.H, 1))), tex: p.tex, mode: 2, cut: .42, cull: d.two ? false : true, tint: [kk, kk, kk, 1]}); }
+        }
         for(const d of dyn){
             if(d.p && spriteReady(d.p)){   // 1枚絵の人（画像が そろっていれば）
                 const pv = pickView(eye, d.x, d.z, d.yaw), im = spriteImage(d.p, pv.view), H = (SPRITE_H[d.p] || 2.2) * im.img.naturalHeight / 256, W = H * im.img.naturalWidth / im.img.naturalHeight;

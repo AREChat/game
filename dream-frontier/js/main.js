@@ -9,6 +9,8 @@ import {Controls} from "./controls.js";
 import {Snd} from "./audio.js";
 import {ATTRACTIONS} from "./df-data.js";
 import {STAGE_LAYERS} from "./df-stages.js";
+import {preloadTexImages} from "./textures.js";
+import {preloadProps} from "./df-props.js";
 
 const $ = (id) => document.getElementById(id);
 const info = window.__dfInfo = {backend: null, threeStatus: "未確認", tried: []};
@@ -23,7 +25,7 @@ async function pickBackend(world){
         setLoad("Three.js を さがしています…");
         try{
             const eng = await import("./engine.js"); info.tried = eng.source.tried; info.threeStatus = "読みこみ OK（r" + eng.source.revision + "）— ただし 動作確認は 実機でのみ";
-            const m = await import("./backend-three.js"); B = await m.create($("view"), {}); B.setScene({layers: world.layers, models: world.models});
+            const m = await import("./backend-three.js"); B = await m.create($("view"), {}); B.setScene({layers: world.layers, models: world.models, props: world.props});
             info.backend = "Three.js r" + eng.source.revision;
         }catch(e){
             info.tried = (e && e.tried) || info.tried; info.threeStatus = "使えませんでした → WebGL2 版に きりかえ：" + ((e && e.message) || e); console.warn("[DF] Three.js 版を 使えません:", e);
@@ -32,12 +34,12 @@ async function pickBackend(world){
         }
         if(!B && want === "three"){ throw new Error("Three.js 版を 強制しましたが 使えません：" + info.threeStatus); }
     } else info.threeStatus = "?engine=gl2 で WebGL2 版を 指定";
-    if(!B){ setLoad("WebGL2 版で じゅんび中…"); const m = await import("./backend-gl2.js"); B = await m.create($("view"), {}); B.setScene({layers: world.layers, models: world.models}); info.backend = "WebGL2（自作・外部ライブラリなし）"; }
+    if(!B){ setLoad("WebGL2 版で じゅんび中…"); const m = await import("./backend-gl2.js"); B = await m.create($("view"), {}); B.setScene({layers: world.layers, models: world.models, props: world.props}); info.backend = "WebGL2（自作・外部ライブラリなし）"; }
     return B;
 }
 
 async function main(){
-    const world = buildWorld(); const ui = new UI(); ui.bind(); Snd.init(); const B = await pickBackend(world);
+    const ui = new UI(); ui.bind(); Snd.init(); setLoad("きや たてものの 絵を よみこんでいます…"); await Promise.all([preloadTexImages(6000), preloadProps(8000)]); const world = buildWorld(); const B = await pickBackend(world);
     const controls = new Controls($("view"), document.body);
     const q = {levels: [["ひくい", .55], ["ふつう", .8], ["たかい", 1]], i: params.get("q") ? +params.get("q") : (matchMedia("(pointer:coarse)").matches ? 0 : 2)};
     const resize = () => { const dpr = Math.max(1, window.devicePixelRatio || 1), qualityScale = q.levels[q.i][1]; B.resize(Math.floor(innerWidth), Math.floor(innerHeight), qualityScale * (B.name === "webgl2" ? Math.min(dpr, 2) : 1)); };
@@ -55,7 +57,7 @@ async function main(){
         else if(ui.dlg){ if(inp.act || inp.act2) ui.advance(); inp = {mx: 0, my: 0, lx: 0, ly: 0}; }
         else if(game.mode === "walk" && inp.esc){ ui.menu(game, menuCb); inp = {mx: 0, my: 0, lx: 0, ly: 0}; }
         game.update(dt, inp); ui.hud(game);
-        const sg = game.stageName(); if(sg !== curStage){ if(curStage) for(const id of STAGE_LAYERS[curStage] || []) B.setHidden(id, true); if(sg) for(const id of STAGE_LAYERS[sg] || []) B.setHidden(id, false); curStage = sg; }   // 新アトラクションの 舞台は のっている あいだだけ 見せる
+        const sg = game.stageName(); if(sg !== curStage){ if(curStage) for(const id of STAGE_LAYERS[curStage] || []) B.setHidden(id, true); if(sg) for(const id of STAGE_LAYERS[sg] || []) B.setHidden(id, false); curStage = sg; if(B.showProps) B.showProps(!sg); }   // 新アトラクションの 舞台は のっている あいだだけ 見せる
         const bk = game.bgmKey(); if(bk !== lastBgm){ lastBgm = bk; Snd.setBgm(bk); }
         B.frame(game.camera(), game.env(), game.dyn(game.t), game.t);
         acc += dt; if(acc > 1){ acc = 0; window.__dfFps = Math.round(1 / Math.max(dt, .001)); }

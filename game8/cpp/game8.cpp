@@ -22,14 +22,17 @@ namespace act {
     const int MAX_PLAT = 96;
     const int MAX_ENEMY = 32;
     const int MAX_COIN = 64;
+    const int MAX_ITEM = 32;
 
     struct Rect { float x, y, w, h; int solidTop; };
     struct Enemy { float x, y, w, h, vx; int alive; float faceDir; float startX, range; };
     struct Coin { float x, y; int collected; };
+    struct Item { float x, y; int type; int collected; };   // type 1〜10（下のfireItem相当のswitchぶんを参照）
 
     Rect plats[MAX_PLAT]; int platCount = 0;
     Enemy enemies[MAX_ENEMY]; int enemyCount = 0;
     Coin coins[MAX_COIN]; int coinCount = 0;
+    Item items[MAX_ITEM]; int itemCount = 0;
     float goalX, goalY, goalW, goalH;
     int goalSet = 0;
 
@@ -39,29 +42,52 @@ namespace act {
     int coinsCollected;
     float respawnX, respawnY;
     float coyoteT, jumpBufT;   // 操作しやすくするための「少しの甘さ」（下の act_step 内の説明を参照）
+    int doubleJumpUsed;        // ジェットパック中、空中でもう一度ジャンプを使ったか
+
+    // ---- 10種のオリジナルアイテム（マリオのキノコ・スター等とは まったく別の効果）----
+    //  1 ばねブーツ：しばらく ジャンプ力がさらにアップ　2 ジェットパック：しばらく 空中でもう一度ジャンプできる
+    //  3 じしゃくリング：しばらく コインを自動で引きよせる　4 ガードオーラ：次の1回のダメージを防ぐ（持ち越し可）
+    //  5 ダッシュソーダ：しばらく 移動速度アップ　6 こおりスプレー：しばらく 敵の動きを遅くする
+    //  7 グローブパンチ：しばらく 踏まなくても ふれるだけで敵を倒せる　8 ハートのかけら：即座にライフ+1
+    //  9 レインボーオーラ：しばらく 無敵＆ふれた敵を即たおす　10 ボーナスコインぶくろ：即座にコイン+15
+    float springT, jetpackT, magnetT, dashT, freezeT, punchT, invincibleT;
+    int shieldCount;
+    int livesGained;   // ハートのかけらを取った回数の累計（JS側がこの値の増分だけライフを増やす）
 
     const float GRAVITY = 1700.0f;
     const float MOVE_ACCEL = 2600.0f;
     const float MOVE_MAXSPD = 260.0f;
     const float FRICTION = 2200.0f;
-    const float JUMP_VEL = 560.0f;
+    const float JUMP_VEL = 1120.0f;   // 以前の2倍（登れない高さの足場に届くように）
     const float JUMP_CUT = 0.45f;   // ボタンを早く離すと ジャンプが低くなる
     const float COYOTE_TIME = 0.1f;   // 足場から落ちた直後も、これだけの間はジャンプを受け付ける（コヨーテタイム）
     const float JUMP_BUFFER = 0.12f;  // 着地の少し前にジャンプを押しても、着地した瞬間にジャンプとして受け付ける（入力バッファ）
     const float PLAYER_W = 30.0f, PLAYER_H = 40.0f;
     const float ENEMY_W = 32.0f, ENEMY_H = 28.0f;
 
+    const float SPRING_JUMP_MULT = 1.4f, SPRING_TIME = 8.0f;
+    const float JETPACK_TIME = 10.0f;
+    const float MAGNET_TIME = 9.0f, MAGNET_RADIUS = 110.0f;
+    const float DASH_TIME_A = 7.0f, DASH_SPEED_MULT = 1.5f;
+    const float FREEZE_TIME = 6.0f, FREEZE_MULT = 0.25f;
+    const float PUNCH_TIME = 8.0f;
+    const float INVINCIBLE_TIME = 6.0f;
+    const int BONUS_COINS = 15;
+
     // 出力バッファ: [0]px [1]py [2]vx [3]vy [4]onGround [5]alive [6]facing [7]invuln
-    // [8]coinsCollected [9]goalReached [10]enemyCount [11]coinCount
-    // そのあと enemy*6 (x,y,w,h,alive,facing) → coin*3 (x,y,collected)
-    const int HEADER = 12;
-    float outBuf[HEADER + MAX_ENEMY * 6 + MAX_COIN * 3];
+    // [8]coinsCollected [9]goalReached [10]enemyCount [11]coinCount [12]itemCount [13]livesGained
+    // [14]springT [15]jetpackT [16]magnetT [17]shieldCount [18]dashT [19]freezeT [20]punchT [21]invincibleT
+    // そのあと enemy*6 (x,y,w,h,alive,facing) → coin*3 (x,y,collected) → item*4 (x,y,type,collected)
+    const int HEADER = 22;
+    float outBuf[HEADER + MAX_ENEMY * 6 + MAX_COIN * 3 + MAX_ITEM * 4];
 
     EM_KEEP void act_reset(float sx, float sy){
-        platCount = 0; enemyCount = 0; coinCount = 0; goalSet = 0;
+        platCount = 0; enemyCount = 0; coinCount = 0; itemCount = 0; goalSet = 0;
         px = sx; py = sy; pvx = 0; pvy = 0; onGround = 0; alive = 1; goalReached = 0;
         facing = 1; invuln = 0; coinsCollected = 0; respawnX = sx; respawnY = sy;
-        coyoteT = 0; jumpBufT = 0;
+        coyoteT = 0; jumpBufT = 0; doubleJumpUsed = 0;
+        springT = jetpackT = magnetT = dashT = freezeT = punchT = invincibleT = 0;
+        shieldCount = 0; livesGained = 0;
     }
     EM_KEEP int act_add_platform(float x, float y, float w, float h, int solidTop){
         if(platCount >= MAX_PLAT) return -1;
@@ -77,6 +103,11 @@ namespace act {
         if(coinCount >= MAX_COIN) return -1;
         coins[coinCount] = {x, y, 0};
         return coinCount++;
+    }
+    EM_KEEP int act_add_item(float x, float y, int type){
+        if(itemCount >= MAX_ITEM) return -1;
+        items[itemCount] = {x, y, type, 0};
+        return itemCount++;
     }
     EM_KEEP void act_set_goal(float x, float y, float w, float h){ goalX = x; goalY = y; goalW = w; goalH = h; goalSet = 1; }
 
@@ -118,32 +149,48 @@ namespace act {
         if(!alive){
             // 少し待って 自動リスポーン（JS 側で演出し、呼び続けてよい）
             px = respawnX; py = respawnY; pvx = 0; pvy = 0; alive = 1; invuln = 1.2f;
+            springT = jetpackT = magnetT = dashT = freezeT = punchT = invincibleT = 0; shieldCount = 0;
             return;
         }
         if(goalReached){ return; }
 
-        if(left && !right){ pvx -= MOVE_ACCEL * dt; facing = -1; }
-        else if(right && !left){ pvx += MOVE_ACCEL * dt; facing = 1; }
+        // アイテム効果の残り時間を減らす
+        if(springT > 0){ springT -= dt; if(springT < 0) springT = 0; }
+        if(jetpackT > 0){ jetpackT -= dt; if(jetpackT < 0) jetpackT = 0; }
+        if(magnetT > 0){ magnetT -= dt; if(magnetT < 0) magnetT = 0; }
+        if(dashT > 0){ dashT -= dt; if(dashT < 0) dashT = 0; }
+        if(freezeT > 0){ freezeT -= dt; if(freezeT < 0) freezeT = 0; }
+        if(punchT > 0){ punchT -= dt; if(punchT < 0) punchT = 0; }
+        if(invincibleT > 0){ invincibleT -= dt; if(invincibleT < 0) invincibleT = 0; }
+
+        float spdMul = dashT > 0 ? DASH_SPEED_MULT : 1.0f;
+        if(left && !right){ pvx -= MOVE_ACCEL * spdMul * dt; facing = -1; }
+        else if(right && !left){ pvx += MOVE_ACCEL * spdMul * dt; facing = 1; }
         else {
             if(pvx > 0) pvx = (pvx - FRICTION * dt < 0) ? 0 : pvx - FRICTION * dt;
             else if(pvx < 0) pvx = (pvx + FRICTION * dt > 0) ? 0 : pvx + FRICTION * dt;
         }
-        pvx = clampf(pvx, -MOVE_MAXSPD, MOVE_MAXSPD);
+        pvx = clampf(pvx, -MOVE_MAXSPD * spdMul, MOVE_MAXSPD * spdMul);
 
         // ジャンプ入力バッファ：押した瞬間を少しの間だけ覚えておく（着地の少し前に押しても ジャンプになる）
         if(jumpPressed) jumpBufT = JUMP_BUFFER;
         else if(jumpBufT > 0) jumpBufT -= dt;
+        float jumpVelEff = JUMP_VEL * (springT > 0 ? SPRING_JUMP_MULT : 1.0f);
         // コヨーテタイム：足場を離れた直後も、少しの間はまだジャンプできる（崖の端でのミスを減らす）
-        if(jumpBufT > 0 && coyoteT > 0){ pvy = -JUMP_VEL; onGround = 0; coyoteT = 0; jumpBufT = 0; }
-        if(!jumpHeld && pvy < -JUMP_VEL * JUMP_CUT) pvy = -JUMP_VEL * JUMP_CUT;
+        if(jumpBufT > 0 && coyoteT > 0){ pvy = -jumpVelEff; onGround = 0; coyoteT = 0; jumpBufT = 0; doubleJumpUsed = 0; }
+        else if(jumpPressed && jetpackT > 0 && !onGround && !doubleJumpUsed && coyoteT <= 0){
+            // ジェットパック：空中でもう一度だけ ジャンプできる
+            pvy = -jumpVelEff * 0.9f; doubleJumpUsed = 1;
+        }
+        if(!jumpHeld && pvy < -jumpVelEff * JUMP_CUT) pvy = -jumpVelEff * JUMP_CUT;
 
         pvy += GRAVITY * dt;
-        pvy = clampf(pvy, -2000.0f, 1400.0f);
+        pvy = clampf(pvy, -2600.0f, 1400.0f);
 
         moveAndCollide(pvx * dt, 0);
         moveAndCollide(0, pvy * dt);
 
-        if(onGround) coyoteT = COYOTE_TIME;
+        if(onGround){ coyoteT = COYOTE_TIME; doubleJumpUsed = 0; }
         else if(coyoteT > 0) coyoteT -= dt;
 
         if(invuln > 0) invuln -= dt;
@@ -153,20 +200,46 @@ namespace act {
         for(int i = 0; i < enemyCount; i++){
             Enemy &e = enemies[i];
             if(!e.alive) continue;
-            e.x += e.faceDir * e.vx * dt;
+            e.x += e.faceDir * e.vx * dt * (freezeT > 0 ? FREEZE_MULT : 1.0f);   // こおりスプレー中は 敵がゆっくりに
             if(e.x < e.startX - e.range){ e.x = e.startX - e.range; e.faceDir = 1; }
             if(e.x > e.startX + e.range){ e.x = e.startX + e.range; e.faceDir = -1; }
             if(overlap(px, py, PLAYER_W, PLAYER_H, e.x, e.y, e.w, e.h)){
                 bool stomp = (pvy > 0) && (py + PLAYER_H - e.y) < (e.h * 0.6f);
-                if(stomp){ e.alive = 0; pvy = -JUMP_VEL * 0.6f; }
-                else if(invuln <= 0){ killPlayer(); }
+                if(stomp || punchT > 0 || invincibleT > 0){
+                    e.alive = 0;
+                    if(stomp) pvy = -jumpVelEff * 0.6f;   // 踏んだ時だけ ジャンプで跳ね返る
+                } else if(invuln <= 0){
+                    if(shieldCount > 0){ shieldCount--; invuln = 0.8f; }   // ガードオーラで1回だけ防ぐ
+                    else killPlayer();
+                }
             }
         }
-        // コイン
+        // コイン（じしゃくリング中は、広い範囲から 自動で引きよせて取れる）
         for(int i = 0; i < coinCount; i++){
             Coin &c = coins[i];
             if(c.collected) continue;
-            if(overlap(px, py, PLAYER_W, PLAYER_H, c.x - 10, c.y - 10, 20, 20)){ c.collected = 1; coinsCollected++; }
+            float r = (magnetT > 0) ? MAGNET_RADIUS : 10.0f;
+            if(overlap(px, py, PLAYER_W, PLAYER_H, c.x - r, c.y - r, r * 2, r * 2)){ c.collected = 1; coinsCollected++; }
+        }
+        // アイテム
+        for(int i = 0; i < itemCount; i++){
+            Item &it = items[i];
+            if(it.collected) continue;
+            if(!overlap(px, py, PLAYER_W, PLAYER_H, it.x - 14, it.y - 14, 28, 28)) continue;
+            it.collected = 1;
+            switch(it.type){
+                case 1: springT = SPRING_TIME; break;
+                case 2: jetpackT = JETPACK_TIME; break;
+                case 3: magnetT = MAGNET_TIME; break;
+                case 4: shieldCount++; break;
+                case 5: dashT = DASH_TIME_A; break;
+                case 6: freezeT = FREEZE_TIME; break;
+                case 7: punchT = PUNCH_TIME; break;
+                case 8: livesGained++; break;
+                case 9: invincibleT = INVINCIBLE_TIME; break;
+                case 10: coinsCollected += BONUS_COINS; break;
+                default: break;
+            }
         }
         // ゴール
         if(goalSet && overlap(px, py, PLAYER_W, PLAYER_H, goalX, goalY, goalW, goalH)) goalReached = 1;
@@ -177,6 +250,9 @@ namespace act {
         outBuf[4] = (float)onGround; outBuf[5] = (float)alive; outBuf[6] = facing; outBuf[7] = invuln;
         outBuf[8] = (float)coinsCollected; outBuf[9] = (float)goalReached;
         outBuf[10] = (float)enemyCount; outBuf[11] = (float)coinCount;
+        outBuf[12] = (float)itemCount; outBuf[13] = (float)livesGained;
+        outBuf[14] = springT; outBuf[15] = jetpackT; outBuf[16] = magnetT; outBuf[17] = (float)shieldCount;
+        outBuf[18] = dashT; outBuf[19] = freezeT; outBuf[20] = punchT; outBuf[21] = invincibleT;
         int o = HEADER;
         for(int i = 0; i < MAX_ENEMY; i++){
             if(i < enemyCount){
@@ -191,6 +267,13 @@ namespace act {
             else memset(&outBuf[o], 0, sizeof(float) * 3);
             o += 3;
         }
+        for(int i = 0; i < MAX_ITEM; i++){
+            if(i < itemCount){
+                Item &it = items[i];
+                outBuf[o] = it.x; outBuf[o+1] = it.y; outBuf[o+2] = (float)it.type; outBuf[o+3] = (float)it.collected;
+            } else memset(&outBuf[o], 0, sizeof(float) * 4);
+            o += 4;
+        }
         return outBuf;
     }
 }
@@ -199,10 +282,11 @@ namespace act {
 // レースモード（マラソン風ランナー・10種のオリジナルアイテムつき）
 // ---------------------------------------------------------------------------
 namespace race {
-    const int MAX_WP = 96;
+    const int MAX_WP = 240;   // 32種のコース用：曲がりくねった道は制御点を増やして滑らかにするため点数を多めに確保
     const int MAX_CAR = 4;
     const int MAX_TRAP = 16;
     const int MAX_ITEMBOX = 8;
+    const int MAX_OBSTACLE = 40;   // コース固定の障害物（ランナーがぶつかると つまずく。アイテムとは別物で消えない）
 
     float wpX[MAX_WP], wpZ[MAX_WP]; int wpCount = 0;
     float trackWidth = 10.0f;
@@ -233,6 +317,10 @@ namespace race {
     struct ItemBox { float x, z; float respawnT; };
     ItemBox itemboxes[MAX_ITEMBOX]; int itemboxCount = 0;
 
+    // 障害物（コースに固定で置かれた、よけるべきもの。ぶつかると つまずいて、ぶつかった場所から 外へ押し出される）
+    struct Obstacle { float x, z, r; };
+    Obstacle obstacles[MAX_OBSTACLE]; int obstacleCount = 0;
+
     const float BASE_MAXSPD = 46.0f;
     const float BASE_ACCEL = 34.0f;
     const float TURN_RATE = 2.6f;
@@ -240,6 +328,8 @@ namespace race {
     const float RESCUE_DURATION = 1.3f;   // モンスターが コースへ もどしてくれるまでの 時間（秒）
     const float STUCK_SPEED = 3.0f;       // これより おそい状態で コース外にいると「止まっている」とみなす
     const float STUCK_TIME_LIMIT = 1.1f;  // これだけ 止まっていたら 助けを呼ぶ
+    const float OBSTACLE_STAGGER = 0.5f;  // 障害物にぶつかった時の つまずき時間
+    const float OBSTACLE_PUSHOUT = 0.9f;  // ぶつかった障害物から 外へ押し出す距離
 
     // ---- アイテムのバランス調整値（10種、すべて このゲームだけの オリジナル効果） ----
     const float PICKUP_RADIUS = 2.4f;
@@ -262,7 +352,7 @@ namespace race {
 
     EM_KEEP void race_reset(int laps){
         wpCount = 0; carCount = 0; lapsTarget = laps > 0 ? laps : 3; raceTime = 0; finishedCount = 0;
-        trapCount = 0; itemboxCount = 0;
+        trapCount = 0; itemboxCount = 0; obstacleCount = 0;
         for(int i = 0; i < MAX_TRAP; i++) traps[i].active = 0;
     }
     EM_KEEP void race_add_waypoint(float x, float z){
@@ -274,6 +364,11 @@ namespace race {
         if(itemboxCount >= MAX_ITEMBOX) return -1;
         itemboxes[itemboxCount] = {x, z, 0.0f};
         return itemboxCount++;
+    }
+    EM_KEEP int race_add_obstacle(float x, float z, float r){
+        if(obstacleCount >= MAX_OBSTACLE) return -1;
+        obstacles[obstacleCount] = {x, z, r};
+        return obstacleCount++;
     }
     EM_KEEP int race_add_car(float x, float z, float heading, int isCpu, float speedMul, float aiSkill){
         if(carCount >= MAX_CAR) return -1;
@@ -466,7 +561,8 @@ namespace race {
 
             float st = steer, ac = accel, br = brake;
             if(c.isCpu){
-                int tgt = wrap(c.nearSeg + 6);
+                int lookAhead = wpCount / 11; if(lookAhead < 3) lookAhead = 3;   // 点が多い（曲がりくねった）コースでも 見る先をそろえる
+                int tgt = wrap(c.nearSeg + lookAhead);
                 float dx = wpX[tgt] + 0.0f - c.x, dz = wpZ[tgt] - c.z;
                 float desired = atan2f(dx, dz);
                 float diff = desired - c.heading;
@@ -520,6 +616,21 @@ namespace race {
                 if(dx * dx + dz * dz < TRAP_RADIUS * TRAP_RADIUS){
                     if(tr.kind == 0) applySlow(c, SLOW_DROWSY); else applyStagger(c, STAGGER_PEBBLE);
                     tr.active = 0;
+                }
+            }
+
+            // 障害物（コース固定）：ぶつかると つまずいて、ぶつかった場所から外へ押し出される（何度も踏みつづけない）
+            for(int oi = 0; oi < obstacleCount; oi++){
+                Obstacle &ob = obstacles[oi];
+                float dx = c.x - ob.x, dz = c.z - ob.z;
+                float rr = ob.r + 0.9f;
+                float d2 = dx * dx + dz * dz;
+                if(d2 < rr * rr){
+                    float d = sqrtf(d2); if(d < 0.001f) d = 0.001f;
+                    float nx = dx / d, nz = dz / d;
+                    c.x = ob.x + nx * (rr + OBSTACLE_PUSHOUT);
+                    c.z = ob.z + nz * (rr + OBSTACLE_PUSHOUT);
+                    applyStagger(c, OBSTACLE_STAGGER);
                 }
             }
 
