@@ -348,6 +348,17 @@ function endStage(cleared, finalScore){
     G.running = false;
     stopBgm();
     try{ if(document.exitPointerLock) document.exitPointerLock(); }catch(_e){}
+    try{
+        if(window.AREFeaturePanel){
+            window.AREFeaturePanel.recordRun("game9", finalScore);
+            const rec = JSON.parse(localStorage.getItem("g9_mission_rec") || "{\"runs\":0,\"clears\":0,\"bestScore\":0}");
+            rec.runs = (rec.runs || 0) + 1;
+            if(cleared) rec.clears = (rec.clears || 0) + 1;
+            rec.bestScore = Math.max(rec.bestScore || 0, finalScore || 0);
+            rec.stagesUnlocked = unlocked + (cleared ? 1 : 0);
+            localStorage.setItem("g9_mission_rec", JSON.stringify(rec));
+        }
+    }catch(_e){}
     if(cleared){
         saveProgress(Math.min(STAGES.length - 1, G.stageIdx + 1));
         sfxClear();

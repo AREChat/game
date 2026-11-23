@@ -93,6 +93,29 @@
 </main>
 
 <script src="./js/game9.wasm.js"></script>
+<script src="../shared/feature-panel.js"></script>
 <script type="module" src="js/core.js"></script>
+<script>(function(){
+    if(!window.AREFeaturePanel) return;
+    window.AREFeaturePanel.init({
+        gameId: "game9",
+        title: "🔫 ミッション せいせき分析＆実績",
+        lowerIsBetter: false,
+        unit: "点",
+        rules: [
+            {id:"g9_first", title:"はじめての出撃", desc:"1回 ミッションに挑む", icon:"🔫", field:"runs", op:"gte", value:1},
+            {id:"g9_5clears", title:"かけだしシェフ討伐隊", desc:"5回 ステージをクリア", icon:"🗡️", field:"clears", op:"gte", value:5},
+            {id:"g9_14clears", title:"鬼軍曹を超えて", desc:"全14皿 クリア", icon:"👑", field:"stagesUnlocked", op:"gte", value:14},
+            {id:"g9_score500", title:"スコアハンター", desc:"1回で 500点 こえる", icon:"⭐", field:"bestScore", op:"gte", value:500},
+            {id:"g9_score2000", title:"エースシューター", desc:"1回で 2000点 こえる", icon:"🏆", field:"bestScore", op:"gte", value:2000},
+            {id:"g9_20runs", title:"百戦錬磨", desc:"20回 出撃する", icon:"🎖️", field:"runs", op:"gte", value:20}
+        ],
+        getLiveStats: function(){
+            var rec = {runs:0, clears:0, bestScore:0, stagesUnlocked:0};
+            try{ rec = JSON.parse(localStorage.getItem("g9_mission_rec") || "null") || rec; }catch(_e){}
+            return rec;
+        }
+    });
+})();</script>
 </body>
 </html>
