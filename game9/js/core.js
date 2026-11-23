@@ -15,8 +15,8 @@ const WEAPONS = [
 
 const $ = (id) => document.getElementById(id);
 const scrs = {};
-["s-title","s-how","s-set","s-play","s-res"].forEach((id) => { scrs[id] = $(id); });
-function showScreen(id){ Object.keys(scrs).forEach((k) => scrs[k].classList.toggle("on", k === id)); }
+["s-title","s-how","s-set","s-play","s-res","s-br"].forEach((id) => { scrs[id] = $(id); });
+function showScreen(id){ Object.keys(scrs).forEach((k) => scrs[k].classList.toggle("on", k === id)); document.body.classList.toggle("g9br", id === "s-br"); }
 
 // ---------- 進捗・せってい（この端末だけに保存） ----------
 const PKEY = "game9_progress_v2", SKEY = "game9_settings_v2";
@@ -553,10 +553,27 @@ $("stageSelect").addEventListener("click", (event) => {
     const b = event.target.closest("[data-i]"); if(!b || b.disabled) return;
     startStage(Number(b.dataset.i));
 });
+// ---------- バトルロワイヤル（js/br.js をはじめて遊ぶときに読みこむ） ----------
+let brMod = null;
+async function launchBR(){
+    try{
+        if(!brMod) brMod = await import("./br.js");
+        stopBgm();
+        const diff = $("brDiff").value, assist = $("brAssist").checked;
+        try{ localStorage.setItem("g9_br_opts", JSON.stringify({diff, assist})); }catch(_e){}
+        showScreen("s-br");
+        brMod.startBR({settings, difficulty: diff, assist});
+    }catch(err){ console.error(err); showScreen("s-title"); alert("バトルロワイヤルを 読みこめませんでした。再読み込みしてください。"); }
+}
+try{ const o = JSON.parse(localStorage.getItem("g9_br_opts") || "null"); if(o){ if(o.diff) $("brDiff").value = o.diff; $("brAssist").checked = o.assist !== false; } }catch(_e){}
+$("bBR").addEventListener("click", launchBR);
+$("brAgain").addEventListener("click", launchBR);
+$("brHome").addEventListener("click", () => { if(brMod) brMod.stopBR(); paintStageSelect(); showScreen("s-title"); });
 $("resRetry").addEventListener("click", () => startStage(G.stageIdx));
 $("resNext").addEventListener("click", () => startStage(Math.min(STAGES.length - 1, G.stageIdx + 1)));
 $("resTitleBtn").addEventListener("click", () => { paintStageSelect(); showScreen("s-title"); });
 $("exitBtn").addEventListener("click", () => {
+    if(scrs["s-br"].classList.contains("on")){ if(brMod) brMod.stopBR(); paintStageSelect(); showScreen("s-title"); return; }
     if(scrs["s-play"].classList.contains("on")){
         G.running = false; stopBgm();
         try{ if(document.exitPointerLock) document.exitPointerLock(); }catch(_e){}
