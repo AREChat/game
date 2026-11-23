@@ -6,14 +6,14 @@
 (function(){
     if(window.AREGameNav) return;
     // path は ゲームの サイト（リポジトリ）の いちばん上から見た 場所。ゲームが 増えたら ここに 足す
-    // 2026-11-08 統合：game2＝ARE QUEST 2＋3／game4＝ARE CARD＋星紡ぎの旅人／game5＝推理ゲーム＋ARE BLOCKS
+    // 2026-11-08 統合：game2＝ARE QUEST 2＋3／game4＝ARE CARD＋星紡ぎの旅人／game5＝ARE BLOCKS（＋推理ゲームの絵・音の素材）／game6＝推理ゲーム
     var GAMES = [
         {id: "game",             icon: "🗡", name: "ARE QUEST"},
         {id: "game2/quest2",     icon: "📖", name: "ARE QUEST 2"},
         {id: "game2/quest3",     icon: "🌙", name: "ARE QUEST 3"},
         {id: "game4/card",       icon: "🃏", name: "ARE CARD"},
         {id: "game4/starweaver", icon: "⭐", name: "星紡ぎの旅人"},
-        {id: "game5",            icon: "🔎", name: "推理ゲーム（表・裏）"},
+        {id: "game6",            icon: "🔎", name: "推理ゲーム"},
         {id: "game5/blocks",     icon: "🧱", name: "ARE BLOCKS"},
         {id: "game7",            icon: "🎰", name: "OFFLINE PARADISE"},
         {id: "game8",            icon: "🏁", name: "GAME8（アクション＆レース）"}
