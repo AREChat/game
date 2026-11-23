@@ -6,6 +6,7 @@ import {pathOf} from "./df-world.js";
 import {coasterInit, coasterUpdate, coasterCamera, stageName} from "./df-ride.js";
 import {stageDyn} from "./df-stages.js";
 import {spriteReady} from "./df-sprites.js";
+import {bootDfWasm} from "./df-wasm.js";
 // どうぶつ・おばけ・ほしのこ：絵（img/chara/<名前>_f|r|l|b.webp）が そろって いれば 絵で、なければ 今までの 手作りの 3D モデルで 出す
 const SPRITE_MODELS = {giraffe: 0, elephant: 0, fluffy: 0, lion: 0, ghost: .3, starkid: 0};   // 値：絵の 足もとを ずらす 高さ（モデルの 原点が 足もとでは ないもの）
 
@@ -13,24 +14,25 @@ const lerpv = (a, b, t) => a + (b - a) * t;
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t, ease = (t) => t * t * (3 - 2 * t);
 const CODE = "427";
 
-// ---- 移動・当たり判定の C++(WebAssembly) コア ----
+// ---- 移動・当たり判定・シューティング判定の C++(WebAssembly) コア ----
 // index.html が <script src="js/dreamfrontier.wasm.js"> で先に読みこみ、グローバルに
 // DreamFrontierModule を置く。読みこみは非同期なので、まだ準備できていない間（または
-// 失敗した時）は、Game.move() が自動で 元のJS実装にフォールバックする。
+// 失敗した時）は、Game.move() などが自動で 元のJS実装にフォールバックする。
+// モジュールの instantiate 自体は js/df-wasm.js が 1回だけ行う（df-coaster.js とも共有）。
 const DFW = {mod: null, ready: false, failed: false};
-(function bootDfWasm(){
-    if(typeof window === "undefined" || typeof window.DreamFrontierModule !== "function") return;
-    try{
-        window.DreamFrontierModule().then((M) => {
-            DFW.mod = M;
-            DFW.resetSolids = M.cwrap("df_reset_solids", null, []);
-            DFW.addSolid = M.cwrap("df_add_solid", "number", ["number", "number", "number"]);
-            DFW.setBounds = M.cwrap("df_set_bounds", null, ["number", "number", "number", "number"]);
-            DFW.move = M.cwrap("df_move", "number", ["number", "number", "number", "number"]);
-            DFW.ready = true;
-        }, (err) => { DFW.failed = true; try{ console.warn("dream-frontier: WASM読みこみ失敗。JS版にフォールバックします。", err); }catch(_e){} });
-    }catch(_e){ DFW.failed = true; }
-})();
+const SHOOTW = {mod: null, ready: false};
+bootDfWasm().then((M) => {
+    DFW.mod = M;
+    DFW.resetSolids = M.cwrap("df_reset_solids", null, []);
+    DFW.addSolid = M.cwrap("df_add_solid", "number", ["number", "number", "number"]);
+    DFW.setBounds = M.cwrap("df_set_bounds", null, ["number", "number", "number", "number"]);
+    DFW.move = M.cwrap("df_move", "number", ["number", "number", "number", "number"]);
+    DFW.ready = true;
+    SHOOTW.mod = M;
+    SHOOTW.buf = M.cwrap("df_shoot_buf", "number", []);
+    SHOOTW.pick = M.cwrap("df_shoot_pick", "number", ["number", "number", "number", "number", "number", "number", "number"]);
+    SHOOTW.ready = true;
+}, () => { DFW.failed = true; });
 const DEF = () => ({stamps: {}, coins: 30, clues: {}, safeOpen: false, shoot: 0, played: 0, wish: 0, done: false, pos: [0, 24], yaw: Math.PI});
 export class Game{
     constructor(world, ui, hooks){
@@ -194,7 +196,15 @@ export class Game{
             if(R.spawn <= 0 && R.targets.length < 5){ R.spawn = .8 + Math.random() * .6; const dir = Math.random() < .5 ? -1 : 1; R.targets.push({x: (Math.random() - .5) * 28 + 18, y: .8 + Math.random() * 3, z: 68 + Math.random() * 24, vx: dir * (1 + Math.random() * 1.8), life: 7, hit: 0, a: Math.random() * 6}); }
             for(const tg of R.targets){ tg.life -= dt; tg.x += tg.vx * dt; if(tg.hit) tg.hit += dt; } R.targets = R.targets.filter((tg) => tg.life > 0 && tg.hit < .5);
             if(inp.act && R.fire <= 0){ R.fire = .28; this.sfx("shot"); const cy = this.yaw + this.lookYaw, cp = this.pitch + this.lookPitch; const dx = Math.sin(cy) * Math.cos(cp), dy = Math.sin(cp), dz = Math.cos(cy) * Math.cos(cp); const ex = a.board.x, ey = 1.7, ez = a.board.z + 1.4;
-                let bestT = null, bt = 1e9; for(const tg of R.targets){ if(tg.hit) continue; const wx = tg.x - ex, wy = tg.y - ey, wz = tg.z - ez; const tt = wx * dx + wy * dy + wz * dz; if(tt < 0) continue; const px = wx - dx * tt, py = wy - dy * tt, pz = wz - dz * tt; if(Math.hypot(px, py, pz) < 1.0 && tt < bt){ bt = tt; bestT = tg; } }
+                let bestT = null;
+                if(SHOOTW.ready){
+                    const ptr = SHOOTW.buf(), F = SHOOTW.mod.HEAPF32, idx = ptr / 4;
+                    for(let i = 0; i < R.targets.length; i++){ const tg = R.targets[i]; F[idx + i * 4] = tg.x; F[idx + i * 4 + 1] = tg.y; F[idx + i * 4 + 2] = tg.z; F[idx + i * 4 + 3] = tg.hit ? 1 : 0; }
+                    const bi = SHOOTW.pick(R.targets.length, ex, ey, ez, dx, dy, dz);
+                    if(bi >= 0) bestT = R.targets[bi];
+                } else {
+                    let bt = 1e9; for(const tg of R.targets){ if(tg.hit) continue; const wx = tg.x - ex, wy = tg.y - ey, wz = tg.z - ez; const tt = wx * dx + wy * dy + wz * dz; if(tt < 0) continue; const px = wx - dx * tt, py = wy - dy * tt, pz = wz - dz * tt; if(Math.hypot(px, py, pz) < 1.0 && tt < bt){ bt = tt; bestT = tg; } }
+                }
                 if(bestT){ bestT.hit = .001; R.hits++; this.sfx("hit"); } }
             if(R.t >= a.dur) this.endRide(true);
         }

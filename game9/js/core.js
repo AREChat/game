@@ -6,6 +6,13 @@
 import * as T from "../vendor/three/build/three.module.js";
 import {STAGES, difficultyFor} from "./stages.js";
 
+// 武器種（C++側 cpp/game9.cpp の WEAPONS テーブルと同じ並び順・同じ3種）
+const WEAPONS = [
+    {name:"ライフル",          icon:"🔫", key:"1"},
+    {name:"サブマシンガン",     icon:"⚡", key:"2"},
+    {name:"スナイパーライフル", icon:"🎯", key:"3"},
+];
+
 const $ = (id) => document.getElementById(id);
 const scrs = {};
 ["s-title","s-how","s-set","s-play","s-res"].forEach((id) => { scrs[id] = $(id); });
@@ -54,6 +61,7 @@ const sfxGrenade = () => beep(90, 0.3, "sawtooth", 0.45);
 const sfxHurt = () => beep(160, 0.18, "sawtooth", 0.4);
 const sfxClear = () => { beep(523, 0.15, "triangle", 0.4); setTimeout(() => beep(784, 0.25, "triangle", 0.4), 140); };
 const sfxOver = () => { beep(220, 0.3, "sawtooth", 0.4); setTimeout(() => beep(140, 0.4, "sawtooth", 0.4), 200); };
+const sfxSwitch = () => beep(700, 0.06, "triangle", 0.22);
 
 // ---------- BGM ----------
 let bgmEl = null;
@@ -83,13 +91,17 @@ function resize(){
 window.addEventListener("resize", resize);
 
 // ---------- 入力 ----------
-const Input = {moveF:0, moveS:0, yaw:0, firing:false, reload:false, grenade:false};
+const Input = {moveF:0, moveS:0, yaw:0, firing:false, reload:false, grenade:false, weaponSwitch:-1};
 window.G9Input = Input; // 動作確認・デバッグ用（ゲームの動きには関係しません）
 const keys = {};
 window.addEventListener("keydown", (e) => {
     keys[e.code] = true;
     if(e.code === "KeyR") Input.reload = true;
     if(e.code === "ShiftLeft" || e.code === "ShiftRight") Input.grenade = true;
+    if(e.code === "Digit1" || e.code === "Numpad1") Input.weaponSwitch = 0;
+    if(e.code === "Digit2" || e.code === "Numpad2") Input.weaponSwitch = 1;
+    if(e.code === "Digit3" || e.code === "Numpad3") Input.weaponSwitch = 2;
+    if(e.code === "KeyQ" || e.code === "Tab"){ e.preventDefault(); Input.weaponSwitch = (G.curWeapon + 1) % WEAPONS.length; }
 });
 window.addEventListener("keyup", (e) => { keys[e.code] = false; });
 function keyboardMove(){
@@ -166,6 +178,21 @@ function bindHold(el, onDown, onUp){
 bindHold($("bFire"), () => { Input.firing = true; }, () => { Input.firing = false; });
 $("bReload").addEventListener("pointerdown", (e) => { e.preventDefault(); Input.reload = true; });
 $("bGrenade").addEventListener("pointerdown", (e) => { e.preventDefault(); Input.grenade = true; });
+
+// ---------- 武器切り替えUI（画面下の武器アイコン：PCのクリックでもスマホのタップでも操作できる） ----------
+const weaponSelectEl = $("weaponSelect");
+let weaponBtns = [];
+function paintWeaponSelect(){
+    weaponSelectEl.innerHTML = WEAPONS.map((w, i) =>
+        '<button type="button" class="weaponBtn' + (i === G.curWeapon ? " active" : "") + '" data-i="' + i + '">' +
+        '<span class="key">' + w.key + '</span>' + w.icon + '<span class="ammo"></span></button>'
+    ).join("");
+    weaponBtns = WEAPONS.map((_, i) => weaponSelectEl.querySelector('[data-i="' + i + '"]'));
+    weaponBtns.forEach((b, i) => {
+        if(!b) return;
+        b.addEventListener("pointerdown", (e) => { e.preventDefault(); Input.weaponSwitch = i; });
+    });
+}
 
 // ---------- 見た目：共通マテリアル・ジオメトリ ----------
 function makeCharacter(bodyColor, hatColor){
@@ -278,7 +305,7 @@ async function boot(){
         G9mod = await window.Game9Module();
         const c = (name, ret, args) => G9mod.cwrap(name, ret, args);
         G9.g9_start_stage = c("g9_start_stage", null, ["number","number","number","number","number","number","number"]);
-        G9.g9_step = c("g9_step", null, ["number","number","number","number","number","number","number"]);
+        G9.g9_step = c("g9_step", null, ["number","number","number","number","number","number","number","number"]);
         G9.g9_get_buffer = c("g9_get_buffer", "number", []);
         G9.heap = () => G9mod.HEAPF32;
         window.G9 = G9;
@@ -292,10 +319,10 @@ async function boot(){
 }
 
 // ---------- ゲーム状態 ----------
-const HEADER = 32, MAX_OBST = 18, MAX_ENEMY = 10, MAX_EB = 60, MAX_TR = 16, MAX_GR = 4;
+const HEADER = 37, MAX_OBST = 18, MAX_ENEMY = 10, MAX_EB = 60, MAX_TR = 16, MAX_GR = 4;
 const BUF_LEN = HEADER + MAX_OBST*3 + MAX_ENEMY*8 + MAX_EB*3 + MAX_TR*6 + MAX_GR*5;
-let G = {running:false, stageIdx:0, stage:null};
-let lastKills = -1, lastHp = -1, lastAmmo = -1, lastCombo = -1, lastBoss = 0, obstaclesPlaced = false;
+let G = {running:false, stageIdx:0, stage:null, curWeapon:0};
+let lastKills = -1, lastHp = -1, lastAmmo = -1, lastCombo = -1, lastBoss = 0, lastWeapon = -1, obstaclesPlaced = false;
 
 function startStage(idx){
     G.stageIdx = idx; G.stage = STAGES[idx];
@@ -303,8 +330,9 @@ function startStage(idx){
     buildStageScene(G.stage);
     const seed = (Date.now() ^ (idx * 7919)) & 0x7fffffff;
     G9.g9_start_stage(idx, G.stage.killTarget, diff.hpMul, diff.speedMul, diff.fireMul, diff.bulletMul, seed);
-    Input.yaw = 0; Input.moveF = 0; Input.moveS = 0; Input.firing = false;
-    obstaclesPlaced = false; lastKills = -1; lastHp = -1; lastAmmo = -1; lastCombo = -1; lastBoss = 0;
+    Input.yaw = 0; Input.moveF = 0; Input.moveS = 0; Input.firing = false; Input.weaponSwitch = -1;
+    G.curWeapon = 0; paintWeaponSelect();
+    obstaclesPlaced = false; lastKills = -1; lastHp = -1; lastAmmo = -1; lastCombo = -1; lastBoss = 0; lastWeapon = -1;
     $("playTitle").textContent = G.stage.title;
     $("playSub").textContent = G.stage.composer;
     $("bossWrap").hidden = true;
@@ -349,8 +377,9 @@ function loop(t){
     const reloadPressed = Input.reload ? 1 : 0; Input.reload = false;
     const grenadePressed = Input.grenade ? 1 : 0; Input.grenade = false;
     const firing = Input.firing ? 1 : 0;
+    const weaponSwitch = Input.weaponSwitch; Input.weaponSwitch = -1;
 
-    G9.g9_step(dt, moveF, moveS, Input.yaw, firing, reloadPressed, grenadePressed);
+    G9.g9_step(dt, moveF, moveS, Input.yaw, firing, reloadPressed, grenadePressed, weaponSwitch);
     const ptr = G9.g9_get_buffer();
     const buf = new Float32Array(G9.heap().buffer, ptr, BUF_LEN);
 
@@ -363,6 +392,8 @@ function loop(t){
     const px = buf[20], pz = buf[21], yaw = buf[22];
     const obstacleCount = buf[23] | 0, enemyCount = buf[24] | 0, ebCount = buf[25] | 0, trCount = buf[26] | 0, grCount = buf[27] | 0;
     const hitFlashT = buf[28];
+    const curWeapon = buf[32] | 0, weaponSwitchT = buf[33];
+    const wpnAmmo = [buf[34] | 0, buf[35] | 0, buf[36] | 0];
 
     // プレイヤー・カメラ
     scene3d.player.position.set(px, 0, pz);
@@ -460,6 +491,17 @@ function loop(t){
     $("hudKills").textContent = bossSpawned ? "" : ("撃破 " + killCount + " / " + killTarget);
     $("ammoText").textContent = reloading ? "…" : (ammo + " / " + maxAmmo);
     $("reloadText").classList.toggle("on", reloading);
+    $("weaponName").textContent = WEAPONS[curWeapon].name;
+    if(curWeapon !== G.curWeapon || curWeapon !== lastWeapon){
+        G.curWeapon = curWeapon;
+        if(lastWeapon >= 0 && curWeapon !== lastWeapon) sfxSwitch();
+        lastWeapon = curWeapon;
+        paintWeaponSelect();
+    }
+    for(let i = 0; i < WEAPONS.length; i++){
+        const b = weaponBtns[i];
+        if(b) b.querySelector(".ammo").textContent = wpnAmmo[i];
+    }
     if(bossActive){
         $("bossWrap").hidden = false;
         $("bossName").textContent = G.stage.bossName;

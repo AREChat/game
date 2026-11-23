@@ -152,8 +152,8 @@ export function buildWorld(){
         box(S, (x0 + x1) / 2, 0, z0 + .4, x1 - x0, h, .8, c); // 前（ドアのすきま 78〜81 あけるため 2枚）
         S.pop(); box(S, (x0 + 77) / 2, 0, z0 + .4, 77 - x0, h, .8, c); box(S, (x1 + 81) / 2, 0, z0 + .4, x1 - 81, h, .8, c); box(S, 79, h - 2, z0 + .4, 4, 2, .8, c);
         box(S, (x0 + x1) / 2, 0, z1 - .4, x1 - x0, h, .8, c); box(S, x0 + .4, 0, (z0 + z1) / 2, .8, h, z1 - z0, c); box(S, x1 - .4, 0, (z0 + z1) / 2, .8, h, z1 - z0, c);
-        box(S, (x0 + x1) / 2, h, (z0 + z1) / 2, x1 - x0 + 2, .6, z1 - z0 + 2, "#3a2e48"); cyl(S, 79, h + .6, 27, 0, 24, 9, "#2e2438", 4); // やね
-        for(const [tx, tz] of [[x0, z0], [x1, z0], [x0, z1], [x1, z1]]){ cyl(S, tx, 0, tz, 2.4, 2.8, h + 3, "#6a5a7a", 8); cyl(S, tx, h + 3, tz, 0, 3.2, 4, "#4a2e68", 8); }
+        box(S, (x0 + x1) / 2, h, (z0 + z1) / 2, x1 - x0 + 2, .6, z1 - z0 + 2, "#3a2e48"); if(hasB("manor_front")) cyl(S, 79, h + .6, 27, 0, 11, 6, "#2e2438", 4); else cyl(S, 79, h + .6, 27, 0, 24, 9, "#2e2438", 4); // やね（正面の 絵が あるときは 絵の うしろに かくれる 小さな やね）
+        for(const [tx, tz] of [[x0, z0], [x1, z0], [x0, z1], [x1, z1]]){ if(tz === z0 && hasB("manor_front")) continue; cyl(S, tx, 0, tz, 2.4, 2.8, h + 3, "#6a5a7a", 8); cyl(S, tx, h + 3, tz, 0, 3.2, 4, "#4a2e68", 8); }
         pln(S, 79, .04, 27, x1 - x0 - 2, z1 - z0 - 2, "#2c2236"); // ゆか（暗い）
         for(const [wx, wz] of [[68, 23], [90, 23], [68, 33], [90, 33]]) { box(S, wx, 0, wz, .5, 3.4, .5, "#6a4a2a"); sph(GLOW, wx, 3.5, wz, 1.2, "#ffd28a"); }
         sol((x0 + 77) / 2, z0 + .4, 0.01); solids.pop();
@@ -193,7 +193,7 @@ export function buildWorld(){
     { const x0 = -66, x1 = -44, z0 = -24, z1 = -6, h = 7.5, c = "#6a4a9a";
         box(S, (x0 + -57) / 2, 0, z1 - .4, -57 - x0, h, .8, c); box(S, (x1 + -53) / 2, 0, z1 - .4, x1 + 53, h, .8, c); box(S, -55, h - 2.2, z1 - .4, 4, 2.2, .8, "#ffd24a");
         box(S, (x0 + x1) / 2, 0, z0 + .4, x1 - x0, h, .8, c); box(S, x0 + .4, 0, (z0 + z1) / 2, .8, h, z1 - z0, c); box(S, x1 - .4, 0, (z0 + z1) / 2, .8, h, z1 - z0, c);
-        box(S, (x0 + x1) / 2, h, (z0 + z1) / 2, x1 - x0 + 1.4, .6, z1 - z0 + 1.4, "#4a2e78"); for(const [tx, tz, th] of [[x0, z1, 12], [x1, z1, 10], [-55, z0, 14]]){ cyl(S, tx, 0, tz, 1.8, 2.2, th, "#9a7ad0", 8); cyl(S, tx, th, tz, 0, 2.6, 4.2, "#ff6aa8", 8); sph(GLOW, tx, th + 1.6, tz, 1.8, "#ffd2f0"); }
+        box(S, (x0 + x1) / 2, h, (z0 + z1) / 2, x1 - x0 + 1.4, .6, z1 - z0 + 1.4, "#4a2e78"); for(const [tx, tz, th] of [[x0, z1, 12], [x1, z1, 10], [-55, z0, 14]]){ if(tz === z1 && hasB("fairy_front")) continue; cyl(S, tx, 0, tz, 1.8, 2.2, th, "#9a7ad0", 8); cyl(S, tx, th, tz, 0, 2.6, 4.2, "#ff6aa8", 8); sph(GLOW, tx, th + 1.6, tz, 1.8, "#ffd2f0"); }
         for(const sx of [-1, 1]) for(let k = 0; k < 4; k++) sph(S, -55 + sx * (3.2 + k * .5), 5.6 - k * .15, z1 - .2, .22, ["#ff6a6a", "#ffd24a", "#6ad86a", "#6ac8ff"][k]);
         pln(S, -55, .04, -15, x1 - x0 - 2, z1 - z0 - 2, "#1c1430");
         for(let x = x0; x <= x1; x += 1.6){ if(x > -57.5 && x < -52.5) continue; sol(x, z1 - .4, 1); sol(x, z0 + .4, 1); } for(let z = z0; z <= z1; z += 1.6){ sol(x0 + .4, z, 1); sol(x1 - .4, z, 1); }
@@ -227,6 +227,11 @@ export function buildWorld(){
     buildStages({layer, model, box, cyl, sph, pln, sol});   // 新アトラクション3つの 舞台（ふだんは かくれている）と のりば
     // --- かざりの 立て絵（絵が あるときだけ。足すだけで、当たり判定は ほとんど ふやさない）---
     if(has("bench")) for(const [x, z] of [[-8, -8], [8, -8], [-8, 8], [8, 8]]){ prop("bench", x, z, 1.5); shadow(x, z, 1.4); sol(x, z, .9); }
+    // 大きな やかたの 正面の 絵（向きは 入口の 方で 固定・りょうめんに 絵）。入口の すきまは 通れるまま
+    if(hasB("manor_front")) PR.push({img: "bld/manor_front", x: 79, y: 0, z: 12.9, h: 15.9, w: 40, yaw: Math.PI, two: true});   // ミステリー・マナー（入口は 北がわ）
+    if(hasB("fairy_front")) PR.push({img: "bld/fairy_front", x: -55, y: 0, z: -4.7, h: 17.4, w: 24, yaw: 0, two: true});   // ひかりの もりの おとぎ館
+    if(hasB("dome_front")) PR.push({img: "bld/dome_front", x: 62, y: 0, z: -49.4, h: 12, w: 22, yaw: 0, two: true});   // コスモ・ドーム
+    if(has("lamp_garden")) for(const sx of [-1, 1]) for(const z of [36, 43, 50]){ const x = sx * 5.4; prop("lamp_garden", x, z, 1.7); sph(GLOW, x, 1.2, z, .4, "#ffe9a0"); }   // ゲートへ のびる 道の 低い 庭園灯
     if(has("trashcan")) for(const [x, z] of [[-21, 1.5], [21, 1.5], [-3.5, 20], [3.5, 20]]){ prop("trashcan", x, z, 1.4); shadow(x, z, .7); sol(x, z, .5); }
     if(has("balloons")) for(const [x, z] of [[-6.5, -9.5], [6.5, -9.5], [-3.2, 29], [3.2, 29]]){ prop("balloons", x, z, 3.3); }
     if(has("reeds")) for(let i = 0; i < 18; i++){ const a = (i + .5) / 18 * 6.283; const x = Math.cos(a) * 23.6, z = 79 + Math.sin(a) * 14; if(Math.sin(a) > .5 && Math.abs(x) < 9) continue; prop("reeds", x, z, 1.8 + hv(i + 80) * .5); }

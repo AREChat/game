@@ -9,7 +9,7 @@ export const PROP_FILES = [
     "prop/crystal_blue", "prop/crystal_violet", "prop/crystal_mint", "prop/crystal_rose", "prop/crystal_tall", "prop/rock_pillar",
     "prop/lamp_plaza", "prop/lamp_lantern", "prop/bench", "prop/trashcan", "prop/signpost", "prop/board_station", "prop/balloons",
     "prop/cloud_a", "prop/cloud_b", "prop/cloud_c", "prop/cloud_d", "prop/cloud_e", "prop/cloud_f", "prop/mountain_a", "prop/mountain_b", "prop/mountain_c", "prop/mountain_d",
-    "bld/shop_1", "bld/shop_2", "bld/shop_3", "bld/shop_4", "bld/shop_5", "bld/shop_6", "bld/info_front", "bld/gate_front"
+    "bld/shop_1", "bld/shop_2", "bld/shop_3", "bld/shop_4", "bld/shop_5", "bld/shop_6", "bld/info_front", "bld/gate_front", "bld/manor_front", "bld/fairy_front", "bld/dome_front", "prop/lamp_garden"
 ];
 const cache = {};
 export function loadProp(name){
