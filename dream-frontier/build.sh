@@ -8,7 +8,8 @@ set -e
 cd "$(dirname "$0")"
 emcc cpp/dream-frontier.cpp -O3 -s WASM=1 -s MODULARIZE=1 -s EXPORT_NAME=DreamFrontierModule -s ENVIRONMENT=web \
   -s ALLOW_MEMORY_GROWTH=0 -s TOTAL_STACK=1048576 -s INITIAL_MEMORY=16777216 \
-  -s EXPORTED_FUNCTIONS=_df_reset_solids,_df_add_solid,_df_set_bounds,_df_move,_dreamfrontier_ping,_malloc,_free \
+  -s EXPORTED_FUNCTIONS=_df_reset_solids,_df_add_solid,_df_set_bounds,_df_move,_dreamfrontier_ping,_malloc,_free,\
+_df_cst_set_path,_df_sim_boomerang,_df_sim_scripted,_df_shoot_buf,_df_shoot_pick,_df_blaster_buf,_df_blaster_pick \
   -s EXPORTED_RUNTIME_METHODS=cwrap,ccall,HEAPF32 \
   -o js/dreamfrontier.wasm.js
 echo "✔ js/dreamfrontier.wasm.js / js/dreamfrontier.wasm.wasm を作りました"

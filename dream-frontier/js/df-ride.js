@@ -2,8 +2,18 @@
 //  Game から よばれる：coasterInit（のりこみ）／coasterUpdate（いちフレーム）／coasterCamera（カメラ）／stageName（見せる 舞台）
 import {trackPath, simBoomerang, simScripted, sample, coasterCam, sstep} from "./df-coaster.js";
 import {genTargets, TARGETS, targetPos} from "./df-stages2.js";
+import {bootDfWasm} from "./df-wasm.js";
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+// ---- シューティング判定の C++(WebAssembly) コア（キラキラ・スイーツ・ブラスター）----
+// 読みこみが まだ・または 失敗した時は この下の 元のJS実装に 自動で フォールバックする。
+const BLASTW = {ready: false};
+bootDfWasm().then((M) => {
+    BLASTW.mod = M;
+    BLASTW.buf = M.cwrap("df_blaster_buf", "number", []);
+    BLASTW.pick = M.cwrap("df_blaster_pick", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number"]);
+    BLASTW.ready = true;
+}, () => {});
 const cache = {};
 // 1つの「幕」の データ（レールの みちすじ・時間ごとの いち・まと）。いちど つくったら つかいまわす
 export function actData(A){
@@ -51,11 +61,22 @@ export function coasterUpdate(g, dt, inp){
         if(inp.act && R.fire <= 0 && R.ct > tb.marks.launch - 1 && R.ct < tb.dur - 3){
             R.fire = .16; R.shots++; g.sfx("shot");
             const cp = Math.cos(cam.pitch), d = [Math.sin(cam.yaw) * cp, Math.sin(cam.pitch), Math.cos(cam.yaw) * cp], e = cam.eye;
-            let best = -1, bt = 1e9; const T = g.t;
-            for(let i = 0; i < D.targets.length; i++){
-                const tg = D.targets[i]; if(R.tgt[i].hit || tg.s < S.s - 6 || tg.s > S.s + 140) continue; const p = targetPos(tg, T), wx = p[0] - e[0], wy = p[1] - e[1], wz = p[2] - e[2], tt = wx * d[0] + wy * d[1] + wz * d[2];
-                if(tt < 2 || tt > 150) continue; const px = wx - d[0] * tt, py = wy - d[1] * tt, pz = wz - d[2] * tt;
-                if(Math.hypot(px, py, pz) < tg.r + .5 && tt < bt){ bt = tt; best = i; }
+            let best = -1; const T = g.t;
+            if(BLASTW.ready && D.targets.length <= 256){
+                const ptr = BLASTW.buf(), F = BLASTW.mod.HEAPF32, idx = ptr / 4;
+                for(let i = 0; i < D.targets.length; i++){
+                    const tg = D.targets[i], o = idx + i * 11;
+                    F[o] = tg.x; F[o + 1] = tg.y; F[o + 2] = tg.z; F[o + 3] = tg.nx; F[o + 4] = tg.nz;
+                    F[o + 5] = tg.amp; F[o + 6] = tg.f; F[o + 7] = tg.ph; F[o + 8] = tg.s; F[o + 9] = tg.r; F[o + 10] = R.tgt[i].hit ? 1 : 0;
+                }
+                best = BLASTW.pick(D.targets.length, T, S.s, e[0], e[1], e[2], d[0], d[1], d[2]);
+            } else {
+                let bt = 1e9;
+                for(let i = 0; i < D.targets.length; i++){
+                    const tg = D.targets[i]; if(R.tgt[i].hit || tg.s < S.s - 6 || tg.s > S.s + 140) continue; const p = targetPos(tg, T), wx = p[0] - e[0], wy = p[1] - e[1], wz = p[2] - e[2], tt = wx * d[0] + wy * d[1] + wz * d[2];
+                    if(tt < 2 || tt > 150) continue; const px = wx - d[0] * tt, py = wy - d[1] * tt, pz = wz - d[2] * tt;
+                    if(Math.hypot(px, py, pz) < tg.r + .5 && tt < bt){ bt = tt; best = i; }
+                }
             }
             const m0 = [e[0] + Math.cos(cam.yaw) * .55, e[1] - .5, e[2] - Math.sin(cam.yaw) * .55];
             let end = [e[0] + d[0] * 70, e[1] + d[1] * 70, e[2] + d[2] * 70];

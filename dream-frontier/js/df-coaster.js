@@ -4,6 +4,19 @@
 //  ・simScripted  : 「ここは このスピード」と きめた ばしょ ごとの スピードで すすむ（飛行・シューティング用）
 //  ・coasterCam   : その 時刻の カメラ（むき・ぼうき・バンク・G・ゆれ）
 import {makePath} from "./df-path.js";
+import {bootDfWasm} from "./df-wasm.js";
+
+// ---- 物理シミュレーションの C++(WebAssembly) コア ----
+// index.html が <script src="js/dreamfrontier.wasm.js"> を 先に読みこむ（js/df-wasm.js が instantiate を 1回だけ行う）。
+// 読みこみが まだ・または 失敗した時は、このファイル下部の 元のJS実装に 自動で フォールバックする。
+const DFC = {ready: false};
+bootDfWasm().then((M) => {
+    DFC.mod = M;
+    DFC.setPath = M.cwrap("df_cst_set_path", null, ["number", "number", "number", "number"]);
+    DFC.simBoomerangC = M.cwrap("df_sim_boomerang", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]);
+    DFC.simScriptedC = M.cwrap("df_sim_scripted", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
+    DFC.ready = true;
+}, () => {});
 export const GRAV = 9.8, D2R = Math.PI / 180;
 const TAU = Math.PI * 2;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
@@ -29,7 +42,35 @@ export function trackPath(tr){ return makePath(tr.pts, false, 12); }
 
 const REC = 1 / 60;
 // 物理シミュレーション（行き → てっぺん → ぎゃくそう）。sp の せつめいは df-data.js を 見てね。
+// WASM(C++)が 準備できていれば そちらを使い、まだ・または 失敗した時は 元のJS実装にフォールバックする。
 export function simBoomerang(path, sp){
+    if(DFC.ready){ try{ return simBoomerangWasm(path, sp); }catch(_e){ try{ console.warn("dream-frontier: コースター物理(WASM)に失敗。JS版にフォールバックします。", _e); }catch(_e2){} } }
+    return simBoomerangJs(path, sp);
+}
+function simBoomerangWasm(path, sp){
+    const M = DFC.mod, L = path.total;
+    // レールの 高さを 密にサンプリングして C++側に渡す（path.at()のスプライン自体は移植していない）
+    const step = 0.5, n = Math.min(10000, Math.max(2, Math.ceil(L / step) + 1));
+    const ys = new Float32Array(n); for(let i = 0; i < n; i++) ys[i] = path.at(Math.min(L - .01, i * step))[1];
+    const ysPtr = M._malloc(n * 4); M.HEAPF32.set(ys, ysPtr / 4); DFC.setPath(ysPtr, n, step, L); M._free(ysPtr);
+    const fwd = sp.fwd || [], rev = sp.rev || [];
+    const zoneType = (t) => t === "const" ? 0 : t === "brake" ? 2 : 1; // launch/assist は どちらも 1
+    const flat = (zs) => { const f = new Float32Array(zs.length * 5); zs.forEach((z, i) => { f[i * 5] = z.s0; f[i * 5 + 1] = z.s1; f[i * 5 + 2] = zoneType(z.type); f[i * 5 + 3] = z.v; f[i * 5 + 4] = z.a || 0; }); return f; };
+    const fwdF = flat(fwd), revF = flat(rev);
+    const fwdPtr = fwdF.length ? M._malloc(fwdF.length * 4) : 0; if(fwdPtr) M.HEAPF32.set(fwdF, fwdPtr / 4);
+    const revPtr = revF.length ? M._malloc(revF.length * 4) : 0; if(revPtr) M.HEAPF32.set(revF, revPtr / 4);
+    const hasTop = sp.topS !== null && sp.topS !== undefined, hasStop = sp.stopS !== null && sp.stopS !== undefined;
+    const ptr = DFC.simBoomerangC(sp.s0 || 0, sp.hold0 || 0, sp.cd || .0012, sp.cr || .05, sp.stopB || 2.2, sp.vCrawl || .6,
+        hasTop ? sp.topS : 0, hasTop ? 1 : 0, hasStop ? sp.stopS : 0, hasStop ? 1 : 0, sp.topHold === undefined ? 3 : sp.topHold, sp.endHold === undefined ? 2 : sp.endHold,
+        fwdPtr, fwd.length, revPtr, rev.length);
+    if(fwdPtr) M._free(fwdPtr); if(revPtr) M._free(revPtr);
+    const F = M.HEAPF32, idx = ptr / 4, cnt = F[idx] | 0, HEAD = 10, MAXS = 20000;
+    const sArr = new Array(cnt), uArr = new Array(cnt);
+    for(let i = 0; i < cnt; i++){ sArr[i] = F[idx + HEAD + i]; uArr[i] = F[idx + HEAD + MAXS + i]; }
+    return {dt: F[idx + 1], s: sArr, u: uArr, notes: [], dur: F[idx + 8], n: cnt, peakV: F[idx + 9],
+        marks: {dispatch: F[idx + 2], launch: F[idx + 3], top: F[idx + 4], rev: F[idx + 5], stop: F[idx + 6], end: F[idx + 7]}};
+}
+function simBoomerangJs(path, sp){
     const L = path.total, DT = 1 / 240, G = GRAV, out = {dt: REC, s: [], u: [], marks: {}, notes: []};
     const hAt = (s) => path.at(clamp(s, 0, L - .01))[1];
     const slope = (s) => (hAt(s + 1.5) - hAt(s - 1.5)) / 3;
@@ -72,7 +113,27 @@ export function simBoomerang(path, sp){
 }
 
 // きまった スピードで すすむ（keys: [[s, v], ...]、holds: [{s, t}] で とまる）
+// WASM(C++)版は holds/marks( sp.holds, sp.marks)に対応していない（実データで使われていないため）。
+// そのどちらかが指定されている時は 安全のため JS版を使う。
 export function simScripted(path, sp){
+    if(DFC.ready && !(sp.holds && sp.holds.length) && !(sp.marks && sp.marks.length)){
+        try{ return simScriptedWasm(path, sp); }catch(_e){ try{ console.warn("dream-frontier: コースター物理(WASM)に失敗。JS版にフォールバックします。", _e); }catch(_e2){} }
+    }
+    return simScriptedJs(path, sp);
+}
+function simScriptedWasm(path, sp){
+    const M = DFC.mod, L = path.total, keys = sp.keys;
+    const kf = new Float32Array(keys.length * 2); keys.forEach((k, i) => { kf[i * 2] = k[0]; kf[i * 2 + 1] = k[1]; });
+    const kPtr = M._malloc(kf.length * 4); M.HEAPF32.set(kf, kPtr / 4);
+    const ptr = DFC.simScriptedC(kPtr, keys.length, sp.s0 || 0, sp.hold0 || 0, sp.endHold === undefined ? 2 : sp.endHold, sp.amax || 4.5, sp.dmax || 5, L);
+    M._free(kPtr);
+    const F = M.HEAPF32, idx = ptr / 4, cnt = F[idx] | 0, HEAD = 10, MAXS = 20000;
+    const sArr = new Array(cnt), uArr = new Array(cnt);
+    for(let i = 0; i < cnt; i++){ sArr[i] = F[idx + HEAD + i]; uArr[i] = F[idx + HEAD + MAXS + i]; }
+    return {dt: F[idx + 1], s: sArr, u: uArr, notes: [], dur: F[idx + 8], n: cnt, peakV: F[idx + 9],
+        marks: {dispatch: F[idx + 2], launch: F[idx + 3], stop: F[idx + 6], end: F[idx + 7]}};
+}
+function simScriptedJs(path, sp){
     const L = path.total, DT = 1 / 240, out = {dt: REC, s: [], u: [], marks: {}, notes: []};
     const keys = sp.keys, vAt = (s) => { if(s <= keys[0][0]) return keys[0][1]; for(let i = 1; i < keys.length; i++){ if(s <= keys[i][0]){ const k = (s - keys[i - 1][0]) / (keys[i][0] - keys[i - 1][0] || 1); return lerp(keys[i - 1][1], keys[i][1], sstep(k)); } } return keys[keys.length - 1][1]; };
     let s = sp.s0 || 0, acc = 0; const holds = (sp.holds || []).map((h) => Object.assign({done: false}, h));
