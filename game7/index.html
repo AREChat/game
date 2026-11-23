@@ -56,10 +56,36 @@
 <script src="../shared/are-mode.js"></script>
 <script src="../shared/game-nav.js"></script>
 <script src="../shared/game-exit.js"></script>
+<script src="../shared/feature-panel.js"></script>
 <script src="./js/core.js"></script>
 <script src="./js/game7.wasm.js"></script>
 <script src="./js/games.js"></script>
 <script src="./js/input.js"></script>
+<script>(function(){
+    if(!window.AREFeaturePanel || !window.G7) return;
+    window.AREFeaturePanel.init({
+        gameId: "game7",
+        title: "🎰 せいせき分析＆実績",
+        lowerIsBetter: false,
+        unit: "点",
+        rules: [
+            {id:"g7_first", title:"はじめてのプレイ", desc:"1回 あそぶ", icon:"🎮", field:"plays", op:"gte", value:1},
+            {id:"g7_20plays", title:"やりこみ中", desc:"20回 あそぶ", icon:"🔁", field:"plays", op:"gte", value:20},
+            {id:"g7_100plays", title:"常連さん", desc:"100回 あそぶ", icon:"🏅", field:"plays", op:"gte", value:100},
+            {id:"g7_coins1000", title:"コインもちさん", desc:"コインを 1000 ためる", icon:"🪙", field:"coins", op:"gte", value:1000},
+            {id:"g7_collect5", title:"コレクター見習い", desc:"アイテムを 5こ 手に入れる", icon:"🎁", field:"ownedCount", op:"gte", value:5},
+            {id:"g7_collectAll", title:"図鑑コンプリート", desc:"アイテムを すべて 手に入れる", icon:"👑", field:"ownedCount", op:"gte", value:12},
+            {id:"g7_bestscore300", title:"ハイスコア！", desc:"どれかの ミニゲームで 300点 こえる", icon:"⭐", field:"bestScoreMax", op:"gte", value:300}
+        ],
+        getLiveStats: function(){
+            var s = window.G7.save;
+            var ownedCount = Object.keys(s.own || {}).length;
+            var bestVals = Object.keys(s.best || {}).map(function(k){ return s.best[k]; });
+            var bestScoreMax = bestVals.length ? Math.max.apply(null, bestVals) : 0;
+            return {plays: s.plays || 0, coins: s.coins || 0, ownedCount: ownedCount, bestScoreMax: bestScoreMax};
+        }
+    });
+})();</script>
 <script>(function(){var b=document.getElementById("exitBtn");if(!b||!window.AREExit)return;b.textContent=AREExit.label();b.addEventListener("click",function(){AREExit.open();});})();</script>
 <script src="../shared/title-secrets.js"></script>
 <script>TitleSecrets.attach({title:function(){return !!(document.getElementById("s-title")&&document.getElementById("s-title").classList.contains("on"));},host:"#stage"});</script>
