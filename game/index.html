@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' https:; frame-src https://drive.google.com https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self'; manifest-src 'self'; worker-src 'self'; font-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' https:; frame-src https://drive.google.com https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self'; manifest-src 'self'; worker-src 'self'; font-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0b1020">
 <title>ARE QUEST 〜そういうときは、AREだ！〜</title>
@@ -32,15 +32,17 @@
 <script src="../shared/game-nav.js"></script>
 <script src="./mode.js"></script>
 <script src="./protect-game.js"></script>
+<script src="./game.wasm.js"></script>
+<script src="./gcore.js"></script>
 <!-- GAME-BUNDLE:BEGIN 自動生成（node tools/build-game.js）。直接編集しない -->
-<script src="./game.bundle-1.js?v=d098f57fb9"></script>
-<script src="./game.bundle-fb.js?v=d098f57fb9" data-seg="1" data-v="d098f57fb9"></script>
-<script src="./game.bundle-2.js?v=d098f57fb9"></script>
-<script src="./game.bundle-fb.js?v=d098f57fb9" data-seg="2" data-v="d098f57fb9"></script>
-<script src="./game.bundle-3.js?v=d098f57fb9"></script>
-<script src="./game.bundle-fb.js?v=d098f57fb9" data-seg="3" data-v="d098f57fb9"></script>
-<script src="./game.bundle-4.js?v=d098f57fb9"></script>
-<script src="./game.bundle-fb.js?v=d098f57fb9" data-seg="4" data-v="d098f57fb9"></script>
+<script src="./game.bundle-1.js?v=f20b739775"></script>
+<script src="./game.bundle-fb.js?v=f20b739775" data-seg="1" data-v="f20b739775"></script>
+<script src="./game.bundle-2.js?v=f20b739775"></script>
+<script src="./game.bundle-fb.js?v=f20b739775" data-seg="2" data-v="f20b739775"></script>
+<script src="./game.bundle-3.js?v=f20b739775"></script>
+<script src="./game.bundle-fb.js?v=f20b739775" data-seg="3" data-v="f20b739775"></script>
+<script src="./game.bundle-4.js?v=f20b739775"></script>
+<script src="./game.bundle-fb.js?v=f20b739775" data-seg="4" data-v="f20b739775"></script>
 <!-- GAME-BUNDLE:END -->
 <script src="../shared/are-guard.js"></script>
 <script src="../shared/are-common.js"></script>

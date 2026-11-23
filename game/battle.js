@@ -21,8 +21,13 @@ const AUTO_DELAY = [700, 380, 130];
 function bAlive(id){ return G.S.m[id].hp > 0; }
 function bSpend(id, n){ if(!G.S.cx.infmp) G.S.m[id].mp = Math.max(0, G.S.m[id].mp - n); }
 function bDmg(atk, def, mult){
-    let d = Math.max(1, Math.round((atk - def / 2) * (mult || 1) * (0.88 + G.rnd() * 0.24)));
-    const crit = (G.rnd() < 1 / 16) || !!(G.S && G.S.cx && G.S.cx.gcrit && G.b && !G.inFoe); if(crit) d = Math.round(d * 1.7);
+    const m = mult || 1, r1 = G.rnd(), r2 = G.rnd();
+    const forceCrit = !!(G.S && G.S.cx && G.S.cx.gcrit && G.b && !G.inFoe);
+    if(window.GCore && GCore.ready){
+        try{ const res = GCore.damage(atk, def, m, r1, r2, 1 / 16, forceCrit); return {d: res.d, crit: res.crit}; }catch(_e){}
+    }
+    let d = Math.max(1, Math.round((atk - def / 2) * m * (0.88 + r1 * 0.24)));
+    const crit = forceCrit || (r2 < 1 / 16); if(crit) d = Math.round(d * 1.7);
     return {d, crit};
 }
 function battleStart(ids, after){
@@ -135,7 +140,11 @@ function battleRound(heroAct){
     S.party.forEach((id) => { if(bAlive(id)) acts.push({t:"p", id, agi:tqStat(id).agi + G.rnd() * 6 + (id === "hero" ? 10 : 0)}); });
     if(window.pkCompActive && pkCompActive()) acts.push({t:"c", agi:G.rnd() * 6 + 5});
     b.foes.forEach((f) => { if(f.cur > 0) acts.push({t:"f", f, agi:f.hp / 40 + G.rnd() * 6 + 4}); });
-    acts.sort((a, c) => c.agi - a.agi);
+    // すばやさ(agi)の 大きい順に 行動順を ならべる（C++(WebAssembly)が 読みこめていれば そちらで計算する）
+    if(window.GCore && GCore.ready){
+        try{ const order = GCore.turnOrder(acts.map((a) => a.agi)), sorted = order.map((i) => acts[i]); acts.length = 0; acts.push.apply(acts, sorted); }
+        catch(_e){ acts.sort((a, c) => c.agi - a.agi); }
+    }else acts.sort((a, c) => c.agi - a.agi);
     if(heroAct.k === "run") acts.sort((a, c) => (c.t === "p" && c.id === "hero" ? 1 : 0) - (a.t === "p" && a.id === "hero" ? 1 : 0));
     b.guard = heroAct.k === "guard";
     for(const a of acts){
@@ -215,8 +224,12 @@ function foeAction(f){
     if(f.stun > 0){ f.stun--; bLog(f.label + "は うごけない！"); return; }
     if(f.flee && !f.boss && G.rnd() < f.flee){ bLog(f.label + "は すばやく にげだした！"); f.cur = 0; f.exp = 0; f.g = 0; f.fled = true; return; }
     const alive = S.party.filter((id) => bAlive(id)); if(!alive.length) return;
-    const list = f.acts && f.acts.length ? f.acts : [["こうげき", 0, 1, 1.2]], tot = list.reduce((a, c) => a + c[2], 0);
-    let r = G.rnd() * tot, act = list[0]; for(const a of list){ r -= a[2]; if(r <= 0){ act = a; break; } }
+    const list = f.acts && f.acts.length ? f.acts : [["こうげき", 0, 1, 1.2]];
+    const r01 = G.rnd(); let actIdx = -1;
+    if(window.GCore && GCore.ready){ try{ actIdx = GCore.weightedPick(list.map((a) => a[2]), r01); }catch(_e){ actIdx = -1; } }
+    let act;
+    if(actIdx >= 0 && actIdx < list.length) act = list[actIdx];
+    else{ const tot = list.reduce((a, c) => a + c[2], 0); let r = r01 * tot; act = list[0]; for(const a of list){ r -= a[2]; if(r <= 0){ act = a; break; } } }
     const defB = b.buff.def > 0 ? 1.3 : 1;
     const hit = (id, mult) => {
         const st = tqStat(id); let def = st.def * defB; if(id === "hero" && b.guard) def *= 2;
@@ -224,7 +237,14 @@ function foeAction(f){
     };
     bLog(f.label + "の " + act[0] + "！");
     if(act[1] === 1) alive.forEach((id) => hit(id, act[3]));
-    else{ const wts = alive.map((id) => (RPG_CLASS[id].role === "tank" ? 2.2 : 1)), tw = wts.reduce((a, c) => a + c, 0); let q = G.rnd() * tw, pick = alive[0]; for(let i = 0; i < alive.length; i++){ q -= wts[i]; if(q <= 0){ pick = alive[i]; break; } } hit(pick, act[3]); }
+    else{
+        const wts = alive.map((id) => (RPG_CLASS[id].role === "tank" ? 2.2 : 1)), q01 = G.rnd(); let qi = -1;
+        if(window.GCore && GCore.ready){ try{ qi = GCore.weightedPick(wts, q01); }catch(_e){ qi = -1; } }
+        let pick;
+        if(qi >= 0 && qi < alive.length) pick = alive[qi];
+        else{ const tw = wts.reduce((a, c) => a + c, 0); let q = q01 * tw; pick = alive[0]; for(let i = 0; i < alive.length; i++){ q -= wts[i]; if(q <= 0){ pick = alive[i]; break; } } }
+        hit(pick, act[3]);
+    }
 }
 function roundEnd(){
     const b = G.b, S = G.S;

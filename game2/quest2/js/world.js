@@ -2,6 +2,7 @@
 // ===== マップ（JSON）→ 3Dの町・原っぱ・店内を組み立てる。当たり判定つき =====
 import {Geo, M4, canvasTex} from "./gl.js";
 import {decorProp, decorShelf, posterMesh} from "./decor.js";
+import {Q} from "./qcore.js";   // C++(WebAssembly)の 当たり判定。読みこみ中・失敗時は 下のJS計算を使う
 
 const hash = (a, b) => { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >> 13)) * 1274126177 | 0; return ((h ^ (h >> 16)) >>> 0) / 4294967295; };
 
@@ -22,6 +23,20 @@ export function getTex(R, name){
 }
 export function textSign(R, text, bg, fg){
     return R.tex(canvasTex(256, 96, (x, w, h) => { x.direction = "ltr"; x.fillStyle = bg || "#223a8a"; x.fillRect(0, 0, w, h); x.strokeStyle = "#ffd24a"; x.lineWidth = 6; x.strokeRect(4, 4, w - 8, h - 8); x.fillStyle = fg || "#fff"; x.font = "bold 44px sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(text, w / 2, h / 2 + 2, w - 24); }));
+}
+
+// WASM側は 1つだけの当たり判定テーブル（static配列）を持つので、マップを切りかえた時や
+// 戦闘の背景(buildBackdrop)を作った時には、いま使っているワールドと ずれることがある。
+// 当たり判定を 呼ぶ直前に、必要なら そのワールドの形を もう一度 流しこみなおす。
+let activeWasmWorld = null;
+function syncWasm(W){
+    if(!Q.ready) return false;
+    try{
+        Q.world_reset(); Q.set_bounds(W.bounds[0], W.bounds[1], W.bounds[2], W.bounds[3]);
+        for(const c of W.colliders) Q.add_rect(c[0], c[1], c[2], c[3]);
+        for(const c of W.circles) Q.add_circle(c[0], c[1], c[2]);
+        activeWasmWorld = W; return true;
+    }catch(_e){ activeWasmWorld = null; return false; }
 }
 
 let skyMesh = null, skyR = null;
@@ -120,16 +135,22 @@ export function buildWorld(R, def){
         for(const p of W.parts) R.draw(p.mesh, p.opt);
     };
     W.dispose = () => { for(const f of W.free){ if(f.vao) R.free(f); else if(f.tex) R.freeTex(f.tex); } W.free = []; W.parts = []; };
-    // 当たり判定：円(r)で移動。軸ごとに試す
-    const hit = (x, z, r) => {
+    // 当たり判定：円(r)で移動。軸ごとに試す（C++(WebAssembly)が 読みこめていれば そちらで計算する。
+    // 読みこみ中・失敗時は 元のJS計算に フォールバックする ので、挙動は 変わらない）
+    const hitJs = (x, z, r) => {
         const [bx0, bz0, bx1, bz1] = W.bounds; if(x < bx0 + r || x > bx1 - r || z < bz0 + r || z > bz1 - r) return true;
         for(const c of W.colliders){ if(x > c[0] - r && x < c[2] + r && z > c[1] - r && z < c[3] + r) return true; }
         for(const c of W.circles){ const dx = x - c[0], dz = z - c[1]; if(dx * dx + dz * dz < (c[2] + r) * (c[2] + r)) return true; }
         return false;
     };
+    const ensureWasm = () => activeWasmWorld === W ? true : syncWasm(W);
+    const hit = (x, z, r) => ensureWasm() ? !!Q.hit(x, z, r) : hitJs(x, z, r);
     W.hit = hit;
-    W.move = (x, z, dx, dz, r) => { let nx = x, nz = z; if(!hit(x + dx, z, r)) nx = x + dx; if(!hit(nx, z + dz, r)) nz = z + dz; return [nx, nz]; };
-    W.freeSpot = (x, z) => { if(!hit(x, z, .4)) return [x, z]; for(let rr = .8; rr < 6; rr += .6) for(let a = 0; a < 6.28; a += .7){ const nx = x + Math.cos(a) * rr, nz = z + Math.sin(a) * rr; if(!hit(nx, nz, .4)) return [nx, nz]; } return [x, z]; };
+    W.move = (x, z, dx, dz, r) => { if(ensureWasm()) return Q.move(x, z, dx, dz, r); let nx = x, nz = z; if(!hitJs(x + dx, z, r)) nx = x + dx; if(!hitJs(nx, z + dz, r)) nz = z + dz; return [nx, nz]; };
+    W.freeSpot = (x, z) => {
+        if(ensureWasm()) return Q.freeSpot(x, z);
+        if(!hitJs(x, z, .4)) return [x, z]; for(let rr = .8; rr < 6; rr += .6) for(let a = 0; a < 6.28; a += .7){ const nx = x + Math.cos(a) * rr, nz = z + Math.sin(a) * rr; if(!hitJs(nx, nz, .4)) return [nx, nz]; } return [x, z];
+    };
     return W;
 }
 
