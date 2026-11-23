@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>AREshoot</title>
 <meta name="theme-color" content="#0a0420">
-<meta name="description" content="向かってくる食べもの・調理道具をねらって撃つ、オリジナルの3Dシューティングギャラリー。虫は一切出てきません。クラシック・オーケストラ曲にのせて、全14コース。">
+<meta name="description" content="厨房を舞台に自由に走り回って撃ち合う、本格3Dガンシューティング。ライバルシェフをたおして、鬼軍曹シェフ（ボス）を撃破しよう。全14皿。">
 <script src="../protect.js"></script><script src="../shared/are-padmap.js"></script>
 <link rel="stylesheet" href="./style.css">
 <script src="../shared/are-offline.js" defer></script>
@@ -17,22 +17,23 @@
 <main id="stage">
   <section id="s-title" class="scr on">
     <div class="logo">ARE<br>shoot</div>
-    <p class="sub">美食の晩餐会 ｜ 3Dシューティングギャラリー</p>
+    <p class="sub">美食の晩餐会 ｜ 3Dガンシューティング</p>
     <div id="stageSelect" class="stage-select"></div>
     <div class="row">
       <button id="bHow" type="button">📖 あそびかた</button>
       <button id="bSet" type="button">⚙ せってい</button>
     </div>
-    <p class="hint">画面をねらってタップ／クリックすると撃てます。向かってくる食べもの・調理道具を全部くいとめよう。虫は一切出てきません。</p>
+    <p class="hint">厨房を自由に走り回り、物陰にかくれながら、むかってくるライバルシェフを銃で撃退しよう。虫は一切出てきません。</p>
   </section>
 
   <section id="s-how" class="scr">
     <h2>あそびかた</h2>
     <div class="panel">
-      <p>画面の好きな場所をタップ（パソコンはクリック）すると、その方向に向けて撃ちます。</p>
-      <p>奥から食べもの・調理道具が向かってきます。画面の手前まで来てしまうと、ハート（ライフ）が1つ減ります。</p>
-      <p>目標の数をたおすとコースクリア。ハートが0になるとゲームオーバーです。</p>
-      <p>最終コース（14）だけは、少し待つとボス「グランド・プディング」が登場します。たくさん撃ってたおしましょう。</p>
+      <p><b>PC：</b> W/A/S/D（または画面左のスティック）で移動。マウスを動かして視点とねらいを操作し、左クリックで発射。R＝リロード、Shift＝食材グレネード。</p>
+      <p><b>スマホ・タブレット：</b> 画面左ドラッグで移動、画面右ドラッグで視点操作。右下の🔥ボタンで発射、🔄でリロード、💣でグレネード。</p>
+      <p>敵の弾（食べもの）はゆっくり飛んでくるので、見てから動いて避けられます。大きな樽やなべの物陰にかくれれば、相手の弾を防げます。</p>
+      <p>目標の数のライバルシェフをたおすと、その皿の「鬼軍曹シェフ」（ボス）が登場。ボスをたおすとコースクリアです。体力（ライフ）が0になるとゲームオーバー。</p>
+      <p>敵をたおすと、たまに🔵パワーオーブ（連射力アップ）や💎スコアジェムをドロップします。拾いに行くのもねらいめ。</p>
       <p>クリアした次のコースが開放されます（この端末に記録されます）。</p>
     </div>
     <div class="row"><button id="bHowBack" type="button">とじる</button></div>
@@ -43,6 +44,7 @@
     <div class="panel">
       <label>BGM音量 <input type="range" id="volBgm" min="0" max="1" step="0.05"></label>
       <label>効果音音量 <input type="range" id="volSe" min="0" max="1" step="0.05"></label>
+      <label>視点感度 <input type="range" id="volSens" min="0.4" max="2.4" step="0.1"></label>
     </div>
     <div class="row"><button id="bSetBack" type="button">とじる</button></div>
   </section>
@@ -50,10 +52,30 @@
   <section id="s-play" class="scr">
     <canvas id="cv"></canvas>
     <div id="crosshair" aria-hidden="true"></div>
+    <div id="hitmark" aria-hidden="true"></div>
     <div id="flash" aria-hidden="true"></div>
     <div id="hud">
       <div id="hudTitles"><strong id="playTitle"></strong><small id="playSub"></small></div>
-      <div id="hudRow"><span id="hudScore"></span><span id="hudProgress"></span><span id="hudLives"></span></div>
+      <div id="hudTop">
+        <div id="hpWrap"><div id="hpBar"></div><span id="hpText"></span></div>
+        <span id="hudScore"></span>
+        <span id="hudCombo"></span>
+      </div>
+      <div id="hudMid">
+        <span id="hudKills"></span>
+        <div id="bossWrap" hidden><span id="bossName"></span><div id="bossBar"></div></div>
+      </div>
+    </div>
+    <div id="ammoBox"><span id="ammoText"></span><span id="reloadText">リロード中…</span></div>
+    <div id="dmgFlash" aria-hidden="true"></div>
+    <div id="touchZones">
+      <div id="moveZone"><div id="moveStick"></div></div>
+      <div id="lookZone"></div>
+    </div>
+    <div id="actionBtns">
+      <button id="bGrenade" type="button">💣</button>
+      <button id="bReload" type="button">🔄</button>
+      <button id="bFire" type="button">🔥</button>
     </div>
   </section>
 
@@ -68,6 +90,7 @@
   </section>
 </main>
 
+<script src="./js/game9.wasm.js"></script>
 <script type="module" src="js/core.js"></script>
 </body>
 </html>

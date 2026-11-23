@@ -105,8 +105,62 @@
   }
   function key(c){ return JSON.stringify(c); }
 
+  // ---------- C++(WebAssembly) 版：パズル生成の本体を C++ に移植したもの ----------
+  // js/game6.wasm.js（<script> で先に読みこみ）が グローバルに Game6Module を置く。
+  // 読みこみは非同期なので、まだ準備できていない間は 下の JS 版（makePuzzleJS）に 自動でフォールバックする。
+  var wasm = {mod: null, make: null, ready: false, failed: false};
+  (function bootWasm(){
+    if(typeof window === "undefined" || typeof window.Game6Module !== "function") return;
+    try{
+      window.Game6Module().then(function(M){
+        wasm.mod = M;
+        wasm.make = M.cwrap("g6_make_puzzle", "number", ["number", "number", "number", "number"]);
+        wasm.ready = true;
+      }, function(err){ wasm.failed = true; try{ console.warn("game6: WASM読みこみ失敗。JS版にフォールバックします。", err); }catch(_e){} });
+    }catch(_e){ wasm.failed = true; }
+  })();
+  var CLUE_T = ["eq", "multi", "neq", "either", "link", "notlink", "before", "adj", "gap"];
+  var MAX_CLUES_W = 256, MAXN_W = 10, MAXM_W = 3;
+  function readPuzzleFromWasm(n, level, m, ptr){
+    var F = wasm.mod.HEAPF32, idx = ptr / 4;
+    var outN = F[idx], outM = F[idx + 1], outLevel = F[idx + 2], clueCount = F[idx + 3], ok = F[idx + 4];
+    var o = idx + 5;
+    var S = [];
+    for(var k = 0; k < MAXM_W; k++){
+      if(k < outM){ var row = []; for(var p = 0; p < outN; p++) row.push(F[o + k * MAXN_W + p]); S.push(row); }
+    }
+    o += MAXM_W * MAXN_W;
+    var clues = [];
+    for(var i = 0; i < clueCount; i++){
+      var base = o + i * 18;
+      var t = CLUE_T[F[base]] || "eq";
+      var c = {t: t};
+      if(t === "eq" || t === "neq"){ c.k = F[base + 1]; c.p = F[base + 2]; c.v = F[base + 3]; }
+      else if(t === "either"){ c.k = F[base + 1]; c.p = F[base + 2]; c.v = F[base + 3]; c.w = F[base + 4]; }
+      else if(t === "multi"){ c.p = F[base + 2]; var cnt = F[base + 11]; c.ks = []; c.vs = []; for(var j = 0; j < cnt; j++){ c.ks.push(F[base + 12 + j]); c.vs.push(F[base + 15 + j]); } }
+      else if(t === "link" || t === "notlink"){ c.k1 = F[base + 5]; c.a = F[base + 6]; c.k2 = F[base + 7]; c.b = F[base + 8]; }
+      else if(t === "before" || t === "adj"){ c.p = F[base + 2]; c.q = F[base + 9]; }
+      else if(t === "gap"){ c.p = F[base + 2]; c.q = F[base + 9]; c.d = F[base + 10]; }
+      clues.push(c);
+    }
+    return {n: outN, m: outM, sol: {S: S}, clues: clues, level: outLevel, ok: !!ok};
+  }
+  function makePuzzleWasm(n, level, seed, m){
+    if(n > MAXN_W || m > MAXM_W) return null; // こえる大きさは JS版にまかせる（通常は起きない）
+    var ptr = wasm.make(n | 0, level | 0, seed | 0, m | 0);
+    return readPuzzleFromWasm(n, level, m, ptr);
+  }
+
   // n=人数、level=0〜4、seed、m=項目の数（2か3）。sol.S[k][人]=その人の項目kの番号
   function makePuzzle(n, level, seed, m){
+    m = m || 2;
+    if(wasm.ready){
+      try{ var r2 = makePuzzleWasm(n, level, seed, m); if(r2) return r2; }
+      catch(_e){ try{ console.warn("game6: WASM生成に失敗。JS版にフォールバックします。", _e); }catch(_e2){} }
+    }
+    return makePuzzleJS(n, level, seed, m);
+  }
+  function makePuzzleJS(n, level, seed, m){
     m = m || 2;
     var r = rng(seed), ids = Array.apply(null, Array(n)).map(function(_, i){ return i; }), S = [];
     for(var q0 = 0; q0 < m; q0++) S.push(shuffle(r, ids));

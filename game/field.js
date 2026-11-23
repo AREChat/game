@@ -70,8 +70,13 @@ function afterStep(){
     if(G.mode === "map") updateHud();
 }
 function encounter(){
-    const mp = curMap(), list = mp.enc.f, tot = list.reduce((a, b) => a + b[1], 0); let r = G.rnd() * tot, pick = list[0];
-    for(const f of list){ r -= f[1]; if(r <= 0){ pick = f; break; } }
+    // 出会う敵の組み合わせを、重みつき抽選で えらぶ（C++(WebAssembly)が 読みこめていれば そちらで計算する）
+    const mp = curMap(), list = mp.enc.f, r01 = G.rnd();
+    let idx = -1;
+    if(window.GCore && GCore.ready){ try{ idx = GCore.weightedPick(list.map((f) => f[1]), r01); }catch(_e){ idx = -1; } }
+    let pick;
+    if(idx >= 0 && idx < list.length) pick = list[idx];
+    else{ const tot = list.reduce((a, b) => a + b[1], 0); let r = r01 * tot; pick = list[0]; for(const f of list){ r -= f[1]; if(r <= 0){ pick = f; break; } } }
     battleStart(pick[0].slice(), null);
 }
 function fieldAct(){

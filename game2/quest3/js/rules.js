@@ -1,5 +1,6 @@
 "use strict";
 // ===== 成長・ダメージ・職業・おぼえるわざの計算（データ駆動）=====
+import {Q} from "./qcore.js";   // C++(WebAssembly)の ダメージ計算。読みこみ中・失敗時は 下のJS計算を使う
 export const G = {eq: {}, jobs: {}, ab: {}};   // 装備ボーナス・職業データ・わざデータ（main.js が読みこんだものを入れる）
 export const setGameData = (data) => { G.jobs = {}; for(const j of data.jobs || []) G.jobs[j.id] = j; G.ab = data.abilities || {}; G.items = data.items || {}; };
 export const setEquip = (S) => { const o = {}; for(const k of Object.keys(S.equip || {})){ const it = G.items && G.items[k]; if(it && it.bonus) for(const [a, v] of Object.entries(it.bonus)) o[a] = (o[a] || 0) + v; } G.eq = o; };
@@ -70,8 +71,13 @@ export function changeJob(m, id){ m.pg.hp *= .5; m.pg.mp *= .5; m.pg.atk *= .5; 
 export const abilitiesOf = (m, type) => m.learned.map((id) => G.ab[id]).filter((a) => a && a.t === type).sort((a, b) => (a.job ? 1000 : 0) + a.lv - ((b.job ? 1000 : 0) + b.lv) || a.id.localeCompare(b.id));
 // ---- ダメージ
 export function damage(atk, def, rnd, opt){
-    const o = opt || {}; let d = atk * (0.85 + rnd() * 0.3) - def * 0.5; d = Math.max(1, Math.floor(d));
-    const crit = o.forceCrit || rnd() < (o.critRate || 0.0625); if(crit) d = Math.max(d, Math.floor(atk * 1.6 + 1));
+    const o = opt || {};
+    const r1 = rnd(), r2 = o.forceCrit ? 0 : rnd();   // 乱数の消費順は 元のJS計算と同じにそろえる（シード再現のため）
+    if(Q.ready){
+        try{ const res = Q.damage(atk, def, r1, r2, o.critRate || 0.0625, !!o.guard, !!o.forceCrit); return {d: res.d, crit: res.crit}; }catch(_e){}
+    }
+    let d = atk * (0.85 + r1 * 0.3) - def * 0.5; d = Math.max(1, Math.floor(d));
+    const crit = o.forceCrit || r2 < (o.critRate || 0.0625); if(crit) d = Math.max(d, Math.floor(atk * 1.6 + 1));
     if(o.guard) d = Math.max(1, Math.floor(d / 2));
     return {d, crit};
 }
