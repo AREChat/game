@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ループ・ラボ 〜過去の自分と協力パズル〜</title>
+<meta name="theme-color" content="#0b1230">
+<meta name="description" content="過去の自分（ぶんしん）と力を合わせて、トビラを開いて出口へ。タイムループ協力パズル「ループ・ラボ」。全10ステージ。">
+<script src="../protect.js"></script>
+<link rel="stylesheet" href="./style.css">
+<script src="../shared/are-offline.js" defer></script>
+</head>
+<body>
+<button id="exitBtn" type="button" aria-label="もどる">← もどる</button>
+<main id="app">
+  <section id="s-title" class="scr on">
+    <div class="logo"><span>LOOP</span><span>LAB</span></div>
+    <p class="sub">過去の自分と きょうりょくする タイムループ・パズル</p>
+    <div class="row"><button id="bPlay" type="button" class="big">▶ あそぶ</button></div>
+    <div class="row"><button id="bHow" type="button">📖 あそびかた</button></div>
+    <p class="hint">虫は 一切 出てきません。この端末の中に 進み具合が 記録されます。</p>
+  </section>
+
+  <section id="s-how" class="scr">
+    <h2>あそびかた</h2>
+    <div class="panel">
+      <p>🤖 <b>あなた（青いロボ）</b>を動かして、いちばん奥の <b>🌀出口</b> をめざします。1回うごくごとに、1歩 すすみます（ターン制）。</p>
+      <p>🚪 出口までの道には <b>トビラ</b> があります。<b>同じ色のボタンが ぜんぶ ふまれている あいだだけ</b> ひらきます。</p>
+      <p>⏪ ボタンの上に立ったまま <b>「ぶんしん」</b>を押すと、いまの動きが <b>ぶんしん（ゴースト）</b>になって、スタートからやりなおす つぎの<b>ループ</b>で、同じ動きをくりかえしてくれます。ゴーストは、さいごの場所に そのまま立ちつづけます。</p>
+      <p>👣 1ループで 歩ける数、ぶんしんの 数には かぎりがあります。<b>すくないぶんしんで クリア</b>すると ★3！</p>
+      <p><b>そうさ</b>　PC：矢印／WASD＝うごく、Space＝まつ、Enter／Z＝ぶんしん、R＝このループをやりなおす、H＝ヒント　／　スマホ：画面の ボタン</p>
+    </div>
+    <div class="row"><button id="bHowBack" type="button">とじる</button></div>
+  </section>
+
+  <section id="s-sel" class="scr">
+    <h2>ステージを えらぶ</h2>
+    <div id="levels" class="levels"></div>
+    <div class="row"><button id="bSelBack" type="button">タイトルへ</button></div>
+  </section>
+
+  <section id="s-play" class="scr">
+    <div id="bar">
+      <div id="lvName"></div>
+      <div id="lvInfo"><span id="gInfo"></span><span id="sInfo"></span></div>
+    </div>
+    <div id="stageWrap"><canvas id="cv"></canvas><div id="toast"></div></div>
+    <div id="ctrl">
+      <div id="dpad">
+        <button type="button" data-d="U" aria-label="うえ">▲</button>
+        <button type="button" data-d="L" aria-label="ひだり">◀</button>
+        <button type="button" data-d="D" aria-label="した">▼</button>
+        <button type="button" data-d="R" aria-label="みぎ">▶</button>
+      </div>
+      <div id="acts">
+        <button id="bLoop" type="button" class="big">⏪ ぶんしん</button>
+        <div class="row2">
+          <button id="bRetry" type="button" title="このループを やりなおす (R)">↺ ループ</button>
+          <button id="bReset" type="button" title="ぶんしんも ぜんぶ やりなおす">🔄 ぜんぶ</button>
+          <button id="bWait" type="button" title="その場で 1歩 まつ (Space)">⏳ まつ</button>
+          <button id="bHint" type="button" title="ヒント (H)">💡 ヒント</button>
+        </div>
+      </div>
+    </div>
+    <div id="clear" hidden>
+      <h2 id="clT"></h2><div id="clStars" class="stars"></div><p id="clB" class="sub"></p>
+      <div class="row"><button id="clNext" type="button" class="big">▶ つぎへ</button><button id="clRetry" type="button">もういちど</button><button id="clSel" type="button">ステージえらび</button></div>
+    </div>
+  </section>
+</main>
+<script src="../shared/are-mode.js"></script>
+<script src="../shared/game-nav.js"></script>
+<script src="../shared/feature-panel.js"></script>
+<script>(function(){
+    if(!window.AREFeaturePanel) return;
+    window.AREFeaturePanel.init({
+        gameId: "game10",
+        title: "⏪ ループ・ラボ せいせき分析＆実績",
+        lowerIsBetter: false,
+        unit: "★",
+        rules: [
+            {id:"g10_first", title:"はじめての実験", desc:"1ステージ クリア", icon:"🧪", field:"clears", op:"gte", value:1},
+            {id:"g10_5", title:"助手に昇格", desc:"5ステージ クリア", icon:"🥼", field:"clears", op:"gte", value:5},
+            {id:"g10_all", title:"ループ・マスター", desc:"全10ステージ クリア", icon:"🌀", field:"clears", op:"gte", value:10},
+            {id:"g10_stars", title:"かんぺきな実験", desc:"★を 20こ あつめる", icon:"⭐", field:"stars", op:"gte", value:20},
+            {id:"g10_perfect", title:"ぶんしんの達人", desc:"★3を 10こ（全ステージ）", icon:"🏆", field:"perfect", op:"gte", value:10}
+        ],
+        getLiveStats: function(){
+            var p = {}; try{ p = JSON.parse(localStorage.getItem("g10_prog_v1") || "{}") || {}; }catch(_e){}
+            var clears = 0, stars = 0, perfect = 0; Object.keys(p).forEach(function(k){ clears++; stars += p[k]; if(p[k] >= 3) perfect++; });
+            return {clears: clears, stars: stars, perfect: perfect};
+        }
+    });
+})();</script>
+<script src="./js/levels.js"></script>
+<script src="./js/sim.js"></script>
+<script src="./js/game.js"></script>
+<script src="../shared/first-tips.js" defer></script>
+</body>
+</html>
