@@ -58,7 +58,25 @@ export function coasterUpdate(g, dt, inp){
     // シューティング
     if(free){
         R.fire = Math.max(0, R.fire - dt); R.comboT -= dt; if(R.comboT <= 0) R.combo = 0;
-        if(inp.act && R.fire <= 0 && R.ct > tb.marks.launch - 1 && R.ct < tb.dur - 3){
+        // オートプレイ：いちばん ちかい まとに じどうで ねらいを あわせて うつ
+        let autoAct = false;
+        if(g.auto && g.auto.on){
+            const T0 = g.t; let bi = -1, bs = 1e9, bp = null;
+            for(let i = 0; i < D.targets.length; i++){
+                const tg = D.targets[i]; if(R.tgt[i].hit || tg.s < S.s - 4 || tg.s > S.s + 90) continue;
+                const p = targetPos(tg, T0), wx = p[0] - cam.eye[0], wy = p[1] - cam.eye[1], wz = p[2] - cam.eye[2], dist = Math.hypot(wx, wy, wz);
+                if(dist < 5 || dist > 80) continue;
+                let ay = Math.atan2(wx, wz) - cam.yaw; ay = Math.atan2(Math.sin(ay), Math.cos(ay)); if(Math.abs(ay) > 1.5) continue;
+                const score = dist + Math.abs(ay) * 12; if(score < bs){ bs = score; bi = i; bp = [wx, wy, wz]; }
+            }
+            if(bp){
+                let dyaw = Math.atan2(bp[0], bp[2]) - cam.yaw; dyaw = Math.atan2(Math.sin(dyaw), Math.cos(dyaw)); const dpit = Math.atan2(bp[1], Math.hypot(bp[0], bp[2])) - cam.pitch;
+                const sy = clamp(dyaw, -7 * dt, 7 * dt), sp = clamp(dpit, -5 * dt, 5 * dt);
+                g.lookYaw = clamp(g.lookYaw + sy, -1.6, 1.6); g.lookPitch = clamp(g.lookPitch + sp, -.9, .9); cam.yaw += sy; cam.pitch += sp;
+                autoAct = Math.abs(dyaw - sy) < .05 && Math.abs(dpit - sp) < .05;
+            }
+        }
+        if((inp.act || autoAct) && R.fire <= 0 && R.ct > tb.marks.launch - 1 && R.ct < tb.dur - 3){
             R.fire = .16; R.shots++; g.sfx("shot");
             const cp = Math.cos(cam.pitch), d = [Math.sin(cam.yaw) * cp, Math.sin(cam.pitch), Math.cos(cam.yaw) * cp], e = cam.eye;
             let best = -1; const T = g.t;

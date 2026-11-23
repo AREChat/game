@@ -49,6 +49,14 @@ async function main(){
     $("engineTag").textContent = "描画: " + info.backend + "　v" + DF.version;
     window.__df = {game, B, ui, controls, info, world, att: ATTRACTIONS};
     const menuCb = {stamps: () => ui.showStamps(game), pystats: () => { if(window.DfStats) window.DfStats.showPanel(); }, help: () => ui.help(), snd: () => { Snd.setOn(!Snd.isOn()); ui.toast("おと：" + (Snd.isOn() ? "ON" : "OFF")); }, sndOn: () => Snd.isOn(), bgmVolume: () => Snd.getVol(), seVolume: () => Snd.getSeVol(), setBgmVolume: (v) => Snd.setVol(v), setSeVolume: (v) => Snd.setSeVol(v), q: () => { q.i = (q.i + 1) % 3; resize(); ui.toast("がしつ：" + q.levels[q.i][0]); }, quality: () => q.levels[q.i][0], diag: () => window.__showDiag && window.__showDiag(), save: () => { game.save(); ui.toast("セーブしました"); }, reset: () => { if(confirm("ほんとうに はじめから やりなおしますか？")){ game.reset(); location.reload(); } }, engine: () => info.backend, back: inEmbed ? () => parent.postMessage({source: "dream-frontier", ev: "exit"}, "*") : null};
+    // 瞬間移動（🌀／Tキー）・オートプレイ（▶／Pキー）
+    const openTp = () => { if(!started) return; if(game.mode !== "walk"){ ui.toast("のりものを おりてから つかってね"); return; } if(ui.busy()) return; ui.showTeleport(game, (id) => game.teleport(id)); };
+    const toggleAuto = () => { if(!started) return; if(ui.modal || ui.dlg) return; game.setAuto(!game.auto.on); };
+    const bTp = $("bTp"), bAuto = $("bAuto");
+    if(bTp) bTp.addEventListener("click", openTp);
+    if(bAuto) bAuto.addEventListener("click", toggleAuto);
+    addEventListener("keydown", (e) => { if(e.repeat || e.ctrlKey || e.metaKey || e.altKey || (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName))) return; if(e.code === "KeyT") openTp(); else if(e.code === "KeyP") toggleAuto(); });
+    window.__dfTp = openTp;
     let last = performance.now(), started = false, acc = 0, curStage = null, lastBgm = null;
     function frame(now){
         requestAnimationFrame(frame); const dt = Math.min(.1, (now - last) / 1000); last = now; if(!started) { B.frame({eye: [0, 12, 40], yaw: Math.PI + Math.sin(now / 6000) * .5, pitch: -.12, fov: 65}, game.env(), game.dyn(now / 1000), now / 1000); return; }

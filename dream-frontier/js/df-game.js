@@ -42,12 +42,96 @@ export class Game{
         for(const a of ATTRACTIONS) if(a.kind === "track") { const p = pathOf(a); let pk = 0, py = -1; for(let i = 0; i < p.pts.length; i++) if(p.pts[i][1] > py){ py = p.pts[i][1]; pk = i; } p.peak = p.len[pk]; this.paths[a.id] = p; }
         this.guests = Array.from({length: 6}, (_, i) => ({m: "guest" + i, r: 6 + i * 2.6, a: i * 1.1, w: (i % 2 ? 1 : -1) * (.07 + i * .01), y: 0}));
         this.cut = null;
+        // オートプレイ（じどうで アトラクションに のって、それを ながめる）の じょうたい
+        this.auto = {on: false, tgt: null, wait: 0, t: 0, walkT: 0, stuck: 0, lastChk: 0, lastPos: [0, 0], side: 0, sideT: 0, last: null};
     }
     load(){ try{ const j = JSON.parse(localStorage.getItem(DF.saveKey) || "null"); if(j && j.stamps) return Object.assign(DEF(), j); }catch(e){} return DEF(); }
     save(){ this.sv.pos = [this.x, this.z]; this.sv.yaw = this.yaw; try{ localStorage.setItem(DF.saveKey, JSON.stringify(this.sv)); }catch(e){} }
     reset(){ this.sv = DEF(); this.x = this.sv.pos[0]; this.z = this.sv.pos[1]; this.yaw = this.sv.yaw; this.save(); }
     count(){ return STAMPS.filter((s) => this.sv.stamps[s]).length; }
     emit(ev, d){ try{ this.hooks.emit && this.hooks.emit(ev, d); }catch(e){} }
+
+    // ---- 瞬間移動：すべてのアトラクションの 入口へ とぶ ----
+    tpList(){ return ATTRACTIONS.filter((a) => a.board || a.id === "parade" || a.id === "puzzle"); }
+    entranceYaw(a){
+        const p = this.posOf(a);
+        try{
+            if(a.c) return Math.atan2(a.c[0] - p[0], a.c[1] - p[1]);
+            const pa = this.paths[a.id]; if(pa){ const P = pa.at(0), Q = pa.at(4); return yawOf(P, Q); }
+        }catch(_e){}
+        return Math.atan2(p[0], p[1]);   // パークの まんなかから そとへ むかう むき（アトラクションは そとがわに ある）
+    }
+    teleport(id){
+        if(this.mode !== "walk" || this.ui.busy()){ this.ui.toast("いまは とべないよ（のりものを おりて、おはなしを おえてから）"); return false; }
+        const a = byId(id); if(!a) return false;
+        const p = this.posOf(a); this.x = p[0]; this.z = p[1]; this.yaw = this.entranceYaw(a); this.pitch = 0; this.bob = 0;
+        // 入口が たてもの・のりものの かべに すこし かさなる ところは、そとへ おしだす
+        for(let k = 0; k < 2; k++) for(const s of this.world.solids){ const ex = this.x - s.x, ez = this.z - s.z, d = Math.hypot(ex, ez), m = s.r + .5; if(d < m && d > .0001){ this.x = s.x + ex / d * m; this.z = s.z + ez / d * m; } }
+        this.auto.tgt = null; this.auto.wait = Math.max(this.auto.wait, 1.2);
+        this.ui.fade(); this.sfx("fan");
+        this.ui.toast("🌀 「" + a.n + "」の いりぐちに とんだよ！" + (a.board ? "  ［E］で のれるよ" : ""), 3200);
+        this.save(); this.emit("teleport", {id}); return true;
+    }
+
+    // ---- オートプレイ：じどうで アトラクションに のってくれる。ながめて たのしもう ----
+    setAuto(on){
+        const A = this.auto; on = !!on; if(A.on === on) return;
+        A.on = on; A.tgt = null; A.wait = 1.0; A.t = 0; A.side = 0; A.stuck = 0;
+        this.ui.toast(on ? "▶ オートプレイ：じどうで アトラクションに のるよ。 うごかすと とまるよ（コインは いらないよ）" : "■ オートプレイを とめたよ", 3600);
+        this.emit("auto", {on});
+    }
+    autoPick(){
+        const A = this.auto, ok = ATTRACTIONS.filter((a) => a.board && a.kind !== "quest" && a.kind !== "show");
+        const un = ok.filter((a) => !this.sv.stamps[a.id]);
+        if(un.length){   // まだ スタンプが ない ところを、ちかい じゅんに
+            let best = null, bd = 1e9; for(const a of un){ const d = Math.hypot(a.board.x - this.x, a.board.z - this.z); if(d < bd){ bd = d; best = a; } } return best;
+        }
+        const pool = ok.filter((a) => !(A.last && A.last.id === a.id)); return pool[Math.floor(Math.random() * pool.length)] || ok[0] || null;
+    }
+    // 射撃の じどうエイム（シューティング・アトラクション用）。うてる むきに なったら true
+    autoShoot(dt, R){
+        const a = R.a, ex = a.board.x, ey = 1.7, ez = a.board.z + 1.4; let best = null, bd = 1e9;
+        for(const tg of R.targets){ if(tg.hit) continue; const d = Math.hypot(tg.x - ex, tg.z - ez); if(d < bd){ bd = d; best = tg; } }
+        this.lookYaw = 0; this.lookPitch = 0; if(!best) return false;
+        const wy = Math.atan2(best.x - ex, best.z - ez), wp = Math.atan2(best.y - ey, Math.hypot(best.x - ex, best.z - ez));
+        let dy = wy - this.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); const dp = wp - this.pitch;
+        this.yaw += clamp(dy, -4 * dt, 4 * dt); this.pitch += clamp(dp, -3 * dt, 3 * dt);
+        return Math.abs(dy) < .05 && Math.abs(dp) < .05;
+    }
+    autoDrive(dt, inp){
+        const A = this.auto; A.t += dt;
+        if(this.ui.busy()) return inp;
+        if(this.mode === "ride"){
+            const R = this.ride; if(!R || inp.esc || inp.act2) return inp;
+            if(R.a.kind === "shoot") return Object.assign({}, inp, {act: this.autoShoot(dt, R), lx: 0, ly: 0});
+            return inp;
+        }
+        if(this.mode !== "walk") return inp;
+        // 人が うごかしたら、オートプレイを とめる
+        if(A.t > 1.5 && (Math.abs(inp.mx) > .5 || Math.abs(inp.my) > .5 || inp.act)){ this.setAuto(false); return inp; }
+        const still = Object.assign({}, inp, {mx: 0, my: 0, lx: 0, ly: 0, act: false, run: false});
+        if(A.wait > 0){ A.wait -= dt; return still; }
+        if(!A.tgt){
+            A.tgt = this.autoPick(); A.walkT = 0; A.stuck = 0; A.side = 0; A.lastChk = 0; A.lastPos = [this.x, this.z];
+            if(!A.tgt){ this.setAuto(false); return inp; }
+            this.ui.toast("🚶 つぎは「" + A.tgt.n + "」へ いくよ", 2600); return still;
+        }
+        const a = A.tgt, b = a.board, dx = b.x - this.x, dz = b.z - this.z, d = Math.hypot(dx, dz);
+        if(d < Math.max(1.4, b.r * .55)){ A.tgt = null; A.last = a; this.board(a); if(this.mode !== "ride") A.wait = 1.5; return still; }   // 入口に ついたら のる
+        A.walkT += dt; A.lastChk += dt;
+        if(A.lastChk > .6){   // あるいても すすめない（かべ・たてもの）ときは、よこに よける。それでも だめなら ちかみち（瞬間移動）
+            const moved = Math.hypot(this.x - A.lastPos[0], this.z - A.lastPos[1]); A.lastChk = 0; A.lastPos = [this.x, this.z];
+            if(moved < .6) A.stuck += .6; else { A.stuck = 0; if(!A.sideT || A.sideT <= 0) A.side = 0; }
+            if(A.stuck >= 1.2 && !A.side){ A.side = (Math.random() < .5 ? 1 : -1) * 1.25; A.sideT = 1.8; }
+        }
+        if(A.side){ A.sideT -= dt; if(A.sideT <= 0) A.side = 0; }
+        if(A.stuck >= 6 || A.walkT > 90){
+            A.tgt = null; A.last = a; this.x = b.x; this.z = b.z; this.ui.fade(); this.ui.toast("🌀 ちかみちで 「" + a.n + "」の いりぐちへ", 1800); A.wait = .8; return still;
+        }
+        const want = Math.atan2(dx, dz) + A.side; let diff = want - this.yaw; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+        this.yaw += clamp(diff, -3.2 * dt, 3.2 * dt);
+        return Object.assign({}, inp, {mx: 0, my: Math.abs(diff) < .9 ? 1 : 0, lx: 0, ly: 0, run: d > 14, act: false});
+    }
 
     // ---- 目標（ナビ）----
     objective(){
@@ -101,9 +185,10 @@ export class Game{
     board(a){
         if(a.kind === "quest") return this.ui.toast("ここは「やかた」の きんこの なぞ。 やかたの なかの てがかりを さがそう！");
         if(a.kind === "show"){ const ps = this.paradeState(); return this.ui.say("ドリーム・パレード", [ps.on ? "いま パレードの まっさいちゅう！ ひろばの ちかくで 4びょう みていよう。" : "つぎの パレードまで あと " + Math.ceil(ps.next) + "びょう。 ひろばで まっていよう！", "（ひろばの ふんすいの まわりを パレードが とおるよ）"]); }
-        if(this.sv.coins < (a.coin || 0) && a.coin) { return this.ui.toast("コインが たりない… (" + a.coin + "コイン ひつよう)"); }
+        const free = !!this.auto.on;   // オートプレイ中は コインなしで のれる（おまかせ見物）
+        if(!free && this.sv.coins < (a.coin || 0) && a.coin) { return this.ui.toast("コインが たりない… (" + a.coin + "コイン ひつよう)"); }
         const R = {a, t: 0, s: 0, lap: 0, text: null, texts: {}, alt: .3, spd: 1, hits: 0, targets: [], fire: 0, spawn: 0, done: false, fade: 1};
-        if(a.coin){ this.sv.coins -= a.coin; }
+        if(a.coin && !free){ this.sv.coins -= a.coin; }
         this.sv.played++; this.ride = R; if(a.kind === "coaster") coasterInit(this, R); this.mode = "ride"; this.lookYaw = 0; this.lookPitch = 0; this.pitch = 0; this.sfx("start");
         this.ui.rideStart(a); this.emit("ride", {id: a.id});
         if(a.kind === "shoot"){ this.yaw = 0; this.pitch = 0; }
@@ -113,6 +198,7 @@ export class Game{
         const R = this.ride; if(!R) return; const a = R.a; this.ride = null; this.mode = "walk"; this.ui.rideEnd(); this.hooks.rideEnd && this.hooks.rideEnd();
         const b = a.board; if(a.kind === "drop"){ this.x = a.board.x; this.z = a.board.z; } else { this.x = b.x; this.z = b.z; }
         this.yaw = Math.atan2(this.x - (a.c ? a.c[0] : this.x), this.z - (a.c ? a.c[1] : this.z)) || Math.PI; this.yaw = Math.PI; this.pitch = 0; this.lookYaw = this.lookPitch = 0;
+        if(this.auto.on){ if(ok){ this.auto.wait = 2.4; this.auto.tgt = null; } else this.setAuto(false); }   // おりたら つぎへ（じぶんで おりたときは オートを とめる）
         if(ok){
             if(a.kind === "coaster"){
                 if(a.pass){
@@ -130,7 +216,7 @@ export class Game{
 
     // ---- いちフレーム ----
     update(dt, inp){
-        dt = Math.min(dt, .05); this.t += dt; this.scan();
+        dt = Math.min(dt, .05); this.t += dt; if(this.auto.on) inp = this.autoDrive(dt, inp); this.scan();
         for(const g of this.guests) g.a += g.w * dt;
         for(const f of this.fx) f.t += dt; this.fx = this.fx.filter((f) => f.t < 2.5);
         if(this.mode === "walk" || this.mode === "talk"){
