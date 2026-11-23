@@ -12,6 +12,25 @@ const SPRITE_MODELS = {giraffe: 0, elephant: 0, fluffy: 0, lion: 0, ghost: .3, s
 const lerpv = (a, b, t) => a + (b - a) * t;
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t, ease = (t) => t * t * (3 - 2 * t);
 const CODE = "427";
+
+// ---- 移動・当たり判定の C++(WebAssembly) コア ----
+// index.html が <script src="js/dreamfrontier.wasm.js"> で先に読みこみ、グローバルに
+// DreamFrontierModule を置く。読みこみは非同期なので、まだ準備できていない間（または
+// 失敗した時）は、Game.move() が自動で 元のJS実装にフォールバックする。
+const DFW = {mod: null, ready: false, failed: false};
+(function bootDfWasm(){
+    if(typeof window === "undefined" || typeof window.DreamFrontierModule !== "function") return;
+    try{
+        window.DreamFrontierModule().then((M) => {
+            DFW.mod = M;
+            DFW.resetSolids = M.cwrap("df_reset_solids", null, []);
+            DFW.addSolid = M.cwrap("df_add_solid", "number", ["number", "number", "number"]);
+            DFW.setBounds = M.cwrap("df_set_bounds", null, ["number", "number", "number", "number"]);
+            DFW.move = M.cwrap("df_move", "number", ["number", "number", "number", "number"]);
+            DFW.ready = true;
+        }, (err) => { DFW.failed = true; try{ console.warn("dream-frontier: WASM読みこみ失敗。JS版にフォールバックします。", err); }catch(_e){} });
+    }catch(_e){ DFW.failed = true; }
+})();
 const DEF = () => ({stamps: {}, coins: 30, clues: {}, safeOpen: false, shoot: 0, played: 0, wish: 0, done: false, pos: [0, 24], yaw: Math.PI});
 export class Game{
     constructor(world, ui, hooks){
@@ -131,6 +150,17 @@ export class Game{
         }
     }
     move(dx, dz){
+        if(DFW.ready){
+            if(!this._dfwSolidsLoaded){
+                const W = this.world; DFW.resetSolids();
+                for(const s of W.solids) DFW.addSolid(s.x, s.z, s.r);
+                DFW.setBounds(W.bounds.x0, W.bounds.x1, W.bounds.z0, W.bounds.z1);
+                this._dfwSolidsLoaded = true;
+            }
+            const ptr = DFW.move(this.x, this.z, dx, dz), F = DFW.mod.HEAPF32, idx = ptr / 4;
+            this.x = F[idx]; this.z = F[idx + 1];
+            return;
+        }
         const W = this.world, r = .38; let x = this.x + dx, z = this.z + dz;
         for(let k = 0; k < 2; k++) for(const s of W.solids){ const ex = x - s.x, ez = z - s.z, d = Math.hypot(ex, ez), m = s.r + r; if(d < m && d > .0001){ x = s.x + ex / d * m; z = s.z + ez / d * m; } }
         if(x > -28 && x < 36 && z > 62.5 && z < 96){ if(this.x > -28 && this.x < 36 && this.z <= 62.5) z = 62.5; else if(this.z >= 96) z = 96; else { x = this.x; z = this.z; } } // みずうみ
