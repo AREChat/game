@@ -1,10 +1,10 @@
 "use strict";
-// ===== GAME9「Cuisine Royale（キュイジーヌロワイヤル）」本体 =====
-// ・3Dの射的（シューティングギャラリー）ゲーム。画面をタップ／クリックして、向かってくる「食べもの・調理道具」を撃ちます。
-// ・虫は一切出てきません（敵はすべて食べもの・調理道具モチーフです）。
-// ・パソコンはマウス、スマホ・タブレットは指で操作できます（狙う＝動かす、撃つ＝タップ／クリック）。
+// ===== GAME9「AREshoot（美食の晩餐会）」本体 =====
+// 厨房を舞台にした3Dガンシューティング（TPS）。
+// 物理・当たり判定・索敵AI・弾道計算は C++(WebAssembly: cpp/game9.cpp) 側が行い、
+// ここ（JS側）は three.js での描画・カメラ制御・入力・HUD・画面遷移だけを担当する（game8と同じ設計方針）。
 import * as T from "../vendor/three/build/three.module.js";
-import {STAGES} from "./stages.js";
+import {STAGES, difficultyFor} from "./stages.js";
 
 const $ = (id) => document.getElementById(id);
 const scrs = {};
@@ -12,20 +12,21 @@ const scrs = {};
 function showScreen(id){ Object.keys(scrs).forEach((k) => scrs[k].classList.toggle("on", k === id)); }
 
 // ---------- 進捗・せってい（この端末だけに保存） ----------
-const PKEY = "game9_progress_v1", SKEY = "game9_settings_v1";
+const PKEY = "game9_progress_v2", SKEY = "game9_settings_v2";
 let unlocked = 0;
 try{ unlocked = Math.max(0, Math.min(STAGES.length - 1, parseInt(localStorage.getItem(PKEY) || "0", 10) || 0)); }catch(_e){}
 function saveProgress(idx){
     unlocked = Math.max(unlocked, idx);
     try{ localStorage.setItem(PKEY, String(unlocked)); }catch(_e){}
 }
-const settings = {bgm: 0.6, se: 0.8};
+const settings = {bgm: 0.6, se: 0.8, sens: 1.1};
 (function loadSettings(){
     try{
         const o = JSON.parse(localStorage.getItem(SKEY) || "null");
         if(o && typeof o === "object"){
             if(typeof o.bgm === "number") settings.bgm = o.bgm;
             if(typeof o.se === "number") settings.se = o.se;
+            if(typeof o.sens === "number") settings.sens = o.sens;
         }
     }catch(_e){}
 })();
@@ -45,9 +46,12 @@ function beep(freq, dur, type, vol){
         o.stop(actx.currentTime + dur);
     }catch(_e){}
 }
-const sfxShoot = () => beep(880, 0.08, "square", 0.25);
-const sfxHit = () => beep(260, 0.18, "sawtooth", 0.35);
-const sfxMiss = () => beep(140, 0.12, "sine", 0.2);
+const sfxShoot = () => beep(1200, 0.045, "square", 0.14);
+const sfxHit = () => beep(300, 0.1, "sawtooth", 0.3);
+const sfxEnemyDown = () => beep(180, 0.22, "sawtooth", 0.4);
+const sfxReload = () => { beep(500, 0.08, "square", 0.2); setTimeout(() => beep(700, 0.08, "square", 0.2), 120); };
+const sfxGrenade = () => beep(90, 0.3, "sawtooth", 0.45);
+const sfxHurt = () => beep(160, 0.18, "sawtooth", 0.4);
 const sfxClear = () => { beep(523, 0.15, "triangle", 0.4); setTimeout(() => beep(784, 0.25, "triangle", 0.4), 140); };
 const sfxOver = () => { beep(220, 0.3, "sawtooth", 0.4); setTimeout(() => beep(140, 0.4, "sawtooth", 0.4), 200); };
 
@@ -58,7 +62,7 @@ function playBgm(src){
     bgmEl = new Audio(src);
     bgmEl.loop = true;
     bgmEl.volume = settings.bgm;
-    bgmEl.play().catch(() => { /* まだ曲ファイルが無い場合は無音のまま続行 */ });
+    bgmEl.play().catch(() => {});
 }
 function stopBgm(){ if(bgmEl){ try{ bgmEl.pause(); }catch(_e){} bgmEl = null; } }
 
@@ -66,24 +70,9 @@ function stopBgm(){ if(bgmEl){ try{ bgmEl.pause(); }catch(_e){} bgmEl = null; } 
 const canvas = $("cv");
 const renderer = new T.WebGLRenderer({canvas, antialias:true, alpha:false});
 renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+renderer.shadowMap.enabled = true;
 const scene = new T.Scene();
-const camera = new T.PerspectiveCamera(62, 1, 0.1, 60);
-camera.position.set(0, 1.5, 6);
-const raycaster = new T.Raycaster();
-const ndc = new T.Vector2();
-
-const hemi = new T.HemisphereLight(0xffffff, 0x202020, 1.1);
-scene.add(hemi);
-const key = new T.DirectionalLight(0xffffff, 1.0);
-key.position.set(3, 6, 4);
-scene.add(key);
-
-const floorGeo = new T.PlaneGeometry(14, 40);
-const floorMat = new T.MeshStandardMaterial({color:0x201418, roughness:0.9});
-const floor = new T.Mesh(floorGeo, floorMat);
-floor.rotation.x = -Math.PI / 2;
-floor.position.set(0, -1, -8);
-scene.add(floor);
+const camera = new T.PerspectiveCamera(66, 1, 0.1, 120);
 
 function resize(){
     const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
@@ -93,166 +82,232 @@ function resize(){
 }
 window.addEventListener("resize", resize);
 
-// ---------- 敵（食べもの・調理道具）の見た目 ----------
-const geoCache = {};
-function geoFor(shape){
-    if(geoCache[shape]) return geoCache[shape];
-    let g;
-    if(shape === "box") g = new T.BoxGeometry(1, 1, 1);
-    else if(shape === "cylinder") g = new T.CylinderGeometry(0.6, 0.6, 1, 20);
-    else if(shape === "cone") g = new T.ConeGeometry(0.65, 1.1, 20);
-    else if(shape === "icosahedron") g = new T.IcosahedronGeometry(0.7, 0);
-    else g = new T.SphereGeometry(0.6, 20, 16);
-    geoCache[shape] = g;
+// ---------- 入力 ----------
+const Input = {moveF:0, moveS:0, yaw:0, firing:false, reload:false, grenade:false};
+window.G9Input = Input; // 動作確認・デバッグ用（ゲームの動きには関係しません）
+const keys = {};
+window.addEventListener("keydown", (e) => {
+    keys[e.code] = true;
+    if(e.code === "KeyR") Input.reload = true;
+    if(e.code === "ShiftLeft" || e.code === "ShiftRight") Input.grenade = true;
+});
+window.addEventListener("keyup", (e) => { keys[e.code] = false; });
+function keyboardMove(){
+    let f = 0, s = 0;
+    if(keys.KeyW || keys.ArrowUp) f += 1;
+    if(keys.KeyS || keys.ArrowDown) f -= 1;
+    if(keys.KeyD || keys.ArrowRight) s += 1;
+    if(keys.KeyA || keys.ArrowLeft) s -= 1;
+    return {f, s};
+}
+
+// マウス：ポインターロックでのマウスルック（失敗時はドラッグ中のmovementXで代用） + 左クリックで発射
+let mouseDown = false;
+canvas.addEventListener("pointerdown", (e) => {
+    if(e.pointerType === "mouse"){
+        if(document.pointerLockElement !== canvas){ try{ canvas.requestPointerLock && canvas.requestPointerLock(); }catch(_e){} }
+        Input.firing = true; mouseDown = true;
+    }
+});
+window.addEventListener("pointerup", (e) => { if(e.pointerType === "mouse"){ Input.firing = false; mouseDown = false; } });
+window.addEventListener("mousemove", (e) => {
+    const locked = document.pointerLockElement === canvas;
+    if(!locked && !mouseDown) return;   // ロック中は常に、ロックできない環境ではドラッグ中だけ視点を回す
+    Input.yaw -= (e.movementX || 0) * 0.0026 * settings.sens;
+});
+window.addEventListener("contextmenu", (e) => { if(scrs["s-play"].classList.contains("on")) e.preventDefault(); });
+
+// タッチ：左半分＝バーチャルスティック（移動）、右半分＝ドラッグで視点
+const moveZone = $("moveZone"), lookZone = $("lookZone"), moveStick = $("moveStick");
+let moveTouchId = null, moveOrigin = {x:0,y:0};
+moveZone.addEventListener("pointerdown", (e) => {
+    if(e.pointerType === "mouse") return;
+    moveTouchId = e.pointerId; moveOrigin = {x:e.clientX, y:e.clientY};
+    moveStick.style.display = "block";
+    moveStick.style.left = (e.clientX - 43) + "px"; moveStick.style.top = (e.clientY - 43) + "px";
+});
+window.addEventListener("pointermove", (e) => {
+    if(e.pointerId === moveTouchId){
+        const dx = clampN(e.clientX - moveOrigin.x, -46, 46), dy = clampN(e.clientY - moveOrigin.y, -46, 46);
+        Input.moveS = dx / 46; Input.moveF = -dy / 46;
+        moveStick.querySelector && (moveStick.style.transform = "");
+        moveStick.style.left = (moveOrigin.x - 43 + dx) + "px"; moveStick.style.top = (moveOrigin.y - 43 + dy) + "px";
+    }
+});
+function endMoveTouch(e){
+    if(e.pointerId === moveTouchId){ moveTouchId = null; Input.moveF = 0; Input.moveS = 0; moveStick.style.display = "none"; }
+}
+window.addEventListener("pointerup", endMoveTouch);
+window.addEventListener("pointercancel", endMoveTouch);
+function clampN(v, lo, hi){ return v < lo ? lo : (v > hi ? hi : v); }
+
+let lookTouchId = null, lookLast = {x:0,y:0};
+lookZone.addEventListener("pointerdown", (e) => {
+    if(e.pointerType === "mouse") return;
+    lookTouchId = e.pointerId; lookLast = {x:e.clientX, y:e.clientY};
+});
+window.addEventListener("pointermove", (e) => {
+    if(e.pointerId === lookTouchId){
+        const dx = e.clientX - lookLast.x;
+        Input.yaw -= dx * 0.0048 * settings.sens;
+        lookLast = {x:e.clientX, y:e.clientY};
+    }
+});
+function endLookTouch(e){ if(e.pointerId === lookTouchId) lookTouchId = null; }
+window.addEventListener("pointerup", endLookTouch);
+window.addEventListener("pointercancel", endLookTouch);
+
+// 画面ボタン（発射・リロード・グレネード）
+function bindHold(el, onDown, onUp){
+    el.addEventListener("pointerdown", (e) => { e.preventDefault(); onDown(); el.classList.add("on"); });
+    const off = () => { onUp(); el.classList.remove("on"); };
+    el.addEventListener("pointerup", off); el.addEventListener("pointerleave", off); el.addEventListener("pointercancel", off);
+}
+bindHold($("bFire"), () => { Input.firing = true; }, () => { Input.firing = false; });
+$("bReload").addEventListener("pointerdown", (e) => { e.preventDefault(); Input.reload = true; });
+$("bGrenade").addEventListener("pointerdown", (e) => { e.preventDefault(); Input.grenade = true; });
+
+// ---------- 見た目：共通マテリアル・ジオメトリ ----------
+function makeCharacter(bodyColor, hatColor){
+    const g = new T.Group();
+    const body = new T.Mesh(new T.CapsuleGeometry(0.42, 0.78, 4, 10), new T.MeshStandardMaterial({color:bodyColor, roughness:0.55, metalness:0.1}));
+    body.position.y = 0.95; body.castShadow = true; g.add(body);
+    const head = new T.Mesh(new T.SphereGeometry(0.28, 16, 12), new T.MeshStandardMaterial({color:0xf0c8a0, roughness:0.6}));
+    head.position.y = 1.72; head.castShadow = true; g.add(head);
+    const hat = new T.Mesh(new T.CylinderGeometry(0.26, 0.3, 0.32, 14), new T.MeshStandardMaterial({color:hatColor, roughness:0.5}));
+    hat.position.y = 2.02; hat.castShadow = true; g.add(hat);
+    const gun = new T.Mesh(new T.BoxGeometry(0.14, 0.14, 0.7), new T.MeshStandardMaterial({color:0x2a2a2a, metalness:0.6, roughness:0.4}));
+    gun.position.set(0.32, 1.05, 0.5); g.add(gun);
+    g.userData.hitFlashMat = [body.material, head.material];
     return g;
 }
-function makeEnemyMesh(def){
-    const geo = geoFor(def.shape);
-    const mat = new T.MeshStandardMaterial({color:def.color, roughness:0.45, metalness:0.08, emissive:def.color, emissiveIntensity:0.08});
-    const mesh = new T.Mesh(geo, mat);
-    const scale = def.r || 0.4;
-    mesh.scale.setScalar(scale);
-    return mesh;
+
+const scene3d = {};
+function buildStageScene(stage){
+    scene.background = new T.Color(stage.sky[0]);
+    scene.fog = new T.Fog(stage.fog, 14, 60);
+    while(scene.children.length) scene.remove(scene.children[0]);
+
+    const hemi = new T.HemisphereLight(stage.sky[0], 0x201810, 1.0);
+    scene.add(hemi);
+    const sun = new T.DirectionalLight(0xfff3e0, 1.15);
+    sun.position.set(14, 26, 10); sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.camera.left = -30; sun.shadow.camera.right = 30; sun.shadow.camera.top = 30; sun.shadow.camera.bottom = -30;
+    sun.shadow.camera.far = 90;
+    scene.add(sun);
+    scene.add(new T.AmbientLight(0xffffff, 0.28));
+
+    const floorMat = new T.MeshStandardMaterial({color:stage.floorColor, roughness:0.92});
+    const floor = new T.Mesh(new T.PlaneGeometry(60, 60), floorMat);
+    floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true;
+    scene.add(floor);
+    const wallMat = new T.MeshStandardMaterial({color:stage.floorColor, roughness:0.95});
+    const wallH = 6;
+    [[0,-23,46,wallH,0],[0,23,46,wallH,0],[-23,0,wallH,46,Math.PI/2],[23,0,wallH,46,Math.PI/2]].forEach(([x,z,w,h,rot]) => {
+        const wall = new T.Mesh(new T.BoxGeometry(w, h, 1), wallMat);
+        wall.position.set(x, h/2, z); wall.rotation.y = rot; wall.receiveShadow = true;
+        scene.add(wall);
+    });
+
+    scene3d.enemyMeshes = [];
+    for(let i = 0; i < 10; i++){
+        const m = makeCharacter(stage.enemyColor, 0xffffff);
+        m.visible = false; scene.add(m); scene3d.enemyMeshes.push(m);
+    }
+    scene3d.player = makeCharacter(0x3a6fd9, 0xffffff);
+    scene.add(scene3d.player);
+
+    scene3d.obstMeshes = [];
+    for(let i = 0; i < 18; i++){
+        const g = new T.Group();
+        const body = new T.Mesh(new T.CylinderGeometry(1, 1, 1.5, 16), new T.MeshStandardMaterial({color:0x6a4a2a, roughness:0.75, metalness:0.1}));
+        body.castShadow = true; body.receiveShadow = true; body.position.y = 0.75; g.add(body);
+        const lid = new T.Mesh(new T.CylinderGeometry(1.04, 1.04, 0.14, 16), new T.MeshStandardMaterial({color:0xcaa36a, roughness:0.6, metalness:0.3}));
+        lid.position.y = 1.5; g.add(lid);
+        g.visible = false; scene.add(g); scene3d.obstMeshes.push(g);
+    }
+
+    scene3d.ebulletMeshes = [];
+    const ebGeo = new T.SphereGeometry(0.22, 10, 8);
+    const ebMat = new T.MeshStandardMaterial({color:0xffb347, emissive:0xff8a2a, emissiveIntensity:0.8, roughness:0.4});
+    for(let i = 0; i < 60; i++){
+        const m = new T.Mesh(ebGeo, ebMat); m.castShadow = false; m.visible = false; scene.add(m); scene3d.ebulletMeshes.push(m);
+    }
+
+    scene3d.tracerLines = [];
+    const trMat0 = new T.LineBasicMaterial({color:0xfff6c8, transparent:true, opacity:0.95});
+    for(let i = 0; i < 16; i++){
+        const geo = new T.BufferGeometry();
+        geo.setAttribute("position", new T.BufferAttribute(new Float32Array(6), 3));
+        const line = new T.Line(geo, trMat0.clone());
+        line.visible = false; scene.add(line); scene3d.tracerLines.push(line);
+    }
+
+    scene3d.grenadeMeshes = [];
+    const grGeo = new T.SphereGeometry(0.3, 12, 10);
+    const grMat = new T.MeshStandardMaterial({color:0x4a2a1a, emissive:0xff4400, emissiveIntensity:0.5});
+    for(let i = 0; i < 4; i++){
+        const m = new T.Mesh(grGeo, grMat); m.visible = false; scene.add(m); scene3d.grenadeMeshes.push(m);
+    }
+    scene3d.explosionSprites = [];
+    const glowTex = makeGlowTexture();
+    for(let i = 0; i < 4; i++){
+        const spr = new T.Sprite(new T.SpriteMaterial({map:glowTex, color:0xffaa33, transparent:true, opacity:0, depthWrite:false, blending:T.AdditiveBlending}));
+        spr.scale.set(1,1,1); spr.visible = false; scene.add(spr); scene3d.explosionSprites.push(spr);
+    }
+
+    scene3d.itemMeshes = [];
+}
+function makeGlowTexture(){
+    const c = document.createElement("canvas"); c.width = c.height = 64;
+    const ctx = c.getContext("2d");
+    const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, "rgba(255,255,255,1)");
+    g.addColorStop(0.4, "rgba(255,180,80,.8)");
+    g.addColorStop(1, "rgba(255,180,80,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 64, 64);
+    return new T.CanvasTexture(c);
+}
+
+// ---------- WASM 起動 ----------
+let G9mod = null;
+const G9 = {};
+async function boot(){
+    try{
+        G9mod = await window.Game9Module();
+        const c = (name, ret, args) => G9mod.cwrap(name, ret, args);
+        G9.g9_start_stage = c("g9_start_stage", null, ["number","number","number","number","number","number","number"]);
+        G9.g9_step = c("g9_step", null, ["number","number","number","number","number","number","number"]);
+        G9.g9_get_buffer = c("g9_get_buffer", "number", []);
+        G9.heap = () => G9mod.HEAPF32;
+        window.G9 = G9;
+        $("boot").classList.add("off");
+        paintStageSelect();
+        resize();
+    }catch(err){
+        $("boot").textContent = "読みこみに失敗しました。再読み込みしてください。";
+        console.error(err);
+    }
 }
 
 // ---------- ゲーム状態 ----------
-const G = {
-    running:false, stageIdx:0, stage:null, kills:0, score:0, lives:5,
-    enemies:[], spawnTimer:0, spawnMs:1000, elapsed:0, boss:null, bossHp:0, bossHpMax:0
-};
-const enemyGroup = new T.Group();
-scene.add(enemyGroup);
+const HEADER = 32, MAX_OBST = 18, MAX_ENEMY = 10, MAX_EB = 60, MAX_TR = 16, MAX_GR = 4;
+const BUF_LEN = HEADER + MAX_OBST*3 + MAX_ENEMY*8 + MAX_EB*3 + MAX_TR*6 + MAX_GR*5;
+let G = {running:false, stageIdx:0, stage:null};
+let lastKills = -1, lastHp = -1, lastAmmo = -1, lastCombo = -1, lastBoss = 0, obstaclesPlaced = false;
 
-function clearEnemies(){
-    enemyGroup.clear();
-    G.enemies = [];
-    G.boss = null;
-}
-
-function spawnEnemy(def, isBoss){
-    const mesh = makeEnemyMesh(def);
-    const x = isBoss ? 0 : (Math.random() * 2 - 1) * 4.2;
-    const y = isBoss ? 1.2 : (Math.random() * 1.6);
-    mesh.position.set(x, y, -26);
-    mesh.userData = {def, isBoss, hp: isBoss ? (def.hp || 12) : 1, spin:(Math.random() - 0.5) * 2};
-    enemyGroup.add(mesh);
-    G.enemies.push(mesh);
-    if(isBoss){ G.boss = mesh; G.bossHp = mesh.userData.hp; G.bossHpMax = mesh.userData.hp; }
-}
-
-function damagePlayer(n){
-    G.lives = Math.max(0, G.lives - n);
-    paintHud();
-    if(G.lives <= 0) endStage(false);
-}
-
-function destroyEnemy(mesh, byPlayer){
-    const idx = G.enemies.indexOf(mesh);
-    if(idx >= 0) G.enemies.splice(idx, 1);
-    enemyGroup.remove(mesh);
-    if(mesh.userData.isBoss){
-        G.boss = null;
-        if(byPlayer){ G.score += 500; sfxClear(); endStage(true); }
-        return;
-    }
-    if(byPlayer){ G.kills++; G.score += 10; paintHud(); if(G.kills >= G.stage.target && !G.stage.boss) endStage(true); }
-}
-
-function tryShoot(clientX, clientY){
-    const rect = canvas.getBoundingClientRect();
-    ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-    ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-    raycaster.setFromCamera(ndc, camera);
-    const hits = raycaster.intersectObjects(G.enemies, false);
-    sfxShoot();
-    muzzleFlash(ndc.x, ndc.y);
-    if(!hits.length){ sfxMiss(); return; }
-    const mesh = hits[0].object;
-    if(mesh.userData.isBoss){
-        G.bossHp -= 1; paintHud();
-        if(G.bossHp <= 0) destroyEnemy(mesh, true); else sfxHit();
-        return;
-    }
-    sfxHit();
-    destroyEnemy(mesh, true);
-}
-
-function muzzleFlash(ndcX, ndcY){
-    const el2 = $("flash");
-    el2.style.left = ((ndcX + 1) / 2 * 100) + "%";
-    el2.style.top = ((1 - ndcY) / 2 * 100) + "%";
-    el2.classList.remove("go"); void el2.offsetWidth; el2.classList.add("go");
-}
-
-// ---------- ループ ----------
-let lastT = 0;
-function loop(t){
-    if(!G.running){ return; }
-    const dt = Math.min(0.05, (t - lastT) / 1000 || 0);
-    lastT = t;
-    G.elapsed += dt;
-
-    if(!G.boss){
-        G.spawnTimer -= dt * 1000;
-        if(G.spawnTimer <= 0){
-            G.spawnTimer = G.spawnMs;
-            const cast = G.stage.cast;
-            spawnEnemy(cast[Math.floor(Math.random() * cast.length)], false);
-        }
-    }else if(G.stage.boss && G.enemies.length === 0 && !enemyGroup.children.includes(G.boss)){
-        // ボスがまだ出ていなければ出す（初回）
-    }
-
-    const speed = G.stage.speed;
-    for(let i = G.enemies.length - 1; i >= 0; i--){
-        const mesh = G.enemies[i];
-        if(mesh.userData.isBoss){
-            mesh.rotation.y += dt * 0.6;
-            mesh.position.z = Math.min(-6, mesh.position.z + dt * 0.4);
-            continue;
-        }
-        mesh.position.z += dt * speed * 6;
-        mesh.rotation.x += dt * mesh.userData.spin;
-        mesh.rotation.y += dt * mesh.userData.spin * 0.7;
-        if(mesh.position.z > 4.5){
-            destroyEnemy(mesh, false);
-            damagePlayer(1);
-        }
-    }
-
-    // 最終ステージ：ボスをまだ出していなければ、開始2秒後に出す
-    if(G.stage.boss && !G.boss && G.elapsed > 2 && !G._bossSpawned){
-        G._bossSpawned = true;
-        spawnEnemy(G.stage.bossCast, true);
-    }
-
-    renderer.render(scene, camera);
-    requestAnimationFrame(loop);
-}
-
-// ---------- HUD ----------
-function paintHud(){
-    $("hudScore").textContent = "スコア " + G.score;
-    $("hudLives").textContent = "❤️".repeat(Math.max(0, G.lives)) + "🖤".repeat(Math.max(0, 5 - G.lives));
-    if(G.stage.boss){
-        $("hudProgress").textContent = G.boss ? ("ボス残りHP " + Math.max(0, G.bossHp) + " / " + G.bossHpMax) : "ボス出現まで…";
-    }else{
-        $("hudProgress").textContent = "撃破 " + G.kills + " / " + G.stage.target;
-    }
-}
-
-// ---------- ステージ開始・終了 ----------
 function startStage(idx){
-    G.stageIdx = idx;
-    G.stage = STAGES[idx];
-    G.kills = 0; G.score = 0; G.lives = 5; G.spawnTimer = 300; G.elapsed = 0; G._bossSpawned = false;
-    clearEnemies();
-    scene.background = new T.Color(G.stage.sky[0]);
-    scene.fog = new T.Fog(G.stage.fog, 8, 30);
-    floorMat.color.setHex(G.stage.sky[1]);
+    G.stageIdx = idx; G.stage = STAGES[idx];
+    const diff = difficultyFor(idx);
+    buildStageScene(G.stage);
+    const seed = (Date.now() ^ (idx * 7919)) & 0x7fffffff;
+    G9.g9_start_stage(idx, G.stage.killTarget, diff.hpMul, diff.speedMul, diff.fireMul, diff.bulletMul, seed);
+    Input.yaw = 0; Input.moveF = 0; Input.moveS = 0; Input.firing = false;
+    obstaclesPlaced = false; lastKills = -1; lastHp = -1; lastAmmo = -1; lastCombo = -1; lastBoss = 0;
     $("playTitle").textContent = G.stage.title;
     $("playSub").textContent = G.stage.composer;
-    paintHud();
+    $("bossWrap").hidden = true;
     showScreen("s-play");
     resize();
     G.running = true;
@@ -261,22 +316,162 @@ function startStage(idx){
     playBgm(G.stage.track);
 }
 
-function endStage(cleared){
+function endStage(cleared, finalScore){
     G.running = false;
     stopBgm();
+    try{ if(document.exitPointerLock) document.exitPointerLock(); }catch(_e){}
     if(cleared){
         saveProgress(Math.min(STAGES.length - 1, G.stageIdx + 1));
         sfxClear();
         $("resTitle").textContent = "🎉 クリア！";
-        $("resBody").textContent = G.stage.title + " をクリアしました（スコア " + G.score + "）";
+        $("resBody").textContent = G.stage.bossName + " を撃破！（スコア " + finalScore + "）";
         $("resNext").hidden = (G.stageIdx + 1 >= STAGES.length);
     }else{
         sfxOver();
         $("resTitle").textContent = "💥 ゲームオーバー";
-        $("resBody").textContent = G.stage.title + "：撃破 " + G.kills + " / " + G.stage.target + "（スコア " + G.score + "）";
+        $("resBody").textContent = G.stage.title + "：スコア " + finalScore;
         $("resNext").hidden = true;
     }
     showScreen("s-res");
+}
+
+let lastT = 0;
+function loop(t){
+    if(!G.running) return;
+    let dt = (t - lastT) / 1000; lastT = t;
+    if(dt > 0.05) dt = 0.05;
+    requestAnimationFrame(loop);
+
+    const km = keyboardMove();
+    let moveF = km.f, moveS = km.s;
+    if(Input.moveF || Input.moveS){ moveF = clampN(moveF + Input.moveF, -1, 1); moveS = clampN(moveS + Input.moveS, -1, 1); }
+
+    const reloadPressed = Input.reload ? 1 : 0; Input.reload = false;
+    const grenadePressed = Input.grenade ? 1 : 0; Input.grenade = false;
+    const firing = Input.firing ? 1 : 0;
+
+    G9.g9_step(dt, moveF, moveS, Input.yaw, firing, reloadPressed, grenadePressed);
+    const ptr = G9.g9_get_buffer();
+    const buf = new Float32Array(G9.heap().buffer, ptr, BUF_LEN);
+
+    const running = buf[0] > 0, gameOver = buf[1] > 0, stageCleared = buf[2] > 0;
+    const score = buf[3] | 0, combo = buf[4] | 0;
+    const hp = buf[6], maxHp = buf[7], ammo = buf[8] | 0, maxAmmo = buf[9] | 0;
+    const reloading = buf[10] > 0, grenadeCd = buf[12];
+    const killCount = buf[13] | 0, killTarget = buf[14] | 0;
+    const bossActive = buf[15] > 0, bossSpawned = buf[16] > 0, bossHp = buf[17], bossHpMax = buf[18];
+    const px = buf[20], pz = buf[21], yaw = buf[22];
+    const obstacleCount = buf[23] | 0, enemyCount = buf[24] | 0, ebCount = buf[25] | 0, trCount = buf[26] | 0, grCount = buf[27] | 0;
+    const hitFlashT = buf[28];
+
+    // プレイヤー・カメラ
+    scene3d.player.position.set(px, 0, pz);
+    scene3d.player.rotation.y = yaw;
+    const backX = -Math.sin(yaw), backZ = -Math.cos(yaw);
+    camera.position.set(px + backX * 4.6, 2.6, pz + backZ * 4.6);
+    const lookX = px + Math.sin(yaw) * 3, lookZ = pz + Math.cos(yaw) * 3;
+    camera.lookAt(lookX, 1.55, lookZ);
+
+    // 遮蔽物（初回のみ配置：ステージ中は不動）
+    if(!obstaclesPlaced){
+        let o = HEADER;
+        for(let i = 0; i < MAX_OBST; i++){
+            const x = buf[o], z = buf[o+1], r = buf[o+2];
+            const m = scene3d.obstMeshes[i];
+            if(i < obstacleCount && r > 0){ m.visible = true; m.position.set(x, 0, z); m.scale.set(r, 1, r); }
+            else m.visible = false;
+            o += 3;
+        }
+        obstaclesPlaced = true;
+    }
+
+    // 敵
+    let o = HEADER + MAX_OBST * 3;
+    for(let i = 0; i < MAX_ENEMY; i++){
+        const ex = buf[o], ez = buf[o+1], eyaw = buf[o+2], ehp = buf[o+3], ehpMax = buf[o+4];
+        const etype = buf[o+5] | 0, estate = buf[o+6] | 0, ehitFlash = buf[o+7];
+        const m = scene3d.enemyMeshes[i];
+        if(i < enemyCount && ehp > 0){
+            m.visible = true;
+            m.position.set(ex, 0, ez); m.rotation.y = eyaw;
+            const scl = etype === 1 ? 1.7 : 1.0;
+            m.scale.setScalar(scl);
+            const flashOn = ehitFlash > 0;
+            m.userData.hitFlashMat.forEach((mat) => { mat.emissive.setHex(flashOn ? 0xffffff : 0x000000); mat.emissiveIntensity = flashOn ? 0.9 : 0; });
+        } else m.visible = false;
+        o += 8;
+    }
+
+    // 敵の弾（投射物）
+    o = HEADER + MAX_OBST * 3 + MAX_ENEMY * 8;
+    for(let i = 0; i < MAX_EB; i++){
+        const bx = buf[o], bz = buf[o+1], alive = buf[o+2] > 0;
+        const m = scene3d.ebulletMeshes[i];
+        if(i < ebCount && alive){ m.visible = true; m.position.set(bx, 1.1, bz); } else m.visible = false;
+        o += 3;
+    }
+
+    // トレーサー（プレイヤーの射撃線）
+    o = HEADER + MAX_OBST * 3 + MAX_ENEMY * 8 + MAX_EB * 3;
+    let anyShot = false;
+    for(let i = 0; i < MAX_TR; i++){
+        const ox = buf[o], oz = buf[o+1], tx = buf[o+2], tz = buf[o+3], life = buf[o+4], hit = buf[o+5] > 0;
+        const line = scene3d.tracerLines[i];
+        if(i < trCount && life > 0){
+            line.visible = true;
+            const pos = line.geometry.attributes.position.array;
+            pos[0] = ox; pos[1] = 1.05; pos[2] = oz; pos[3] = tx; pos[4] = 1.05; pos[5] = tz;
+            line.geometry.attributes.position.needsUpdate = true;
+            line.material.opacity = Math.min(1, life * 6);
+            if(hit) anyShot = true;
+        } else line.visible = false;
+        o += 6;
+    }
+    if(anyShot){ $("hitmark").classList.remove("go"); void $("hitmark").offsetWidth; $("hitmark").classList.add("go"); }
+
+    // 手榴弾・爆発
+    o = HEADER + MAX_OBST * 3 + MAX_ENEMY * 8 + MAX_EB * 3 + MAX_TR * 6;
+    for(let i = 0; i < MAX_GR; i++){
+        const gx = buf[o], gz = buf[o+1], alive = buf[o+2] > 0, exploded = buf[o+3] > 0, life = buf[o+4];
+        const m = scene3d.grenadeMeshes[i], spr = scene3d.explosionSprites[i];
+        if(i < grCount && alive){
+            if(!exploded){ m.visible = true; m.position.set(gx, 1, gz); spr.visible = false; }
+            else { m.visible = false; spr.visible = true; spr.position.set(gx, 1, gz); spr.scale.setScalar(2 + (0.4 - life) * 10); spr.material.opacity = Math.max(0, life / 0.4) * 0.9; }
+        } else { m.visible = false; spr.visible = false; }
+        o += 5;
+    }
+
+    // 発射音（ammoが減った瞬間に鳴らす）
+    if(lastAmmo >= 0 && ammo < lastAmmo && !reloading) sfxShoot();
+    if(lastAmmo >= 0 && reloading && lastAmmo !== -2 && ammo === maxAmmo && lastAmmo !== maxAmmo){ /* reload complete handled below */ }
+    lastAmmo = ammo;
+
+    if(killCount > lastKills){ sfxEnemyDown(); lastKills = killCount; }
+    if(lastHp >= 0 && hp < lastHp){ sfxHurt(); $("dmgFlash").classList.add("go"); setTimeout(() => $("dmgFlash").classList.remove("go"), 160); }
+    lastHp = hp;
+    if(bossActive && !lastBoss){ sfxGrenade(); }
+    lastBoss = bossActive ? 1 : 0;
+
+    // HUD
+    $("hpBar").style.width = Math.max(0, (hp / maxHp) * 100) + "%";
+    $("hpText").textContent = Math.ceil(hp) + " / " + maxHp;
+    $("hudScore").textContent = "スコア " + score;
+    $("hudCombo").textContent = combo > 1 ? ("combo " + combo) : "";
+    $("hudKills").textContent = bossSpawned ? "" : ("撃破 " + killCount + " / " + killTarget);
+    $("ammoText").textContent = reloading ? "…" : (ammo + " / " + maxAmmo);
+    $("reloadText").classList.toggle("on", reloading);
+    if(bossActive){
+        $("bossWrap").hidden = false;
+        $("bossName").textContent = G.stage.bossName;
+        $("bossBar").style.setProperty("--w", Math.max(0, (bossHp / bossHpMax) * 100) + "%");
+    }else{
+        $("bossWrap").hidden = true;
+    }
+
+    renderer.render(scene, camera);
+
+    if(gameOver && G.running){ endStage(false, score); }
+    else if(stageCleared && G.running){ endStage(true, score); }
 }
 
 // ---------- タイトル：ステージ選択 ----------
@@ -290,19 +485,17 @@ function paintStageSelect(){
     }).join("");
 }
 
-// ---------- 入力（マウス・タッチ共通）----------
-canvas.addEventListener("pointerdown", (event) => { if(G.running) tryShoot(event.clientX, event.clientY); });
-
 // ---------- 画面のボタン ----------
 $("bHow").addEventListener("click", () => showScreen("s-how"));
 $("bHowBack").addEventListener("click", () => showScreen("s-title"));
 $("bSet").addEventListener("click", () => {
-    $("volBgm").value = settings.bgm; $("volSe").value = settings.se;
+    $("volBgm").value = settings.bgm; $("volSe").value = settings.se; $("volSens").value = settings.sens;
     showScreen("s-set");
 });
 $("bSetBack").addEventListener("click", () => showScreen("s-title"));
 $("volBgm").addEventListener("input", (event) => { settings.bgm = Number(event.target.value); if(bgmEl) bgmEl.volume = settings.bgm; saveSettings(); });
 $("volSe").addEventListener("input", (event) => { settings.se = Number(event.target.value); saveSettings(); });
+$("volSens").addEventListener("input", (event) => { settings.sens = Number(event.target.value); saveSettings(); });
 $("stageSelect").addEventListener("click", (event) => {
     const b = event.target.closest("[data-i]"); if(!b || b.disabled) return;
     startStage(Number(b.dataset.i));
@@ -311,10 +504,13 @@ $("resRetry").addEventListener("click", () => startStage(G.stageIdx));
 $("resNext").addEventListener("click", () => startStage(Math.min(STAGES.length - 1, G.stageIdx + 1)));
 $("resTitleBtn").addEventListener("click", () => { paintStageSelect(); showScreen("s-title"); });
 $("exitBtn").addEventListener("click", () => {
-    if(scrs["s-play"].classList.contains("on")){ G.running = false; stopBgm(); paintStageSelect(); showScreen("s-title"); return; }
+    if(scrs["s-play"].classList.contains("on")){
+        G.running = false; stopBgm();
+        try{ if(document.exitPointerLock) document.exitPointerLock(); }catch(_e){}
+        paintStageSelect(); showScreen("s-title"); return;
+    }
     try{ const back = new URLSearchParams(location.search).get("back"); location.href = back || "../index.html"; }catch(_e){ history.back(); }
 });
 
-paintStageSelect();
 resize();
-$("boot").classList.add("off");
+boot();
