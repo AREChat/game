@@ -110,7 +110,9 @@ export function buildWorld(){
     const rails = (a, P, opt) => { const pa = pathOf(a), n = Math.ceil(pa.total / 1.4); let last = -99;
         for(let i = 0; i < n; i++){ const s0 = i / n * pa.total, s1 = (i + 1) / n * pa.total; const A = pa.at(s0), Bp = pa.at(s1); const yaw = yawOf(A, Bp), pit = pitchOf(A, Bp), L = Math.hypot(Bp[0] - A[0], Bp[1] - A[1], Bp[2] - A[2]) + .08; const mx = (A[0] + Bp[0]) / 2, my = (A[1] + Bp[1]) / 2, mz = (A[2] + Bp[2]) / 2, c = Math.cos(yaw), s = Math.sin(yaw);
             if(opt.style === "rails"){ for(const k of [-.55, .55]) P.push({t: "b", x: mx + c * k, y: my - .08, z: mz - s * k, w: .12, h: .14, d: L, c: opt.color, ry: yaw, rx: -pit}); if(i % 2 === 0) P.push({t: "b", x: mx, y: my - .16, z: mz, w: 1.35, h: .08, d: .18, c: "#5a4a3a", ry: yaw, rx: -pit});
-                if(my > 1.6 && s0 - last >= 6){ last = s0; cyl(P, mx, 0, mz, .14, .2, my - .15, "#c8c0b8", 6); } }
+                // まんなかの はり（ここが ないと、レールの あいだから 下の 柱が 電柱みたいに 見えてしまう）と、レールの 真下に ならぶ 2本の 支柱（まんなかには 立てない）
+                P.push({t: "b", x: mx, y: my - .3, z: mz, w: .44, h: .14, d: L, c: "#5a4a3a", ry: yaw, rx: -pit});
+                if(my > 1.6 && s0 - last >= 6){ last = s0; for(const k of [-.55, .55]) cyl(P, mx + c * k, 0, mz - s * k, .1, .17, my - .17, "#c8c0b8", 6); P.push({t: "b", x: mx, y: my - .34, z: mz, w: 1.3, h: .1, d: .14, c: "#b8b0a8", ry: yaw}); } }
             else if(opt.style === "trough"){ P.push({t: "b", x: mx, y: my - .5, z: mz, w: 2.6, h: .5, d: L, c: "#3a8ad8", ry: yaw, rx: -pit}); for(const k of [-1.4, 1.4]) P.push({t: "b", x: mx + c * k, y: my - .3, z: mz - s * k, w: .22, h: .8, d: L, c: "#8a5a32", ry: yaw, rx: -pit}); if(my > 1.6 && s0 - last >= 6){ last = s0; cyl(P, mx, 0, mz, .22, .3, my - .5, "#c8c0b8", 6); } } } };
     rails(ATTRACTIONS.find((x) => x.id === "mine"), S, {style: "rails", color: "#8a6a4a"});
     // マインコースターの 両がわ：ほら穴の 岩と 水晶
