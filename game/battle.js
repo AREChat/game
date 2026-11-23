@@ -268,6 +268,16 @@ function endBattle(res){
     let gold = 0, exp = 0; b.foes.forEach((f) => { gold += f.g; exp += f.exp; });
     if(S.cx.ggold) gold *= 3; if(S.cx.gexp) exp *= 3;
     S.gold = Math.min(TQ_MAX_GOLD, S.gold + gold); S.kills += b.foes.length;
+    try{
+        if(window.AREFeaturePanel){
+            window.AREFeaturePanel.recordRun("game", b.turn);
+            const rec = JSON.parse(localStorage.getItem("tq_battle_rec") || "{\"wins\":0,\"bossWins\":0,\"lv\":1}");
+            rec.wins = (rec.wins || 0) + 1;
+            if(b.boss) rec.bossWins = (rec.bossWins || 0) + 1;
+            rec.lv = S.lv || rec.lv || 1;
+            localStorage.setItem("tq_battle_rec", JSON.stringify(rec));
+        }
+    }catch(_e){}
     const lines = log.slice(); lines.push(rpgFmt("たたかいに しょうり！ " + Math.round(exp * (S.expmul || 1)).toLocaleString() + "EXP と " + gold + "G を てにいれた。"));
     if(!b.boss && G.rnd() < 0.18){ S.items.onigiri = Math.min(99, (S.items.onigiri || 0) + 1); lines.push("おにぎりを ひろった！"); }
     else if(!b.boss && G.rnd() < 0.03){ S.items.omamori = Math.min(99, (S.items.omamori || 0) + 1); lines.push("ふっかつのおまもりを ひろった！"); }
