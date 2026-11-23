@@ -124,6 +124,7 @@ export function start(ctx){
     const N = track.pts.length;
     const LAPS = 3;
     toast("🏁 コース " + track.courseNo + " / " + COURSE_COUNT + "：" + track.theme.name);
+    const raceStartMs = performance.now();
 
     // アイテムボックスを置く場所（コースを8か所に分けて置く）
     const ITEMBOX_N = 8;
@@ -489,7 +490,19 @@ export function start(ctx){
             if(pinfo.finished >= 1 && !done){
                 done = true;
                 const rankTxt = pinfo.rank === 1 ? '<span class="rank1">🥇 1位</span>' : pinfo.rank + '位';
-                showResult("🏁 ゴール！", '<p>結果：' + rankTxt + ' ／ ' + LAPS + '周</p>', () => restart(), () => {});
+                const finishSec = (performance.now() - raceStartMs) / 1000;
+                try{
+                    if(window.AREFeaturePanel){
+                        window.AREFeaturePanel.recordRun("game8", finishSec);
+                        const rec = JSON.parse(localStorage.getItem("g8_race_rec") || "{\"races\":0,\"wins\":0,\"bestRank\":99}");
+                        rec.races = (rec.races || 0) + 1;
+                        if(pinfo.rank === 1) rec.wins = (rec.wins || 0) + 1;
+                        rec.bestRank = Math.min(rec.bestRank || 99, pinfo.rank || 99);
+                        rec.lastFinishSec = finishSec;
+                        localStorage.setItem("g8_race_rec", JSON.stringify(rec));
+                    }
+                }catch(_e){}
+                showResult("🏁 ゴール！", '<p>結果：' + rankTxt + ' ／ ' + LAPS + '周 ／ タイム ' + finishSec.toFixed(1) + '秒</p>', () => restart(), () => {});
             }
 
             const my = cars[0];
