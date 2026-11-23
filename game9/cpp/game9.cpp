@@ -29,6 +29,21 @@ const float ENEMY_MOVE_BASE = 3.0f;
 enum EnemyType { ET_GRUNT = 0, ET_BOSS = 1 };
 enum EnemyState { ES_SEEK = 0, ES_ATTACK = 1, ES_COVER = 2 };
 
+// ---------------------------------------------------------------------------
+// 武器種（CoD的な複数武器の持ち替え）
+//   0: ライフル     … 連射は遅いが一撃が重い。標準バランス。
+//   1: サブマシンガン … 連射は速いが威力が低く、射程も短め。弾倉は大きい。
+//   2: スナイパーライフル … 射程も威力も最大級だが連射が非常に遅く、弾倉が小さい。
+// ---------------------------------------------------------------------------
+enum Weapon { WPN_RIFLE = 0, WPN_SMG = 1, WPN_SNIPER = 2, WPN_COUNT = 3 };
+struct WeaponDef { float dmg, fireInterval, reloadTime, range, spread; int maxAmmo; };
+const WeaponDef WEAPONS[WPN_COUNT] = {
+    /* RIFLE  */ {24.0f, 0.46f, 2.0f, 36.0f, 0.006f, 8},
+    /* SMG    */ {7.5f,  0.085f, 1.5f, 20.0f, 0.05f, 30},
+    /* SNIPER */ {100.0f, 1.05f, 2.3f, 60.0f, 0.0f,   5},
+};
+const float WEAPON_SWITCH_TIME = 0.32f; // 持ち替え（構えなおし）にかかる時間。この間は射撃できない。
+
 const int MAX_OBST = 18;
 const int MAX_ENEMY = 10;
 const int MAX_EBULLET = 60;
@@ -54,8 +69,10 @@ Grenade grenades[MAX_GRENADE]; int grenadeCount = 0;
 
 float px = 0, pz = 0, pyaw = 0;
 float hp = 100, maxHp = 100;
-int ammo = 24, maxAmmo = 24, reloading = 0;
-float reloadT = 0, fireCooldown = 0, grenadeCd = 0, hitFlashT = 0;
+int curWeapon = 0;
+int ammoArr[WPN_COUNT] = {8, 30, 5};
+int reloading = 0;
+float reloadT = 0, fireCooldown = 0, grenadeCd = 0, hitFlashT = 0, weaponSwitchT = 0;
 double score = 0;
 int combo = 0, comboMax = 0;
 int killCount = 0, killTarget = 20;
@@ -66,10 +83,6 @@ int spawnQueue = 0; float spawnTimer = 0.6f;
 float enemyHpMul = 1, enemySpeedMul = 1, fireRateMul = 1, bulletSpeedMul = 1;
 const int CONCURRENT_CAP = 4;
 
-const float RELOAD_TIME = 1.7f;
-const float FIRE_INTERVAL = 0.14f;
-const float GUN_DMG = 11.0f;
-const float GUN_RANGE = 34.0f;
 const float GRENADE_CD = 6.0f;
 const float GRENADE_SPEED = 13.0f;
 const float GRENADE_RANGE = 12.0f;
@@ -119,9 +132,18 @@ static void pushOutCircle(float &ax, float &az, float ar, float bx, float bz, fl
 
 EM_KEEP void g9_start_stage(int idx, int targetKills, float hpMul, float speedMul, float fireMul, float bulletMul, int seed){
     srand((unsigned)seed);
+    // 前回のプレイ（リトライ・次のコースへ 等、同じWASMインスタンスを再利用するケース）の
+    // 残留状態が残らないよう、各配列の alive フラグ等を明示的にクリアする。
     enemyCount = 0; ebulletCount = 0; tracerCount = 0; grenadeCount = 0;
+    memset(enemies, 0, sizeof(enemies));
+    memset(ebullets, 0, sizeof(ebullets));
+    memset(grenades, 0, sizeof(grenades));
+    for(int i = 0; i < MAX_TRACER; i++) tracers[i].life = 0;
     px = 0; pz = 0; pyaw = 0;
-    hp = maxHp = 100; ammo = maxAmmo = 24; reloading = 0; reloadT = 0; fireCooldown = 0; grenadeCd = 0; hitFlashT = 0;
+    hp = maxHp = 100;
+    curWeapon = 0;
+    for(int i = 0; i < WPN_COUNT; i++) ammoArr[i] = WEAPONS[i].maxAmmo;
+    reloading = 0; reloadT = 0; fireCooldown = 0; grenadeCd = 0; hitFlashT = 0; weaponSwitchT = 0;
     score = 0; combo = 0; comboMax = 0; killCount = 0; elapsed = 0;
     killTarget = targetKills > 0 ? targetKills : 14;
     enemyHpMul = hpMul > 0 ? hpMul : 1.0f;
@@ -267,11 +289,22 @@ static void stepEnemy(Enemy &e, float dt){
     e.z = clampf(e.z, -ARENA_HALF + 0.5f, ARENA_HALF - 0.5f);
 }
 
-EM_KEEP void g9_step(float dt, float moveF, float moveS, float yaw, int firing, int reloadPressed, int grenadePressed){
+EM_KEEP void g9_step(float dt, float moveF, float moveS, float yaw, int firing, int reloadPressed, int grenadePressed, int weaponSwitch){
     if(dt > 0.05f) dt = 0.05f;
     if(!running) return;
     elapsed += dt;
     if(hitFlashT > 0){ hitFlashT -= dt; if(hitFlashT < 0) hitFlashT = 0; }
+
+    // ---- 武器の持ち替え ----
+    if(weaponSwitchT > 0){ weaponSwitchT -= dt; if(weaponSwitchT < 0) weaponSwitchT = 0; }
+    if(weaponSwitch >= 0 && weaponSwitch < WPN_COUNT && weaponSwitch != curWeapon){
+        curWeapon = weaponSwitch;
+        reloading = 0; // 持ち替え中はリロードを中断する（弾は減らない）
+        weaponSwitchT = WEAPON_SWITCH_TIME;
+        if(fireCooldown < weaponSwitchT) fireCooldown = weaponSwitchT;
+    }
+    const WeaponDef &wdef = WEAPONS[curWeapon];
+    int &curAmmo = ammoArr[curWeapon];
 
     // ---- プレイヤー移動（カメラの向き=yaw を基準にした前後・左右移動） ----
     pyaw = yaw;
@@ -287,18 +320,19 @@ EM_KEEP void g9_step(float dt, float moveF, float moveS, float yaw, int firing, 
     // ---- リロード ----
     if(reloading){
         reloadT -= dt;
-        if(reloadT <= 0){ reloading = 0; ammo = maxAmmo; }
-    } else if((reloadPressed && ammo < maxAmmo) || ammo <= 0){
-        reloading = 1; reloadT = RELOAD_TIME;
+        if(reloadT <= 0){ reloading = 0; curAmmo = wdef.maxAmmo; }
+    } else if((reloadPressed && curAmmo < wdef.maxAmmo) || curAmmo <= 0){
+        reloading = 1; reloadT = wdef.reloadTime;
     }
 
     // ---- 射撃（ヒットスキャン：遮蔽物／敵のうち いちばん近いものに当たる） ----
     fireCooldown -= dt;
-    if(firing && !reloading && ammo > 0 && fireCooldown <= 0 && running){
-        fireCooldown = FIRE_INTERVAL;
-        ammo--;
-        float dirx = sinf(yaw), dirz = cosf(yaw);
-        float bestDist = GUN_RANGE; int hitEnemy = -1;
+    if(firing && !reloading && curAmmo > 0 && fireCooldown <= 0 && running){
+        fireCooldown = wdef.fireInterval;
+        curAmmo--;
+        float shotYaw = wdef.spread > 0 ? yaw + frand2() * wdef.spread : yaw;
+        float dirx = sinf(shotYaw), dirz = cosf(shotYaw);
+        float bestDist = wdef.range; int hitEnemy = -1;
         for(int i = 0; i < obstacleCount; i++){
             float t = rayHitCircle(px, pz, dirx, dirz, obstacles[i].x, obstacles[i].z, obstacles[i].r);
             if(t >= 0 && t < bestDist) bestDist = t;
@@ -313,7 +347,7 @@ EM_KEEP void g9_step(float dt, float moveF, float moveS, float yaw, int firing, 
         tr->hit = hitEnemy >= 0 ? 1 : 0;
         if(hitEnemy >= 0){
             Enemy &e = enemies[hitEnemy];
-            e.hp -= GUN_DMG; e.hitFlash = 6;
+            e.hp -= wdef.dmg; e.hitFlash = 6;
             if(e.hp <= 0) killEnemy(e);
         }
     }
@@ -382,13 +416,14 @@ EM_KEEP void g9_step(float dt, float moveF, float moveS, float yaw, int firing, 
     for(int i = 0; i < tracerCount; i++) if(tracers[i].life > 0){ tracers[i].life -= dt; if(tracers[i].life < 0) tracers[i].life = 0; }
 }
 
-// 出力バッファ: HEADER(32) → obstacle*3 → enemy*8 → ebullet*3 → tracer*6 → grenade*5
+// 出力バッファ: HEADER(37) → obstacle*3 → enemy*8 → ebullet*3 → tracer*6 → grenade*5
 // HEADER: 0 running 1 gameOver 2 stageCleared 3 score 4 combo 5 comboMax 6 hp 7 maxHp
-//  8 ammo 9 maxAmmo 10 reloading 11 reloadT 12 grenadeCd 13 killCount 14 killTarget
+//  8 ammo(現在の武器) 9 maxAmmo(現在の武器) 10 reloading 11 reloadT 12 grenadeCd 13 killCount 14 killTarget
 //  15 bossActive 16 bossSpawned 17 bossHp 18 bossHpMax 19 elapsed 20 px 21 pz 22 yaw
 //  23 obstacleCount 24 enemyCount 25 ebulletCount 26 tracerCount 27 grenadeCount
 //  28 hitFlashT 29 arenaHalf 30 playerR 31 enemyR
-const int HEADER = 32;
+//  32 curWeapon 33 weaponSwitchT 34 ammoWpn0 35 ammoWpn1 36 ammoWpn2
+const int HEADER = 37;
 const int PER_OBST = 3, PER_ENEMY = 8, PER_EB = 3, PER_TR = 6, PER_GR = 5;
 float outBuf[HEADER + MAX_OBST * PER_OBST + MAX_ENEMY * PER_ENEMY + MAX_EBULLET * PER_EB + MAX_TRACER * PER_TR + MAX_GRENADE * PER_GR];
 
@@ -397,7 +432,7 @@ EM_KEEP float* g9_get_buffer(){
     for(int i = 0; i < enemyCount; i++) if(enemies[i].alive && enemies[i].type == ET_BOSS){ bossHp = enemies[i].hp; bossHpMax = enemies[i].hpMax; }
     outBuf[0] = (float)running; outBuf[1] = (float)gameOver; outBuf[2] = (float)stageCleared;
     outBuf[3] = (float)score; outBuf[4] = (float)combo; outBuf[5] = (float)comboMax;
-    outBuf[6] = hp; outBuf[7] = maxHp; outBuf[8] = (float)ammo; outBuf[9] = (float)maxAmmo;
+    outBuf[6] = hp; outBuf[7] = maxHp; outBuf[8] = (float)ammoArr[curWeapon]; outBuf[9] = (float)WEAPONS[curWeapon].maxAmmo;
     outBuf[10] = (float)reloading; outBuf[11] = reloadT; outBuf[12] = grenadeCd;
     outBuf[13] = (float)killCount; outBuf[14] = (float)killTarget;
     outBuf[15] = (float)bossActive; outBuf[16] = (float)bossSpawned; outBuf[17] = bossHp; outBuf[18] = bossHpMax;
@@ -405,6 +440,8 @@ EM_KEEP float* g9_get_buffer(){
     outBuf[23] = (float)obstacleCount; outBuf[24] = (float)enemyCount; outBuf[25] = (float)ebulletCount;
     outBuf[26] = (float)tracerCount; outBuf[27] = (float)grenadeCount;
     outBuf[28] = hitFlashT; outBuf[29] = ARENA_HALF; outBuf[30] = PLAYER_R; outBuf[31] = ENEMY_R;
+    outBuf[32] = (float)curWeapon; outBuf[33] = weaponSwitchT;
+    outBuf[34] = (float)ammoArr[0]; outBuf[35] = (float)ammoArr[1]; outBuf[36] = (float)ammoArr[2];
     int o = HEADER;
     for(int i = 0; i < MAX_OBST; i++){
         if(i < obstacleCount){ outBuf[o] = obstacles[i].x; outBuf[o+1] = obstacles[i].z; outBuf[o+2] = obstacles[i].r; }

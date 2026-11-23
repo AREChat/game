@@ -29,8 +29,9 @@
   <section id="s-how" class="scr">
     <h2>あそびかた</h2>
     <div class="panel">
-      <p><b>PC：</b> W/A/S/D（または画面左のスティック）で移動。マウスを動かして視点とねらいを操作し、左クリックで発射。R＝リロード、Shift＝食材グレネード。</p>
-      <p><b>スマホ・タブレット：</b> 画面左ドラッグで移動、画面右ドラッグで視点操作。右下の🔥ボタンで発射、🔄でリロード、💣でグレネード。</p>
+      <p><b>PC：</b> W/A/S/D（または画面左のスティック）で移動。マウスを動かして視点とねらいを操作し、左クリックで発射。R＝リロード、Shift＝食材グレネード。1/2/3キーまたはQキーで武器を持ち替え。</p>
+      <p><b>スマホ・タブレット：</b> 画面左ドラッグで移動、画面右ドラッグで視点操作。右下の🔥ボタンで発射、🔄でリロード、💣でグレネード。画面下の武器アイコンをタップして持ち替え。</p>
+      <p><b>武器：</b> 🔫ライフル（連射は遅いが一撃が重い）／⚡サブマシンガン（連射が速いが威力は低く射程も短い）／🎯スナイパーライフル（射程と威力は最大だが連射が非常に遅い）。弾倉は武器ごとに別々に管理されます。</p>
       <p>敵の弾（食べもの）はゆっくり飛んでくるので、見てから動いて避けられます。大きな樽やなべの物陰にかくれれば、相手の弾を防げます。</p>
       <p>目標の数のライバルシェフをたおすと、その皿の「鬼軍曹シェフ」（ボス）が登場。ボスをたおすとコースクリアです。体力（ライフ）が0になるとゲームオーバー。</p>
       <p>敵をたおすと、たまに🔵パワーオーブ（連射力アップ）や💎スコアジェムをドロップします。拾いに行くのもねらいめ。</p>
@@ -66,7 +67,8 @@
         <div id="bossWrap" hidden><span id="bossName"></span><div id="bossBar"></div></div>
       </div>
     </div>
-    <div id="ammoBox"><span id="ammoText"></span><span id="reloadText">リロード中…</span></div>
+    <div id="ammoBox"><span id="weaponName"></span><span id="ammoText"></span><span id="reloadText">リロード中…</span></div>
+    <div id="weaponSelect"></div>
     <div id="dmgFlash" aria-hidden="true"></div>
     <div id="touchZones">
       <div id="moveZone"><div id="moveStick"></div></div>
