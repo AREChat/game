@@ -92,6 +92,7 @@ export class Game{
     stamp(id){
         if(this.sv.stamps[id]) return false; this.sv.stamps[id] = true; const a = byId(id); const c = this.count(); const coin = (a && a.coin) || 20; this.sv.coins += coin;
         this.ui.toast("🏅 スタンプ ゲット！「" + (a ? a.n : id) + "」  (" + c + "/" + STAMPS.length + ")  +" + coin + "コイン"); this.sfx("stamp"); this.emit("stamp", {id, count: c, coins: this.sv.coins});
+        try{ if(window.DfStats) window.DfStats.record({id, area: a ? a.area : "", coin, count: c}); }catch(_e){}
         if(c >= STAMPS.length && !this.sv.done){ this.sv.done = true; setTimeout(() => { this.ui.cert(this); this.emit("complete", {count: c}); }, 1200); }
         this.save(); return true;
     }
