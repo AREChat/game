@@ -3,6 +3,7 @@
 //  jupiter … はずむ 2びょうし と ホルン（「木星」を イメージ）。ゆっくりな ところでは ひろい 旋律に かわる
 //  sweets  … ポップな 4びょうし（ピコピコ ＋ ベル）  /  aurora … ひろがる ぼうけんの きょく（ストリングス ＋ ホルン）
 //  のりものの はやさ（intensity 0〜1）で 楽器が ふえたり へったり する。
+import {SONG, melodyAt, rootAt} from "./df-x-song.js";
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
 // ---- きょくの せっけい：bar(小節番号, つよさ, add) の中で add(楽器, 音の高さ(MIDI), ステップ, ながさ(ステップ), つよさ) を よぶ ----
@@ -11,7 +12,52 @@ const TH_JUP = [[[67, 0, 2], [64, 2, 2], [67, 4, 2], [72, 6, 2]], [[69, 0, 2], [
     [[72, 0, 2], [67, 2, 2], [72, 4, 2], [76, 6, 2]], [[76, 0, 2], [74, 2, 2], [72, 4, 2], [69, 6, 2]], [[74, 0, 4], [71, 4, 2], [74, 6, 2]], [[72, 0, 8]]];
 const LEAD_SW = [[[76, 0, 3], [79, 4, 2], [76, 6, 2], [72, 8, 4]], [[76, 0, 3], [81, 4, 2], [79, 6, 2], [76, 8, 4]], [[77, 0, 3], [81, 4, 2], [77, 6, 2], [72, 8, 4]], [[74, 0, 3], [79, 4, 2], [71, 8, 2], [74, 10, 2], [67, 12, 4]]];
 const LEAD_AU = [[[69, 0, 6], [72, 6, 2], [76, 8, 8]], [[72, 0, 6], [69, 6, 2], [65, 8, 8]], [[67, 0, 6], [72, 6, 2], [76, 8, 8]], [[74, 0, 8], [71, 8, 4], [67, 12, 4]]];
+// ---- 新5アトラクションの きょく（ぜんぶ オリジナル）----
+const rhythmScore = {bpm: SONG.bpm, beats: 4, sub: 2, gain: 1.15, bar(b, I, add){
+    const root = rootAt(b), mel = melodyAt(b), chorus = (b >= 12 && b < 20) || (b >= 24 && b < 32), minor = root === 45 || root === 40, tn = [0, minor ? 3 : 4, 7, 12];
+    add("kick", 40, 0, 1, .55); add("kick", 40, 4, 1, .5); if(chorus){ add("kick", 40, 2, 1, .3); add("kick", 40, 6, 1, .3); }
+    if(b >= 2){ add("snare", 60, 2, 1, .3); add("snare", 60, 6, 1, .3); }
+    for(let st = 0; st < 8; st++) add("hat", 80, st, 1, .11 + (st % 2 ? .04 : 0));
+    add("bass", root, 0, 4, .5); add("bass", root + 7, 4, 4, .42);
+    if(b >= 1) [0, 1, 2, 3, 2, 1, 2, 3].forEach((q, st) => add("pluck", root + 24 + tn[q], st, 1, .1 + (chorus ? .05 : 0)));
+    if(b >= 2){ add("string", root + 24, 0, 8, .1); add("string", root + 31, 0, 8, .08); }
+    if(mel) mel.forEach((m, st) => { if(m){ add(chorus ? "horn" : "bell", m, st, 1.7, chorus ? .3 : .34); if(chorus) add("chip", m + 12, st, 1, .06); } });
+    if(b % 8 === 4 || b === 33) add("crash", 60, 0, 4, .35);
+}};
+const mazeScore = {bpm: 84, beats: 4, sub: 4, gain: .9, bar(b, I, add){
+    const root = [45, 41, 43, 40][b % 4] , minor = true, tn = [0, 3, 7, 12, 15, 12, 7, 3];
+    add("string", root + 12, 0, 16, .1); add("string", root + 19, 0, 16, .08); add("bass", root - 12, 0, 8, .4); add("bass", root - 12, 8, 8, .34);
+    for(let i = 0; i < 8; i++) add("bell", root + 24 + tn[i], i * 2, 2, .1 + (i % 4 === 0 ? .05 : 0));
+    if(b % 4 === 3) [12, 13, 14, 15].forEach((st, k) => add("bell", root + 36 + k * 3, st, 1, .08));
+}};
+const jumpScore = {bpm: 128, beats: 4, sub: 2, gain: 1.05, bar(b, I, add){
+    const rt = [0, 5, 7, 4][b % 4], root = 48 + rt, pent = [0, 2, 4, 7, 9, 12, 14, 16], pat = [[0, 2, 4, 2, 5, 4, 2, 1], [3, 4, 5, 4, 2, 4, 3, 1], [2, 4, 5, 6, 5, 4, 2, 0], [4, 5, 7, 5, 4, 2, 3, 2]][(b >> 0) % 4];
+    [0, 2, 4, 6].forEach((st, i) => add("bass", root - 12 + (i % 2 ? 7 : 0), st, 1, .36));
+    [0, 4].forEach((st) => add("kick", 60, st, 1, .5)); [2, 6].forEach((st) => add("snare", 60, st, 1, .22)); for(let i = 0; i < 8; i++) add("hat", 60, i, 1, i % 2 ? .1 : .06);
+    [0, 1, 2, 3, 4, 5, 6, 7].forEach((st) => { if(st % 2 === 0 || b % 2) add("pluck", root + 12 + [0, 4, 7, 4][st % 4], st, 1, .13); });
+    pat.forEach((q, st) => add(b % 8 < 4 ? "bell" : "chip", root + 24 + pent[q], st, 1, b % 8 < 4 ? .22 : .12));
+    if(b % 8 === 7) for(let k = 0; k < 4; k++) add("snare", 60, 4 + k, 1, .12 + k * .05);
+    if(b % 8 === 0) add("crash", 60, 0, 4, .3);
+}};
+const loopScore = {bpm: 146, beats: 4, sub: 2, gain: 1.0, bar(b, I, add){
+    const rt = [0, -4, -2, -5][b % 4], root = 45 + rt, arp = [0, 3, 7, 12, 7, 3, 7, 10];
+    for(let i = 0; i < 8; i++){ add("bass", root - 12, i, 1, .34); add("pluck", root + 12 + arp[i], i, 1, .13 + (i % 2 ? 0 : .05)); }
+    add("string", root + 12, 0, 8, .1); add("string", root + 19, 0, 8, .08); [0, 4].forEach((st) => add("kick", 60, st, 1, .5)); [2, 6].forEach((st) => add("snare", 60, st, 1, .2)); for(let i = 0; i < 8; i++) add("hat", 60, i, 1, i % 2 ? .1 : .05);
+    if(b % 8 >= 4){ [[0, 12, 2], [2, 15, 1], [3, 14, 1], [4, 12, 2], [6, 10, 2]].forEach(([st, m, len]) => add("brass", root + 24 + m - 12, st, len, .22)); add("timp", root, 0, 2, .4); }
+    if(b % 8 === 7) for(let k = 0; k < 4; k++) add("snare", 60, 4 + k, 1, .1 + k * .05); if(b % 8 === 0) add("crash", 60, 0, 4, .3);
+}};
+const kartScore = {bpm: 156, beats: 4, sub: 2, gain: 1.05, bar(b, I, add){
+    const rt = [0, 7, 9, 5][b % 4], root = 48 + rt, hook = [[0, 12], [1, 16], [2, 19], [3, 16], [4, 21], [5, 19], [6, 16], [7, 14]];
+    for(let i = 0; i < 8; i++){ add("bass", root - 12 + (i % 4 === 2 ? 7 : 0), i, 1, .34); } [0, 4].forEach((st) => add("kick", 60, st, 1, .5)); [2, 6].forEach((st) => add("snare", 60, st, 1, .22)); for(let i = 0; i < 8; i++) add("hat", 60, i, 1, i % 2 ? .1 : .05);
+    hook.forEach(([st, m]) => add(b % 8 < 4 ? "chip" : "bell", root + 12 + m, st, 1, b % 8 < 4 ? .13 : .22)); [0, 3, 6].forEach((st) => add("pluck", root + 24 + [0, 4, 7][st % 3], st, 1, .1));
+    if(b % 8 === 3 || b % 8 === 7) for(let k = 0; k < 4; k++) add("snare", 60, 4 + k, 1, .1 + k * .05); if(b % 8 === 0) add("crash", 60, 0, 4, .3);
+}};
 export const SCORES = {
+    maze: mazeScore,
+    jump: jumpScore,
+    loop: loopScore,
+    kart: kartScore,
+    rhythm: rhythmScore,
     mars: {bpm: 156, beats: 5, sub: 2, gain: 1, bar(b, I, add){
         const r = 36 + [0, 0, -4, -4, -7, -5, 0, -5][b % 8], hits = [0, 2, 3, 5, 7, 8], pit = [0, 0, 7, 0, 1, 7];
         hits.forEach((st, i) => add("pluck", r + 12 + pit[i], st, 1, .34 + .22 * I));

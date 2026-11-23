@@ -45,6 +45,6 @@ export class Controls{
             if(cur.plus && !prev.plus) o.esc = true;
             this._gpPrev = cur;
         }catch(_e){}
-        this.lx = 0; this.ly = 0; this.pressed = {}; return o;
+        o.K = k; o.P = P; this.lx = 0; this.ly = 0; this.pressed = {}; return o;
     }
 }

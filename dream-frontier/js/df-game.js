@@ -7,6 +7,7 @@ import {coasterInit, coasterUpdate, coasterCamera, stageName} from "./df-ride.js
 import {stageDyn} from "./df-stages.js";
 import {spriteReady} from "./df-sprites.js";
 import {bootDfWasm} from "./df-wasm.js";
+import {X} from "./df-extra.js";
 // どうぶつ・おばけ・ほしのこ：絵（img/chara/<名前>_f|r|l|b.webp）が そろって いれば 絵で、なければ 今までの 手作りの 3D モデルで 出す
 const SPRITE_MODELS = {giraffe: 0, elephant: 0, fluffy: 0, lion: 0, ghost: .3, starkid: 0};   // 値：絵の 足もとを ずらす 高さ（モデルの 原点が 足もとでは ないもの）
 
@@ -76,7 +77,7 @@ export class Game{
     // ---- オートプレイ：じどうで アトラクションに のってくれる。ながめて たのしもう ----
     setAuto(on){
         const A = this.auto; on = !!on; if(A.on === on) return;
-        A.on = on; A.tgt = null; A.wait = 1.0; A.t = 0; A.side = 0; A.stuck = 0;
+        A.on = on; A.tgt = null; A.wait = 1.0; A.t = 0; A.side = 0; A.stuck = 0; if(!on && this.ride && this.ride.xm) this.ride.auto = false;
         this.ui.toast(on ? "▶ オートプレイ：じどうで アトラクションに のるよ。 うごかすと とまるよ（コインは いらないよ）" : "■ オートプレイを とめたよ", 3600);
         this.emit("auto", {on});
     }
@@ -104,6 +105,7 @@ export class Game{
         if(this.mode === "ride"){
             const R = this.ride; if(!R || inp.esc || inp.act2) return inp;
             if(R.a.kind === "shoot") return Object.assign({}, inp, {act: this.autoShoot(dt, R), lx: 0, ly: 0});
+            if(R.xm){ R.auto = true; return inp; }
             return inp;
         }
         if(this.mode !== "walk") return inp;
@@ -189,13 +191,13 @@ export class Game{
         if(!free && this.sv.coins < (a.coin || 0) && a.coin) { return this.ui.toast("コインが たりない… (" + a.coin + "コイン ひつよう)"); }
         const R = {a, t: 0, s: 0, lap: 0, text: null, texts: {}, alt: .3, spd: 1, hits: 0, targets: [], fire: 0, spawn: 0, done: false, fade: 1};
         if(a.coin && !free){ this.sv.coins -= a.coin; }
-        this.sv.played++; this.ride = R; if(a.kind === "coaster") coasterInit(this, R); this.mode = "ride"; this.lookYaw = 0; this.lookPitch = 0; this.pitch = 0; this.sfx("start");
-        this.ui.rideStart(a); this.emit("ride", {id: a.id});
+        this.sv.played++; this.ride = R; if(a.kind === "coaster") coasterInit(this, R); else if(X[a.kind]){ R.xm = X[a.kind]; R.A = {stage: a.id, env: a.id, music: a.id, xm: true}; R.auto = !!this.auto.on; } this.mode = "ride"; this.lookYaw = 0; this.lookPitch = 0; this.pitch = 0; this.sfx("start");
+        this.ui.rideStart(a); if(R.xm) R.xm.init(this, R, a); this.emit("ride", {id: a.id});
         if(a.kind === "shoot"){ this.yaw = 0; this.pitch = 0; }
         if(a.kind === "wheel") this.yaw = -Math.PI / 4;
     }
-    endRide(ok){
-        const R = this.ride; if(!R) return; const a = R.a; this.ride = null; this.mode = "walk"; this.ui.rideEnd(); this.hooks.rideEnd && this.hooks.rideEnd();
+    endRide(ok, quiet){
+        const R = this.ride; if(!R) return; const a = R.a; if(R.xm && R.xm.end) R.xm.end(this, R, ok); this.ride = null; this.mode = "walk"; this.ui.rideEnd(); this.hooks.rideEnd && this.hooks.rideEnd();
         const b = a.board; if(a.kind === "drop"){ this.x = a.board.x; this.z = a.board.z; } else { this.x = b.x; this.z = b.z; }
         this.yaw = Math.atan2(this.x - (a.c ? a.c[0] : this.x), this.z - (a.c ? a.c[1] : this.z)) || Math.PI; this.yaw = Math.PI; this.pitch = 0; this.lookYaw = this.lookPitch = 0;
         if(this.auto.on){ if(ok){ this.auto.wait = 2.4; this.auto.tgt = null; } else this.setAuto(false); }   // おりたら つぎへ（じぶんで おりたときは オートを とめる）
@@ -210,7 +212,7 @@ export class Game{
             }
             else if(a.kind === "shoot"){ this.sv.shoot = Math.max(this.sv.shoot, R.hits); if(R.hits >= 8){ this.ui.toast("ヒット " + R.hits + "こ！ すごい うで まえ！"); this.stamp(a.id); if(R.hits >= 14){ this.sv.coins += 50; this.ui.toast("ぜんぶ ちかく あてた！ ボーナス +50コイン"); } } else this.ui.toast("ヒット " + R.hits + "こ…（8こ いじょうで スタンプ）"); }
             else this.stamp(a.id);
-        } else this.ui.toast("のりものから おりた。");
+        } else if(!quiet) this.ui.toast("のりものから おりた。");
         this.save();
     }
 
@@ -260,6 +262,7 @@ export class Game{
         const R = this.ride, a = R.a; R.t += dt; this.ui.rideSet && this.ui.rideSet(R, a);
         this.lookYaw = clamp(this.lookYaw - inp.lx, -1.5, 1.5); this.lookPitch = clamp(this.lookPitch - inp.ly, -.9, .9);
         if(inp.esc || inp.act2){ return this.endRide(false); }
+        if(R.xm){ R.xm.update(this, R, dt, inp); this.shake = 0; return; }
         const free = (R.a.kind === "shoot") || !!(R.A && R.A.shoot);
         if(!free && !inp.looking){ this.lookYaw *= Math.pow(.4, dt); this.lookPitch *= Math.pow(.4, dt); }
         const ev = (list, frac) => { for(const e of list || []){ if(!R.texts[e.s] && frac >= e.s){ R.texts[e.s] = 1; this.ui.toast(e.text, 3200); if(e.ev === "drop") this.shake = .6; if(e.ev === "splash"){ this.shake = 1; this.fxSplash = this.t; } if(e.ev === "climb" || e.ev === "drop" || e.ev === "splash") this.sfx(e.ev); } } };
@@ -302,7 +305,7 @@ export class Game{
     sfx(n){ this.hooks.sfx && this.hooks.sfx(n); }
     camera(){
         const R = this.ride; let cam = {eye: [this.x, this.eyeH + Math.sin(this.bob) * .035, this.z], yaw: this.yaw, pitch: this.pitch, fov: this.fov};
-        if(this.mode !== "ride" || !R) return cam; const a = R.a, t = R.t;
+        if(this.mode !== "ride" || !R) return cam; if(R.xm) return R.xm.camera(this, R); const a = R.a, t = R.t;
         const shake = this.shake ? (Math.random() - .5) * this.shake * .12 : 0;
         if(a.kind === "track"){ const p = this.paths[a.id], P = p.at(R.s), Q = p.at(R.s + 1.8), P2 = p.at(R.s + 5); const yw = yawOf(P, Q), pt = pitchOf(P, P2) * .8; cam = {eye: [P[0], P[1] + a.eye, P[2]], yaw: yw + this.lookYaw, pitch: pt + this.lookPitch + shake, fov: 72 + (R.v || 0) * .5}; if(a.id === "boat" || a.id === "safari" || a.id === "splash") cam.eye[1] += Math.sin(t * 1.7) * .03; }
         else if(a.kind === "sim"){ const f = R.frac, z = this.cosmoZ(t, a), sh = this.shake; const sw = Math.sin(t * .6) * .06; cam = {eye: [Math.sin(t * .9) * .6 + (Math.random() - .5) * sh * .5, 400 + Math.sin(t * 1.1) * .5 + (Math.random() - .5) * sh * .5, z], yaw: sw + this.lookYaw + (f > .15 && f < .3 ? .22 : 0), pitch: this.lookPitch + (Math.random() - .5) * sh * .06 + Math.sin(t * .5) * .03, fov: 70 + (f > .7 && f < .88 ? 30 * Math.sin((f - .7) / .18 * Math.PI) : 0)}; }
@@ -377,6 +380,7 @@ export class Game{
         // 自分のりもの
         if(riding("balloon")){ const a = R.a, ph = R.t * a.w, h = lerp(a.h0, a.h1, R.alt); D.push({m: "balloon", x: a.c[0] + Math.sin(ph) * a.r, y: h, z: a.c[1] + Math.cos(ph) * a.r}); }
         if(R && R.a.kind === "coaster") stageDyn(this, D);
+        if(R && R.xm && R.xm.dyn) R.xm.dyn(this, R, D);
         // のりばに とまっている のりもの
         if(!riding("worldjet")) D.push({m: "jetplane", x: 91, y: 0, z: -43.5, yaw: Math.PI / 2});
         if(!riding("sweets")) D.push({m: "blastercar", x: -43.6, y: .9 + Math.sin(T * 1.6) * .12, z: 68, yaw: Math.PI / 2 + Math.sin(T * .5) * .08});

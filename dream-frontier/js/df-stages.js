@@ -3,6 +3,7 @@
 import {STAGES, MARS_TR, JUP_TR, AU_TR} from "./df-data.js";
 import {trackPath, sstep} from "./df-coaster.js";
 import {buildSweets, buildAurora, buildTerminals, dynSweets, dynAurora, genTargets, TARGETS, targetPos, frameAt, ST_AZ} from "./df-stages2.js";
+import {buildExtra} from "./df-extra.js";
 
 export const STAGE_LAYERS = {};   // ステージ名 → レイヤーID の 一覧
 const TAU = Math.PI * 2;
@@ -116,7 +117,7 @@ export function buildStages(h){
         const m = model("doll" + i), P = m.prims; cyl(P, 0, .4, 0, .38, .55, 1.0, c, 8); sph(P, 0, 1.75, 0, .42, "#ffe0c4", 1, 8); cyl(P, 0, 2.05, 0, .2, .46, .42, ["#ffffff", "#ffd24a", "#ff6a8a"][i % 3], 8);
         box(P, -.62, 1.0, 0, .16, .7, .16, c, 0, 0, .7); box(P, .62, 1.0, 0, .16, .7, .16, c, 0, 0, -.7); sph(P, -.14, 1.8, .36, .06, "#2a2a40"); sph(P, .14, 1.8, .36, .06, "#2a2a40");
     });
-    const K = {mk, near, bbox, rnd, h, ST}; buildSweets(K); buildAurora(K); ST_AZ.moon = AU_END_YAW(); buildTerminals(h);
+    const K = {mk, near, bbox, rnd, h, ST}; buildSweets(K); buildAurora(K); ST_AZ.moon = AU_END_YAW(); buildTerminals(h); buildExtra(K);
 }
 const AU_END_YAW = () => AU_TR.end.yaw * Math.PI / 180;
 
