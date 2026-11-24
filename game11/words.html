@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ことばクラフト｜打った言葉が「もの」になる物理パズル</title>
+<meta name="theme-color" content="#0d0a2a">
+<meta name="description" content="「はし」「ばくだん」「おおきい いし」…打った言葉がそのまま物になる、世界初のことばパズル。日本語・英語・中国語・韓国語に対応。">
+<script src="../protect.js"></script>
+<link rel="stylesheet" href="./css/lab.css">
+<style>
+#s-play{padding:0;gap:0;justify-content:flex-start;overflow:hidden}
+#bar{width:100%;padding:calc(8px + env(safe-area-inset-top)) 56px 4px 100px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px;min-height:44px}
+#bar #nm{font-weight:900;font-size:15px;text-align:left;flex:1 1 140px;min-width:0}
+#bar .pill{background:#14164acc;border:1px solid #5a63d8;border-radius:999px;padding:3px 11px;font-weight:800;font-size:13px;white-space:nowrap}
+#bar .pill.low{background:#a02a3a;border-color:#ff8090}
+#stageWrap{position:relative;flex:1;width:100%;min-height:0}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#ctrl{width:100%;display:flex;flex-direction:column;gap:6px;padding:6px 10px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(#0f1040e6,#0a0a2cf5);border-top:1px solid #4c54c8}
+#wf{display:flex;gap:8px}
+#wi{flex:1;min-width:0;font:inherit;font-size:17px;font-weight:700;padding:10px 12px;border-radius:12px;border:2px solid #8a8fff;background:#121552;color:#fff;outline:none;-webkit-user-select:text;user-select:text}
+#wi:focus{border-color:#ffe36a;box-shadow:0 0 0 3px rgba(255,227,106,.25)}
+#acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+#acts button{padding:8px 11px;font-size:14px}
+#chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+#chips::-webkit-scrollbar{display:none}
+#chips button{flex:0 0 auto;padding:5px 11px;font-size:13px;border-radius:999px;background:#1c1f66;box-shadow:none;border:1px solid #5a63d8}
+#hintBox{position:absolute;left:8px;right:8px;top:6px;background:#14164aee;border:1px solid #8a8fff;border-radius:12px;padding:7px 12px;font-size:13px;line-height:1.5;display:none;text-align:left;pointer-events:none}
+#hintBox.on{display:block}
+#zgrid{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}
+#zgrid .cardbtn{padding:8px 4px}
+#zgrid .e{font-size:30px}
+.lv{position:relative}
+#levels{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (min-width:720px){#levels{grid-template-columns:repeat(6,minmax(0,1fr))}}
+#ver{position:fixed;right:10px;bottom:6px;font-size:10px;color:#6f78c0;pointer-events:none}
+</style>
+<script src="../shared/are-offline.js" defer></script>
+</head>
+<body>
+<button id="exitBtn" type="button" aria-label="back">← もどる</button>
+<button id="sndBtn" type="button" aria-label="sound">🔊</button>
+<main id="app">
+  <section id="s-title" class="scr on">
+    <div class="logo">ことば<br>クラフト</div>
+    <p class="sub" id="tSub"></p>
+    <div class="menu">
+      <button id="bStages" type="button" class="big"></button>
+      <button id="bSand" type="button" class="teal"></button>
+      <button id="bZukan" type="button"></button>
+      <button id="bHow" type="button"></button>
+    </div>
+    <p class="hint" id="tNote"></p>
+  </section>
+
+  <section id="s-how" class="scr">
+    <h2 id="hT"></h2>
+    <div class="panel" id="hBody"></div>
+    <div class="row"><button id="bHowBack" type="button"></button></div>
+  </section>
+
+  <section id="s-sel" class="scr">
+    <h2 id="selT"></h2>
+    <div id="levels" class="grid"></div>
+    <div class="row"><button id="bSelBack" type="button"></button></div>
+  </section>
+
+  <section id="s-zukan" class="scr">
+    <h2 id="zT"></h2>
+    <p class="sub" id="zCount"></p>
+    <div id="zgrid" class="grid"></div>
+    <div class="row"><button id="bZBack" type="button"></button></div>
+  </section>
+
+  <section id="s-play" class="scr">
+    <div id="bar"><div id="nm"></div><span class="pill" id="wInfo"></span></div>
+    <div id="stageWrap"><canvas id="cv"></canvas><div id="hintBox"></div></div>
+    <div id="ctrl">
+      <form id="wf" autocomplete="off"><input id="wi" maxlength="14" enterkeyhint="done" autocapitalize="off" autocorrect="off" spellcheck="false"><button id="wMake" type="submit" class="big" style="padding:8px 16px;font-size:16px"></button></form>
+      <div id="chips"></div>
+      <div id="acts">
+        <button id="bGo" type="button" class="teal"></button>
+        <button id="bReset" type="button"></button>
+        <button id="bUndo" type="button">↩</button>
+        <button id="bRotL" type="button" title="Q">⟲</button>
+        <button id="bRotR" type="button" title="E">⟳</button>
+        <button id="bDel" type="button">🗑</button>
+        <button id="bSpeed" type="button">⏩ ×1</button>
+        <button id="bHint" type="button">💡</button>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="toast" class="toast"></div>
+<div class="modal" id="mClear"><div class="box"><h2 id="clT"></h2><div class="stars" id="clStars"></div><p class="sub" id="clB"></p>
+  <div class="row" style="margin-top:10px"><button id="clNext" type="button" class="big"></button><button id="clRetry" type="button"></button><button id="clSel" type="button"></button></div></div></div>
+<div id="ver">v1</div>
+<script src="./vendor/matter.min.js"></script>
+<script src="../shared/gk.js"></script>
+<script src="./js/wc-banned.js"></script>
+<script src="./js/wc-dict.js"></script>
+<script src="./js/wc-core.js"></script>
+<script src="./js/wc-stages.js"></script>
+<script src="./js/wc-ui.js"></script>
+</body>
+</html>
