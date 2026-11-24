@@ -298,7 +298,7 @@ export function start(ctx){
         cap.position.set(0, 0.26, 0); g.add(cap);
         const prop = new T.Mesh(new T.BoxGeometry(0.26, 0.02, 0.05), new T.MeshStandardMaterial({color: 0x6ecfff, roughness: 0.4}));
         prop.position.set(0, 0.33, 0); g.add(prop);
-        // ふわふわ ちいさな羽（布っぽい、虫の羽ではなく リボンのような形）
+        // ふわふわ ちいさな羽（布っぽい、リボンのような形）
         [-1, 1].forEach((side) => {
             const wing = new T.Mesh(new T.CircleGeometry(0.13, 12, 0, Math.PI), new T.MeshStandardMaterial({color: 0xffffff, roughness: 0.6, side: T.DoubleSide, transparent: true, opacity: 0.9}));
             wing.position.set(side * 0.2, 0.04, -0.02);
@@ -366,7 +366,7 @@ export function start(ctx){
         let fx = "";
         if(effects){
             if(effects.stagger) fx += " 😵つまずき中";
-            if(effects.slow) fx += " 🐌スロー中";
+            if(effects.slow) fx += " 🐢スロー中";
             if(effects.shield) fx += " 🧥ガード中";
             if(effects.speedBuff) fx += " 🥤ダッシュ中";
             if(effects.turnBuff) fx += " 👟スプリント中";
