@@ -13,19 +13,19 @@ const WORDS = [
     "カブトムシ", "かぶとむし", "クワガタ", "くわがた", "テントウムシ", "てんとうむし", "てんとう虫", "トンボ", "とんぼ", "バッタ", "ばった",
     "カマキリ", "かまきり", "コオロギ", "こおろぎ", "スズムシ", "すずむし", "セミの", "せみの", "ゴキブリ", "ごきぶり", "ムカデ", "むかで", "ゲジゲジ",
     "ダンゴムシ", "だんごむし", "ナメクジ", "なめくじ", "カタツムリ", "かたつむり", "ミミズ", "みみず", "サソリ", "アリの", "アリが", "アリを", "ありんこ", "アリンコ",
-    "クモの", "クモが", "クモを", "くもの巣", "クモの巣", "ハエ", "ホタル", "カナブン", "アブラムシ", "シロアリ", "百足",
+    "クモの", "クモが", "クモを", "くもの巣", "クモの巣", "ハエ", "ハチ", "ホタル", "カナブン", "アブラムシ", "シロアリ", "百足",
     "butterfly", "butterflies", "ladybug", "ladybird", "cockroach", "caterpillar", "dragonfly", "grasshopper", "beetle", "firefly", "centipede", "mosquito", "cicada", "termite"
 ];
 // 例外：ふつうの言葉・人の名前・注意書き（この文字列を消してから 調べる）
 const OK_PHRASES = [
     "がんばった", "頑張った", "ばったり", "当たりばったり", "あたりばったり", "ハチャメチャ", "ハチマキ", "ポテトンボ", "蛍光", "蝴蝶结", "蝴蝶",
     "トンボ(トリムマーク)", "トンボや塗り", "ほたる", "芦原",
-    "角ばった", "ばったん"
+    "角ばった", "ばったん", "ハチ公"
 ];
 // 「虫は 出さない」と 書いてある 注意書き（同じ行に これがあれば 例外）
 const NOTE_RE = /(一切|ぜったい|絶対|なし|入れな|出ない|出さな|出ません|禁止|NG|BAD|block|除外|使わな|無し|含まな|入って いな|入っていな|いない|ありません|ゼロ|無い)/;
 // 注意書き／禁止語リストそのもの（中に 虫の言葉が 並ぶのが 仕事のファイル）
-const SKIP_FILE = /(check-words\.js|check-bugs\.js|game6[\\/]js[\\/](pools|plan)\.js|[\\/]docs[\\/]|DEVLOG|story_bible|README|PROGRESS_NOTES|prompts?[\\/])/i;
+const SKIP_FILE = /(check-words\.js|check-bugs\.js|game6[\\/]js[\\/](pools|plan)\.js|wc-banned\.js|[\\/]docs[\\/]|DEVLOG|story_bible|README|PROGRESS_NOTES|prompts?[\\/])/i;
 const SKIP_DIR = new Set(["node_modules", ".git", "vendor", "lazy", "bgm", "bgm_src", "wasm"]);
 const EXT = /\.(js|mjs|json|html|css|md|txt|svg|cpp|h)$/i;
 const SKIP_NAME = /(three(\.min|\.module)?|\.bundle|precache|\.min)\b|chat\.bundle|game\.bundle|monsters\.json$/i;
@@ -58,7 +58,7 @@ for(const d of dirs){
                     let re;
                     if(/^[a-z]+$/i.test(w)) re = new RegExp("\\b" + w + "\\b", "i");
                     else if(/^[ァ-ヶー]+$/.test(w)) re = new RegExp("(^|[^ァ-ヶー])" + w + "($|[^ァ-ヶー])");       // カタカナだけの言葉は、前後がカタカナでないときだけ
-                    else if(/^[ぁ-ん]+$/.test(w)) re = new RegExp("(^|[^ぁ-ん])" + w + "($|[^ぁ-ん])");             // ひらがなだけの言葉は、前後がひらがなでないときだけ
+                    else if(/^[ぁ-ん]+$/.test(w) && w.length <= 3) re = new RegExp("(^|[^ぁ-ん])" + w + "($|[^ぁ-ん])");   // 短いひらがなの言葉は、前後がひらがなでないときだけ（長い言葉は そのまま調べる）
                     else re = null;
                     if(re ? re.test(line) : line.includes(w)) hit.push(w);
                 }

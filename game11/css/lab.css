@@ -1,0 +1,38 @@
+/* ARE 前代未聞ラボ：3本で 共通の デザイン */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#0d0a2a;color:#fff;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP","Noto Sans SC","Noto Sans KR",system-ui,sans-serif;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+body{background:radial-gradient(1200px 700px at 20% -10%,#3b1f8f 0%,transparent 60%),radial-gradient(900px 600px at 100% 10%,#0d7f93 0%,transparent 55%),#0d0a2a}
+#app{position:fixed;inset:0}
+.scr{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:safe center;gap:14px;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom));text-align:center;overflow:auto}
+.scr.on{display:flex}
+button{font:inherit;color:#fff;background:linear-gradient(#3a3d8f,#262a6b);border:1px solid #8a8fff;border-radius:14px;padding:10px 16px;cursor:pointer;touch-action:manipulation;box-shadow:0 3px 0 #14174a}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #14174a}
+button:disabled{opacity:.4}
+button.big{font-size:18px;font-weight:900;padding:14px 26px;border:0;color:#1a0b3a;background:linear-gradient(#ffe36a,#ffb02e);box-shadow:0 4px 0 #a06a00,0 0 26px rgba(255,200,60,.5)}
+button.pink{background:linear-gradient(#ff8ac7,#e0408f);box-shadow:0 3px 0 #8c1d58;border:0}
+button.teal{background:linear-gradient(#59e6d0,#17a893);box-shadow:0 3px 0 #0b6558;color:#04271f;border:0;font-weight:800}
+.logo{font-size:clamp(34px,9vw,64px);font-weight:900;letter-spacing:.04em;line-height:1.1;background:linear-gradient(90deg,#fff,#ffe36a 40%,#ff8ac7 75%,#7ae6ff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 14px rgba(120,80,255,.55))}
+.sub{margin:0;color:#c9d3ff;font-size:14px}
+.hint{margin:0;color:#9aa6dd;font-size:12px}
+h2{margin:0;font-size:22px}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.panel{width:min(94vw,560px);text-align:left;background:rgba(20,22,70,.78);border:1px solid #5a63d8;border-radius:16px;padding:12px 18px;backdrop-filter:blur(4px)}
+.panel p{margin:8px 0;font-size:14px;line-height:1.75;color:#e8ecff}
+#exitBtn{position:fixed;left:8px;top:calc(8px + env(safe-area-inset-top));z-index:40;padding:6px 12px;font-size:13px;border-radius:999px}
+#sndBtn{position:fixed;right:8px;top:calc(8px + env(safe-area-inset-top));z-index:40;padding:6px 11px;font-size:15px;border-radius:999px}
+.grid{display:grid;gap:10px;width:min(96vw,640px)}
+.cardbtn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 6px;border-radius:16px;background:linear-gradient(#2c2f86,#1d2060);border:1px solid #6b73f0;position:relative}
+.cardbtn b{font-size:20px}
+.cardbtn small{font-size:10.5px;color:#c4cdff;min-height:26px;line-height:1.25}
+.cardbtn .st{font-size:13px;letter-spacing:1px;color:#ffd35a}
+.cardbtn.locked{opacity:.4}
+.menu{display:flex;flex-direction:column;gap:12px;width:min(92vw,420px)}
+.menu button{width:100%;font-size:17px;padding:14px}
+.toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#12123aee;border:1px solid #8a8fff;border-radius:14px;padding:9px 16px;font-size:14px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60;max-width:92vw;text-align:center}
+.toast.on{opacity:1}
+.modal{position:fixed;inset:0;background:rgba(5,3,25,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal.on{display:flex}
+.modal .box{width:min(92vw,440px);background:linear-gradient(#26297a,#171a52);border:2px solid #8a8fff;border-radius:20px;padding:18px;text-align:center;box-shadow:0 0 40px rgba(120,100,255,.5)}
+.modal h2{font-size:26px;margin-bottom:6px}
+.stars{font-size:38px;letter-spacing:6px;color:#ffd35a;text-shadow:0 0 14px rgba(255,200,60,.8);margin:6px 0}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
