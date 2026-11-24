@@ -8,7 +8,7 @@
 <title>AREshoot</title>
 <meta name="theme-color" content="#0a0420">
 <meta name="description" content="厨房を舞台に自由に走り回って撃ち合う、本格3Dガンシューティング。ライバルシェフをたおして、鬼軍曹シェフ（ボス）を撃破しよう。全14皿。">
-<script src="../protect.js"></script><script src="../shared/are-padmap.js"></script>
+<script src="../protect.js"></script><script src="../shared/are-padmap.js"></script><script src="../shared/are-pad.js"></script><script src="./js/pad9.js"></script>
 <link rel="stylesheet" href="./style.css">
 <script src="../shared/are-offline.js" defer></script>
 </head>
@@ -32,6 +32,7 @@
     <div class="row">
       <button id="bHow" type="button">📖 あそびかた</button>
       <button id="bSet" type="button">⚙ せってい</button>
+      <button id="bPad" type="button" data-are-padmap>🎮 ボタン設定（プロコン）</button>
     </div>
     <p class="hint">厨房を自由に走り回り、物陰にかくれながら、むかってくるライバルシェフを銃で撃退しよう。虫は一切出てきません。</p>
   </section>
@@ -40,6 +41,7 @@
     <h2>あそびかた</h2>
     <div class="panel">
       <p><b>PC：</b> W/A/S/D または ↑←↓→ キー（→＝右、←＝左、↑＝前、↓＝うしろ）で移動。マウスを動かして視点とねらいを操作し、左クリックで発射。R＝リロード、Shift＝食材グレネード。1/2/3キーまたはQキーで武器を持ち替え。</p>
+      <p><b>プロコン（ゲームパッド）：</b> 左スティック／十字キー＝移動、右スティック＝視点、ZR か A＝発射、R か B＝グレネード、X＝リロード、L／ZL か Y＝武器の持ち替え、＋＝タイトルにもどる。メニューは 十字キーで選んで A で決定、B でもどります。「🎮 ボタン設定」で、Xbox・Steam 配置（下＝A）にも切りかえられます。（⚔ バトルロワイヤル：ZR／R＝発射、ZL＝ダッシュ、B＝しゃがむ、A＝ひろう・ジャンプ、X＝リロード、Y＝かいふく、L＝つぎの武器）</p>
       <p><b>スマホ・タブレット：</b> 画面左ドラッグで移動、画面右ドラッグで視点操作。右下の🔥ボタンで発射、🔄でリロード、💣でグレネード。画面下の武器アイコンをタップして持ち替え。</p>
       <p><b>武器：</b> 🔫ライフル（連射は遅いが一撃が重い）／⚡サブマシンガン（連射が速いが威力は低く射程も短い）／🎯スナイパーライフル（射程と威力は最大だが連射が非常に遅い）。弾倉は武器ごとに別々に管理されます。</p>
       <p>敵の弾（食べもの）はゆっくり飛んでくるので、見てから動いて避けられます。大きな樽やなべの物陰にかくれれば、相手の弾を防げます。</p>

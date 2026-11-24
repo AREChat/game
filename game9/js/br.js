@@ -92,6 +92,20 @@ function groundTex(){
 // ---------- 状態 ----------
 let S = null, renderer = null, scene = null, camera = null, raf = 0, active = false, opts = null, lastT = 0, bgmEl = null, actx = null, sndT = 0;
 const Inp = {mf: 0, ms: 0, yaw: 0, fire: false, sprint: false, rel: false, use: false, pick: false, jump: false, slot: -1};
+// ゲームパッド（プロコン／ニンテンドー配置が標準）：左スティック・十字＝いどう／右スティック＝みまわし／ZR か R＝うつ／ZL＝ダッシュ／B＝しゃがむ
+//   A＝ひろう・ジャンプ（飛行機から）／X＝リロード／Y＝かいふく／L＝つぎの武器／＋＝タイトルにもどる
+const PD = {f: 0, s: 0, fire: false, sprint: false, crouch: false};
+function padFrame(dt){
+    const P = window.Pad9 ? window.Pad9.read() : null;
+    if(!P || !P.on){ PD.f = PD.s = 0; PD.fire = PD.sprint = PD.crouch = false; return; }
+    PD.f = P.f; PD.s = P.s; PD.fire = P.h.zr || P.h.r; PD.sprint = P.h.zl || P.h.l3; PD.crouch = P.h.b;
+    Inp.yaw -= P.rx * 2.6 * ((opts && opts.settings && opts.settings.sens) || 1.1) * dt;
+    if(P.e.a){ Inp.jump = true; Inp.pick = true; }
+    if(P.e.x) Inp.rel = true;
+    if(P.e.y) Inp.use = true;
+    if(P.e.l && S){ for(let k = 1; k <= 3; k++){ const i = (S.player.cur + k) % 3; if(S.player.slots[i]){ Inp.slot = i; break; } } }
+    if(P.e.plus){ window.__g9PadBackT = performance.now(); const eb = document.getElementById("exitBtn"); if(eb) eb.click(); }
+}
 const keys = {};
 
 function beep(freq, dur, type, vol){
@@ -453,7 +467,7 @@ function playerUpdate(a, dt){
         return;
     }
     const fw = {f: 0, s: 0};
-    let mf = Inp.mf, ms = Inp.ms;
+    let mf = Inp.mf + PD.f, ms = Inp.ms + PD.s;
     if(keys.KeyW || keys.ArrowUp) mf += 1; if(keys.KeyS || keys.ArrowDown) mf -= 1; if(keys.KeyD || keys.ArrowRight) ms += 1; if(keys.KeyA || keys.ArrowLeft) ms -= 1;
     mf = clamp(mf, -1, 1); ms = clamp(ms, -1, 1); const ml = Math.hypot(mf, ms); if(ml > 1){ mf /= ml; ms /= ml; }
     a.yaw = Inp.yaw;
@@ -465,15 +479,15 @@ function playerUpdate(a, dt){
         return;
     }
     timers(a, dt);
-    const sprint = (keys.ShiftLeft || keys.ShiftRight || Inp.sprint || ml > .94 && S.touch) && !S.crouch && a.healT <= 0;
-    S.crouch = !!(keys.KeyC || keys.ControlLeft);
+    const sprint = (keys.ShiftLeft || keys.ShiftRight || Inp.sprint || PD.sprint || ml > .94 && S.touch) && !S.crouch && a.healT <= 0;
+    S.crouch = !!(keys.KeyC || keys.ControlLeft || PD.crouch);
     let speed = (sprint ? 8.0 : 5.6) * (S.crouch ? .55 : 1) * (a.healT > 0 ? .55 : 1);
     a.x += (mf * sinY - ms * cosY) * speed * dt; a.z += (mf * cosY + ms * sinY) * speed * dt; pushOut(a); a.walk += ml * dt * 9;
     // こうげき
     if(Inp.slot >= 0){ if(a.slots[Inp.slot]){ a.cur = Inp.slot; a.reloadT = 0; a.healT = 0; a.healKind = null; beep(700, .05, "triangle", .22); } Inp.slot = -1; }
     if(Inp.rel){ Inp.rel = false; startReload(a); }
     if(Inp.use){ Inp.use = false; if(!useItem(a)) toast("いま つかえる かいふくは ありません"); }
-    if(Inp.fire){
+    if(Inp.fire || PD.fire){
         let aim = a.yaw;
         if(S.assist){ // エイムアシスト：まえ方向の 近い 敵に すこし すいつく
             let bt = null, bd = 1e9; const w = curW(a), rng = w ? WD[w.type].range : 40;
@@ -672,6 +686,7 @@ function loop(t){
     if(!active) return;
     raf = requestAnimationFrame(loop);
     let dt = (t - lastT) / 1000; lastT = t; if(dt > .05) dt = .05; if(dt < 0) dt = 0;
+    padFrame(dt);
     step(dt); render(dt);
     hudT -= dt; if(hudT <= 0){ hudT = .08; hud(); }
 }

@@ -145,6 +145,14 @@
     if(inGame){ confirmBox("いまの事件を やめて、もどる？<br>（進みぐあいは 保存されないよ）", "もどる", leave); return; }
     leave();
   });
+  // プロコンの B（もどる）＝ Esc：ひらいている確認の窓は 閉じ、なければ「もどる」を押す（are-pad.js が Esc を 2回送るので、2回目は無視）
+  window.addEventListener("keydown", function(e){
+    if(e.key !== "Escape") return;
+    var n = performance.now(); if(window.__g6EscT && n - window.__g6EscT < 150) return; window.__g6EscT = n;
+    var m = document.querySelector(".modal");
+    if(m){ var first = m.querySelector("button"); if(first) first.click(); return; }
+    if(btnBack.style.visibility !== "hidden") btnBack.click();
+  });
   var btnExit = document.getElementById("btnExit");
   if(btnExit){ btnExit.textContent = window.AREExit ? AREExit.label() : "終了"; btnExit.addEventListener("click", function(){ if(window.AREExit) AREExit.open(); }); }
 
