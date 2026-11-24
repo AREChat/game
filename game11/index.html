@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ARE 前代未聞ラボ｜打った言葉が「もの」になる</title>
+<meta name="theme-color" content="#0d0a2a">
+<meta name="description" content="打った言葉がそのまま物になる「ことばクラフト」ほか、ARE オリジナルの新しいしくみのゲームを集めた「前代未聞ラボ」。日本語・英語・中国語・韓国語に対応。">
+<script src="../protect.js"></script>
+<link rel="stylesheet" href="./css/lab.css">
+<style>
+#lab{gap:12px}
+#cards{display:flex;flex-direction:column;gap:12px;width:min(94vw,520px)}
+.gc{display:flex;gap:12px;align-items:center;text-align:left;padding:14px 16px;border-radius:18px;border:1px solid #6b73f0;background:linear-gradient(#2c2f86,#1d2060);color:#fff;text-decoration:none;position:relative;box-shadow:0 4px 0 #14174a}
+.gc .em{font-size:40px;flex:0 0 auto}
+.gc b{display:block;font-size:19px}
+.gc small{display:block;color:#c4cdff;font-size:12.5px;line-height:1.5;margin-top:2px}
+.gc .tag{position:absolute;right:10px;top:8px;font-size:11px;font-weight:800;border-radius:999px;padding:1px 9px;background:#ffe36a;color:#2b1a00}
+.gc.soon{opacity:.55;pointer-events:none;filter:saturate(.6)}
+.gc.soon .tag{background:#8a8fff;color:#fff}
+.gc:active{transform:translateY(2px)}
+#lg{display:flex;gap:6px}
+#lg button{padding:4px 10px;font-size:12px;border-radius:999px}
+#lg button.on{background:linear-gradient(#ffe36a,#ffb02e);color:#1a0b3a;border:0}
+</style>
+<script src="../shared/are-offline.js" defer></script>
+</head>
+<body>
+<button id="exitBtn" type="button" aria-label="back">← もどる</button>
+<main id="app">
+  <section id="lab" class="scr on">
+    <div class="logo">ARE<br>前代未聞ラボ</div>
+    <p class="sub" id="sub"></p>
+    <div id="cards"></div>
+    <div id="lg"></div>
+    <p class="hint" id="note"></p>
+  </section>
+</main>
+<script src="../shared/gk.js"></script>
+<script>
+(function(){
+  "use strict";
+  var T = {
+    sub: {ja: "ほかの ゲームには ない、ARE オリジナルの しくみを あつめました。", en: "Games built on mechanics you won't find anywhere else.", zh: "汇集了别处没有的 ARE 原创玩法。", ko: "다른 곳에는 없는 ARE 오리지널 게임 모음."},
+    note: {ja: "どれも ブラウザだけで あそべます（オフラインOK）。つづきは じゅんびちゅう。", en: "All playable in the browser (offline OK). More coming soon.", zh: "全部在浏览器中即可游玩（支持离线）。更多内容准备中。", ko: "모두 브라우저에서 바로 플레이 (오프라인 가능). 계속 추가됩니다."},
+    back: {ja: "← もどる", en: "← Back", zh: "← 返回", ko: "← 돌아가기"},
+    soon: {ja: "じゅんびちゅう", en: "Coming soon", zh: "准备中", ko: "준비 중"},
+    ready: {ja: "あそべる", en: "Playable", zh: "可玩", ko: "플레이 가능"}
+  };
+  var GAMES = [
+    {em: "✍️", href: "words.html", ready: 1,
+      n: {ja: "ことばクラフト", en: "Word Craft", zh: "文字工坊", ko: "단어 공작소"},
+      d: {ja: "打った言葉が、そのまま「もの」になる物理パズル。「はし」「ばくだん」「おおきい いし」…なにを書いても ふしぎな ものが できる！", en: "Type a word and it becomes a real object in a physics puzzle. \"bridge\", \"bomb\", \"big stone\"… anything you write turns into something!", zh: "写下的词会变成真正的物体！「桥」「炸弹」「大石头」……写什么都能变出奇妙的东西。", ko: "쓴 단어가 그대로 물체가 되는 물리 퍼즐. \"다리\", \"폭탄\", \"큰 돌\"… 무엇을 써도 신기한 물건이 생겨요!"}},
+    {em: "☯️", href: "#", ready: 0,
+      n: {ja: "ふたごの世界", en: "Twin Worlds", zh: "双生世界", ko: "쌍둥이 세계"},
+      d: {ja: "かがみあわせの 2つの せかいを、1つの ボタンで 同時に あやつる パズル。", en: "Control two mirrored worlds at once with one set of buttons.", zh: "用同一组按键同时操控两个镜像世界的解谜游戏。", ko: "거울처럼 마주한 두 세계를 한 번에 조종하는 퍼즐."}},
+    {em: "🎰", href: "#", ready: 0,
+      n: {ja: "ルール・ルーレット", en: "Rule Roulette", zh: "规则轮盘", ko: "룰 룰렛"},
+      d: {ja: "ミニゲームの「ルール」が 毎回 かわる！ ルーレットで きまった ルールで ハイスコアを めざそう。", en: "The rules change every round! Chase a high score under whatever the roulette picks.", zh: "小游戏的「规则」每次都会改变！在轮盘选出的规则下冲击高分。", ko: "미니게임의 \"규칙\"이 매번 바뀌어요! 룰렛이 정한 규칙으로 하이스코어에 도전!"}}
+  ];
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]; }); }
+  function L(o){ var l = GK.lang(); return o[l] || o.ja; }
+  function render(){
+    var l = GK.lang();
+    document.documentElement.lang = l;
+    document.getElementById("sub").textContent = L(T.sub);
+    document.getElementById("note").textContent = L(T.note);
+    document.getElementById("exitBtn").textContent = L(T.back);
+    document.getElementById("cards").innerHTML = GAMES.map(function(g){
+      return '<a class="gc' + (g.ready ? "" : " soon") + '" href="' + g.href + '"><span class="em">' + g.em + '</span><span><b>' + esc(L(g.n)) + '</b><small>' + esc(L(g.d)) + '</small></span><span class="tag">' + esc(L(g.ready ? T.ready : T.soon)) + '</span></a>';
+    }).join("");
+    document.getElementById("lg").innerHTML = [["ja", "日本語"], ["en", "English"], ["zh", "中文"], ["ko", "한국어"]].map(function(p){ return '<button type="button" data-l="' + p[0] + '" class="' + (p[0] === l ? "on" : "") + '">' + p[1] + '</button>'; }).join("");
+  }
+  document.getElementById("lg").addEventListener("click", function(e){ var b = e.target.closest("button"); if(!b) return; GK.LS.set("are_lang", b.dataset.l); render(); });
+  document.getElementById("exitBtn").onclick = function(){
+    try{ var b = new URLSearchParams(location.search).get("back"); if(b && /^https:\/\/arechat\.github\.io\//.test(b)){ location.href = b; return; } }catch(_e){}
+    location.href = "../index.html";
+  };
+  render();
+})();
+</script>
+</body>
+</html>

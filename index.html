@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0a1030">
 <title>ARE ゲーム ｜ あそびたいゲームをえらぼう</title>
-<meta name="description" content="AREのゲームをまとめた入口です。RPG・カード・推理・ミニゲームなど、ブラウザですぐあそべます（無料）。">
+<meta name="description" content="AREのゲームをまとめた入口です。RPG・推理・パズル・アクション・カード・ミニゲームなど、ブラウザですぐあそべます（無料）。">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 <style>
 :root{color-scheme:dark;--bg:#080d24;--panel:#121a3d;--panel2:#18224d;--line:#2b3868;--text:#eef1ff;--muted:#a9b4e0;--accent:#7aa2ff;--accent2:#b58bff;--gold:#ffd24a}
@@ -31,7 +31,12 @@ h1{font-size:clamp(28px,6.5vw,46px);margin:.35em 0 .1em;line-height:1.25;backgro
 .chip{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:8px 16px;font:600 14px/1 inherit;cursor:pointer;min-height:40px}
 .chip[aria-pressed=true]{background:linear-gradient(180deg,#4d6ff0,#3552c9);border-color:#8fa8ff}
 .chip:focus-visible,.card:focus-visible,.foot a:focus-visible,.back:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));gap:16px}
+.grid{display:block}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));gap:16px}
+.gh{margin:26px 4px 12px;font-size:19px;font-weight:900;letter-spacing:.04em;display:flex;align-items:center;gap:8px}
+.gh small{font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 9px}
+.grp[data-grp=new] .gh{color:var(--gold)}
+.grp[data-grp=new] .card{border-color:#c9a23a;box-shadow:0 0 0 1px rgba(255,210,74,.35),0 10px 30px rgba(255,170,40,.18)}
 .card{position:relative;display:flex;flex-direction:column;text-decoration:none;border-radius:18px;overflow:hidden;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);transition:transform .18s,border-color .18s,box-shadow .18s}
 .card:hover{transform:translateY(-4px);border-color:#6f8aff;box-shadow:0 12px 30px rgba(20,30,100,.55)}
 .card:active{transform:translateY(-1px)}
@@ -71,10 +76,13 @@ header.top{position:relative}
 
   <nav class="chips" id="chips" aria-label="ゲームのしぼりこみ">
     <button type="button" class="chip" data-f="all" aria-pressed="true">すべて</button>
+    <button type="button" class="chip" data-f="new" aria-pressed="false">🆕 しんさく</button>
     <button type="button" class="chip" data-f="rpg" aria-pressed="false">🗡️ RPG</button>
+    <button type="button" class="chip" data-f="mystery" aria-pressed="false">🔍 推理</button>
+    <button type="button" class="chip" data-f="puzzle" aria-pressed="false">🧩 パズル</button>
+    <button type="button" class="chip" data-f="action" aria-pressed="false">⚔️ アクション・シューティング</button>
     <button type="button" class="chip" data-f="card" aria-pressed="false">🃏 カード</button>
-    <button type="button" class="chip" data-f="mystery" aria-pressed="false">🔍 推理・パズル</button>
-    <button type="button" class="chip" data-f="casual" aria-pressed="false">🎰 ミニゲーム・のんびり</button>
+    <button type="button" class="chip" data-f="park" aria-pressed="false">🎡 テーマパーク・ミニゲーム</button>
   </nav>
 
   <main>
@@ -109,15 +117,16 @@ header.top{position:relative}
     {id:"are-quest", name:"ARE", sub:"〜そういうときは、AREだ！〜", desc:"王道ふうの2D RPG。過去へタイムスリップして、メモリを取りもどそう。セーブ3つ・自動戦闘・自動レベル上げ。", href:"game/index.html", cat:"rpg", tags:["2D","RPG","やりこみ"], emoji:"🗡️", c1:"#2a4a9a", c2:"#7a3aa8", img:"thumbs/are-quest.webp"},
     {id:"quest2-3", name:"ARE QUEST 2・3", sub:"AREを入手せよ ／ 月影のあしあと", desc:"ストーリー重視の3D・RPG。前日譚から後日談まで、物語を楽しむシリーズです。おはなしは「2 → 3 → ARE QUEST」の順につながります。", href:"game2/index.html", cat:"rpg", tags:["3D","RPG","ストーリー"], emoji:"📖", c1:"#25507a", c2:"#2a2f7a", img:"thumbs/quest2.webp"},
     {id:"starweaver", name:"星紡ぎの旅人", sub:"GAME6", desc:"星の道しるべをたどる、オリジナルの冒険ファンタジーJRPG。探索とバトルを楽しもう。", href:"game4/starweaver/index.html", cat:"rpg", tags:["RPG","ファンタジー"], emoji:"⭐", c1:"#3a3a9a", c2:"#a04a8a", img:"thumbs/starweaver.webp"},
-    {id:"dream", name:"ドリーム・フロンティア", sub:"3Dテーマパーク", desc:"一人称で歩く、オリジナルの3Dテーマパーク。ライドやアトラクションをめぐってスタンプを集めよう。", href:"dream-frontier/index.html", cat:"casual", tags:["3D","一人称","スタンプ集め"], emoji:"🎡", c1:"#1f6a8a", c2:"#7a4ab0", img:"thumbs/dream.webp"},
+    {id:"dream", name:"ドリーム・フロンティア", sub:"3Dテーマパーク", desc:"一人称で歩く、オリジナルの3Dテーマパーク。ライドやアトラクションをめぐってスタンプを集めよう。", href:"dream-frontier/index.html", cat:"park", tags:["3D","一人称","スタンプ集め"], emoji:"🎡", c1:"#1f6a8a", c2:"#7a4ab0", img:"thumbs/dream.webp"},
     {id:"card", name:"ARE CARD", sub:"〜そういうときは、AREだ！〜", desc:"3Dの盤面で遊ぶカードバトル。デッキを選んでCPUと対戦します。", href:"game4/card/index.html", cat:"card", tags:["カード","3D","CPU対戦"], emoji:"🃏", c1:"#5a2a7a", c2:"#2a3f8a", img:"thumbs/card.webp"},
     {id:"daifugo", name:"大富豪", sub:"本格ルール", desc:"3〜2の技・縛り・革命・階級・カード交換。ルールは自由に変えられます。", href:"https://arechat.github.io/ARE/daifugo/index.html", cat:"card", tags:["カード","ルール自由"], emoji:"👑", c1:"#7a5a1f", c2:"#4a2a60", ext:true},
     {id:"mystery", name:"推理ゲーム", sub:"全20章｜やりすぎヒーロー伝説つき", desc:"会話と証言を集めて、マス目のパズルで事件を解く、オリジナルの推理ゲーム。毎回ちがう事件、ノートに○×をつけながら推理。全10章＋「やりすぎヒーロー伝説」10章（虫は一切出てきません）。", href:"game6/index.html", cat:"mystery", tags:["推理","全20章","○×メモ"], emoji:"🔍", c1:"#26406a", c2:"#1f2a5a", img:"thumbs/mystery.webp"},
-    {id:"blocks", name:"ARE BLOCKS", sub:"おもちゃブロック", desc:"おもちゃブロック風の落ち物パズル。ブロックをうまく積んで、そろえて消そう。", href:"game5/blocks/index.html", cat:"mystery", tags:["落ち物パズル","ブロック"], emoji:"🧱", c1:"#a05a2a", c2:"#7a2a5a"},
-    {id:"offline", name:"OFFLINE PARADISE", sub:"電波がなくてもOK", desc:"ルーレットで選ばれる5つのミニゲーム。コインをためて図鑑をうめよう。", href:"game7/index.html", cat:"casual", tags:["ミニゲーム","オフラインOK"], emoji:"🎰", c1:"#a03a6a", c2:"#3a2a8a"},
-    {id:"game8", name:"GAME8", sub:"アクション＆レース", desc:"横スクロールアクションと、コースを走るレース。3Dグラフィックで描く、オリジナルの2in1ゲーム。", href:"game8/index.html", cat:"casual", tags:["3D","アクション","レース"], emoji:"🏁", c1:"#1f6ab0", c2:"#2a3a9a", img:"thumbs/game8.webp"},
-    {id:"game9", name:"AREshoot", sub:"美食の晩餐会＋バトルロワイヤル", desc:"向かってくる食べもの・調理道具をねらって撃つ3Dシューティングギャラリー（全14コース）に、新モード「バトルロワイヤル」が登場。島に降りて武器をひろい、せばまるエリアで最後の1人をめざそう（虫は一切出てきません）。", href:"game9/index.html", cat:"casual", tags:["3D","シューティング","バトロワ","クラシック音楽"], emoji:"🍽️", c1:"#e05a2a", c2:"#3a1c63"},
-    {id:"game10", name:"ループ・ラボ", sub:"過去の自分と協力パズル", desc:"ボタンを踏んだまま「ぶんしん」を作って、つぎのループで自分のゴーストと力を合わせ、トビラを開いて出口へ。ターン制のタイムループ・パズル、全10ステージ（虫は一切出てきません）。", href:"game10/index.html", cat:"mystery", tags:["パズル","タイムループ","ターン制"], emoji:"⏪", c1:"#1f8a9a", c2:"#3a3a9a"}
+    {id:"blocks", name:"ARE BLOCKS", sub:"おもちゃブロック", desc:"おもちゃブロック風の落ち物パズル。ブロックをうまく積んで、そろえて消そう。", href:"game5/blocks/index.html", cat:"puzzle", tags:["落ち物パズル","ブロック"], emoji:"🧱", c1:"#a05a2a", c2:"#7a2a5a"},
+    {id:"offline", name:"OFFLINE PARADISE", sub:"電波がなくてもOK", desc:"ルーレットで選ばれる5つのミニゲーム。コインをためて図鑑をうめよう。", href:"game7/index.html", cat:"park", tags:["ミニゲーム","オフラインOK"], emoji:"🎰", c1:"#a03a6a", c2:"#3a2a8a"},
+    {id:"game8", name:"GAME8", sub:"アクション＆レース", desc:"横スクロールアクションと、コースを走るレース。3Dグラフィックで描く、オリジナルの2in1ゲーム。", href:"game8/index.html", cat:"action", tags:["3D","アクション","レース"], emoji:"🏁", c1:"#1f6ab0", c2:"#2a3a9a", img:"thumbs/game8.webp"},
+    {id:"game9", name:"AREshoot", sub:"美食の晩餐会＋バトルロワイヤル", desc:"向かってくる食べもの・調理道具をねらって撃つ3Dシューティングギャラリー（全14コース）に、新モード「バトルロワイヤル」が登場。島に降りて武器をひろい、せばまるエリアで最後の1人をめざそう（虫は一切出てきません）。", href:"game9/index.html", cat:"action", tags:["3D","シューティング","バトロワ","クラシック音楽"], emoji:"🍽️", c1:"#e05a2a", c2:"#3a1c63"},
+    {id:"game10", name:"ループ・ラボ", sub:"過去の自分と協力パズル", desc:"ボタンを踏んだまま「ぶんしん」を作って、つぎのループで自分のゴーストと力を合わせ、トビラを開いて出口へ。ターン制のタイムループ・パズル、全10ステージ（虫は一切出てきません）。", href:"game10/index.html", cat:"puzzle", tags:["パズル","タイムループ","ターン制"], emoji:"⏪", c1:"#1f8a9a", c2:"#3a3a9a"},
+    {id:"game11", name:"ARE 前代未聞ラボ", sub:"ことばクラフト（あそべる）＋2本じゅんびちゅう", desc:"打った言葉がそのまま「もの」になる物理パズル「ことばクラフト」が あそべます。鏡の2つの世界を同時にあやつる「ふたごの世界」と、ルールが毎回かわる「ルール・ルーレット」も じゅんびちゅう（虫は一切出てきません）。", href:"game11/index.html", cat:"puzzle", isNew:1, tags:["パズル","物理","言葉","4か国語"], emoji:"🧪", c1:"#7a3cff", c2:"#16b8c8"},
   ];
 
   var grid = document.getElementById("grid"), empty = document.getElementById("empty"), resume = document.getElementById("resume");
@@ -129,16 +138,22 @@ header.top{position:relative}
     if(!back || g.ext) return g.href;
     return g.href + (g.href.indexOf("?") < 0 ? "?" : "&") + "back=" + encodeURIComponent(back);
   }
-  function card(g){
+  function card(g, dup){
     var cover = '<div class="cover" style="--c1:' + g.c1 + ';--c2:' + g.c2 + '"><span class="emoji" aria-hidden="true">' + g.emoji + '</span>' +
       (g.img ? '<img src="' + g.img + '" alt="" loading="lazy" decoding="async" onerror="this.remove()">' : '') +
       (g.id === last ? '<span class="ribbon">前回あそんだ</span>' : '') + '</div>';
-    return '<a class="card" data-id="' + g.id + '" data-cat="' + g.cat + '" href="' + esc(url(g)) + '"' + (g.ext ? ' rel="noopener"' : '') + '>' + cover +
+    return '<a class="card' + (dup ? ' dupnew' : '') + '" data-id="' + g.id + '" data-cat="' + g.cat + '" href="' + esc(url(g)) + '"' + (g.ext ? ' rel="noopener"' : '') + '>' + cover +
       '<div class="body"><h2 class="name">' + esc(g.name) + '<small>' + esc(g.sub) + '</small></h2><p class="desc">' + esc(g.desc) + '</p>' +
       '<div class="tags">' + g.tags.map(function(t){ return '<span class="tag">' + esc(t) + '</span>'; }).join("") + '</div>' +
       '<span class="play">▶ あそぶ</span></div></a>';
   }
-  grid.innerHTML = GAMES.map(card).join("");
+  var GROUPS = [["new", "🆕 しんさく"], ["rpg", "🗡️ RPG"], ["mystery", "🔍 推理"], ["puzzle", "🧩 パズル"], ["action", "⚔️ アクション・シューティング"], ["card", "🃏 カード"], ["park", "🎡 テーマパーク・ミニゲーム"]];
+  // ジャンルごとに まとめて ならべる（しんさくは 上に。ゲーム自体は もとのジャンルにも のる）
+  grid.innerHTML = GROUPS.map(function(gp){
+    var list = GAMES.filter(function(g){ return gp[0] === "new" ? g.isNew : g.cat === gp[0]; });
+    if(!list.length) return "";
+    return '<section class="grp" data-grp="' + gp[0] + '"><h2 class="gh">' + esc(gp[1]) + ' <small>' + list.length + '</small></h2><div class="cg">' + list.map(function(g){ return card(g, gp[0] !== "new" && g.isNew); }).join("") + '</div></section>';
+  }).join("");
 
   var lg = GAMES.filter(function(g){ return g.id === last; })[0];
   if(lg){
@@ -152,16 +167,22 @@ header.top{position:relative}
   });
   resume.addEventListener("click", function(){ if(lg){ try{ localStorage.setItem(KEY, lg.id); }catch(_e){} } });
 
+  function applyFilter(f){
+    var shown = 0;
+    [].forEach.call(grid.querySelectorAll(".grp"), function(sec){
+      var ok = f === "all" ? true : sec.dataset.grp === f, cnt = 0;
+      [].forEach.call(sec.querySelectorAll(".card"), function(c){ var vis = ok && !(f === "all" && c.classList.contains("dupnew")); c.style.display = vis ? "" : "none"; if(vis) cnt++; });
+      sec.style.display = (ok && cnt) ? "" : "none"; shown += cnt;
+    });
+    empty.style.display = shown ? "none" : "block";
+  }
   document.getElementById("chips").addEventListener("click", function(e){
     var b = e.target.closest ? e.target.closest(".chip") : null;
     if(!b) return;
-    var f = b.dataset.f, shown = 0;
     [].forEach.call(document.querySelectorAll(".chip"), function(c){ c.setAttribute("aria-pressed", c === b ? "true" : "false"); });
-    [].forEach.call(grid.querySelectorAll(".card"), function(c){
-      var ok = f === "all" || c.dataset.cat === f; c.style.display = ok ? "" : "none"; if(ok) shown++;
-    });
-    empty.style.display = shown ? "none" : "block";
+    applyFilter(b.dataset.f);
   });
+  applyFilter("all");
 })();
 </script>
 <script>/* ゲーム入口もオフラインで開けるように、サービスワーカーを登録 */(function(){try{if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1")){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js",{scope:"./"}).catch(function(){});});}}catch(_e){}})();</script>
