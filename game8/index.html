@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="are-orient" content="landscape">
+<script src="../shared/are-orient.js"></script>
 <title>GAME8 〜アクション＆レース〜</title>
 <meta name="theme-color" content="#06101f">
 <meta name="description" content="横スクロールアクションと、コースを走るレース。3DグラフィックでブラウザからすぐあそべるオリジナルゲームGAME8。">
@@ -37,9 +39,9 @@
       <h3>🏃 アクション</h3>
       <p>左右で移動、ジャンプで飛びます。敵の上に乗ると倒せます。穴に落ちないように、コインを集めてゴールの旗を目指しましょう。</p>
       <h3>🏁 レース</h3>
-      <p>自動で前に進みます。左右でハンドル操作してコースをはずれないように走り、CPUと順位を競います。コースの外に出ると速度が落ちます。</p>
+      <p>ランナーが自動で前に走ります。左右で走る向きを変えて、コースをはずれないように走り、CPUのランナーと順位を競います。コースの外に出ると速度が落ちます。</p>
       <h3>🎮 プロコン・ゲームパッド</h3>
-      <p>つないだ状態でボタンを押すと、自動で使えるようになります。十字キー／左スティックで移動、A（B・X・Y も同じ）でジャンプ・アクセル、＋でいちじ停止。タイトルは A＝アクション、X＝レースでも選べます。ボタンの配置は「🎮 ボタン設定」でかえられます。</p>
+      <p>つないだ状態でボタンを押すと、自動で使えるようになります。十字キー／左スティックで移動、A（B・X・Y も同じ）でジャンプ・ダッシュ、＋でいちじ停止。タイトルは A＝アクション、X＝レースでも選べます。ボタンの配置は「🎮 ボタン設定」でかえられます。</p>
     </div>
     <button id="howBack" type="button">もどる</button>
   </section>
@@ -68,7 +70,7 @@
     <button class="tb rt" data-k="right" aria-label="右">▶</button>
   </div>
   <div id="padR" class="grp">
-    <button class="tb a" data-k="jump" aria-label="ジャンプ・アクセル">A</button>
+    <button class="tb a" data-k="jump" aria-label="ジャンプ・ダッシュ">A</button>
   </div>
 </div>
 
@@ -77,6 +79,29 @@
 <script src="../shared/are-mode.js"></script>
 <script src="../shared/game-nav.js"></script>
 <script src="../shared/game-exit.js"></script>
+<script src="../shared/feature-panel.js"></script>
+<script>(function(){
+    if(!window.AREFeaturePanel) return;
+    window.AREFeaturePanel.init({
+        gameId: "game8",
+        title: "🏁 レース せいせき分析＆実績",
+        lowerIsBetter: true,
+        unit: "秒",
+        rules: [
+            {id:"g8_first", title:"初レース完走", desc:"1回 レースを おわらせる", icon:"🏁", field:"races", op:"gte", value:1},
+            {id:"g8_10races", title:"レース常連", desc:"10回 レースする", icon:"🏃", field:"races", op:"gte", value:10},
+            {id:"g8_50races", title:"百戦錬磨", desc:"50回 レースする", icon:"🛣️", field:"races", op:"gte", value:50},
+            {id:"g8_firstwin", title:"はじめての1位", desc:"レースで 1位になる", icon:"🥇", field:"wins", op:"gte", value:1},
+            {id:"g8_5wins", title:"勝ちぐせ", desc:"1位に 5回なる", icon:"🏆", field:"wins", op:"gte", value:5},
+            {id:"g8_podium", title:"表彰台の常連", desc:"最高順位が 3位以内", icon:"🎖️", field:"bestRankInv", op:"gte", value:1}
+        ],
+        getLiveStats: function(){
+            var rec = {races:0, wins:0, bestRank:99};
+            try{ rec = JSON.parse(localStorage.getItem("g8_race_rec") || "null") || rec; }catch(_e){}
+            return {races: rec.races || 0, wins: rec.wins || 0, bestRank: rec.bestRank || 99, bestRankInv: (rec.bestRank && rec.bestRank <= 3) ? 1 : 0};
+        }
+    });
+})();</script>
 <script src="./js/game8.wasm.js"></script>
 <script type="module" src="./js/core.js"></script>
 <script src="../shared/title-secrets.js"></script>

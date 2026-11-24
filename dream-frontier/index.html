@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8"><script src="../protect.js"></script><script src="../shared/are-padmap.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="are-orient" content="landscape">
+<script src="../shared/are-orient.js"></script>
 <title>ドリーム・フロンティア</title>
 <meta name="description" content="一人称で あそぶ、オリジナルの 3D テーマパーク RPG。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,7 +15,8 @@
 <script src="../shared/are-offline.js" defer></script></head>
 <body>
 <canvas id="view"></canvas>
-<div id="hud"><div class="pill">🏅 <span id="hudStamps">0 / 21</span></div><div class="pill">🪙 <span id="hudCoins">0</span></div><div class="pill" id="hudObj"></div></div>
+<div id="hud"><div class="pill">🏅 <span id="hudStamps">0 / 26</span></div><div class="pill">🪙 <span id="hudCoins">0</span></div><div class="pill" id="hudObj"></div></div>
+<div id="dfTools"><button type="button" id="bTp" aria-label="瞬間移動">🌀 瞬間移動</button><button type="button" id="bAuto" aria-label="オートプレイ">▶ オートプレイ</button></div>
 <div id="areaName"></div><div id="prompt"></div><div id="toast"></div><div id="cross"></div>
 <div id="rideHud"><span id="rideName"></span><span id="rideInfo"></span></div><div id="vehicle"></div><div id="fade"></div><div id="gfx"></div>
 <div id="dlg"><div id="dlgName"></div><div id="dlgText"></div></div>
@@ -23,6 +26,7 @@
 <div id="engineTag"></div>
 <div id="loading"><h1>ドリーム・フロンティア</h1><p id="loadMsg">よみこみ中…</p><p id="loadEngine" style="font-size:13px;font-weight:600"></p><button id="startBtn">あそぶ！</button><button id="diagBtn" style="display:none;font:inherit;padding:8px 18px;margin-top:6px" onclick="window.__showDiag&&window.__showDiag()">しんだん</button><p style="font-size:12px;opacity:.7;margin-top:12px">うまく はじまらない時は 8びょう後に しんだん画面が でます（URLの おわりに ?diag=1 でも ひらけます）</p></div>
 <script src="js/dreamfrontier.wasm.js"></script>
+<script src="js/pystats.js"></script>
 <script type="module" src="js/main.js"></script>
 <noscript><p style="position:fixed;inset:0;background:#fff;color:#000;z-index:99999;padding:20px">JavaScript を ゆうこうに してください。</p></noscript>
 <a href="https://arechat.github.io/LearnLab124/" target="_blank" rel="noopener" tabindex="-1" id="areStudyLink" style="position:fixed;right:6px;bottom:2px;z-index:5;font-size:10px;line-height:1.2;color:#888;opacity:.55;text-decoration:none;background:transparent">study124（学習サイト）</a>

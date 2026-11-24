@@ -103,3 +103,17 @@ html,body{font-family:"Cinzel","Noto Serif JP",serif;color:#fff7e4;text-shadow:0
 #vehicle.veh-blaster{opacity:1;height:100%;border:0;background:linear-gradient(to top,rgba(255,154,196,.92) 0,rgba(255,154,196,.92) 6vh,rgba(255,154,196,0) 14vh),radial-gradient(ellipse at 100% 100%,rgba(255,247,251,.95) 0,rgba(255,247,251,.95) 14vw,rgba(255,247,251,0) 15vw),linear-gradient(to right,rgba(255,200,230,.5) 0,rgba(255,200,230,0) 5vw),linear-gradient(to left,rgba(255,200,230,.5) 0,rgba(255,200,230,0) 5vw)}
 #vehicle.veh-wing{opacity:1;height:100%;border:0;background:linear-gradient(115deg,rgba(74,255,216,.55) 0,rgba(74,255,216,.0) 22%) left bottom/46% 40% no-repeat,linear-gradient(245deg,rgba(154,138,255,.55) 0,rgba(154,138,255,0) 22%) right bottom/46% 40% no-repeat,linear-gradient(to top,rgba(10,16,40,.8) 0,rgba(10,16,40,0) 8vh)}
 
+
+/* 瞬間移動・オートプレイ のボタン */
+#dfTools{position:fixed;right:12px;top:44px;z-index:11;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+body.touch #dfTools{top:112px;right:10px}
+#dfTools button{font:700 13px/1.2 "Noto Serif JP",sans-serif;color:#fff4df;padding:8px 12px;min-height:40px;border-radius:12px;border:1px solid rgba(238,214,155,.75);background:linear-gradient(180deg,rgba(61,74,106,.94),rgba(22,31,56,.96));box-shadow:0 .4em .9em rgba(0,0,0,.35);cursor:pointer;-webkit-tap-highlight-color:transparent}
+#dfTools button:active{filter:brightness(1.25)}
+#dfTools button.on{background:linear-gradient(180deg,#e0734a,#a8402a);border-color:#ffd9a0}
+body.riding #bTp{display:none}
+#loading:not(.off) ~ #dfTools,body:has(#loading:not(.off)) #dfTools{display:none}
+.tp{max-height:62vh;overflow:auto;-webkit-overflow-scrolling:touch}
+.tp h3{margin:10px 0 4px;font-size:13px;color:#ffd9a0}
+.tpg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tpg button{padding:11px 8px;min-height:44px;font-size:13px;line-height:1.25}
+@media(max-width:520px){.tpg{grid-template-columns:1fr}}

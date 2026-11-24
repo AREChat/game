@@ -3,6 +3,7 @@
 import {STAGES, MARS_TR, JUP_TR, AU_TR} from "./df-data.js";
 import {trackPath, sstep} from "./df-coaster.js";
 import {buildSweets, buildAurora, buildTerminals, dynSweets, dynAurora, genTargets, TARGETS, targetPos, frameAt, ST_AZ} from "./df-stages2.js";
+import {buildExtra} from "./df-extra.js";
 
 export const STAGE_LAYERS = {};   // ステージ名 → レイヤーID の 一覧
 const TAU = Math.PI * 2;
@@ -30,17 +31,21 @@ export function buildStages(h){
     // ---- レール（ほそい ふたすじ ＋ まくらぎ ＋ 中心の はり ＋ 支柱 ＋ ひかる ゲート）----
     const buildRails = (L, tr, opt) => {
         const P = trackPath(tr), S = L.solid, GL = L.glow, step = 2.2, n = Math.ceil(P.total / step); let last = -99, gate = 0;
+        // 柱が、ほかの 場所の レール（もっと 低いところ）を つらぬかないように：真下に 別の レールが あるときは 柱を たてない（がいとうする 場所は、いまは ないはず。ねんのため）
+        const smp = []; for(let q = 0; q < P.total; q += 3){ const a0 = P.at(q); smp.push([q, a0[0], a0[1], a0[2]]); }
+        const underRail = (s0, x, y, z) => smp.some((q) => Math.abs(q[0] - s0) > 30 && q[2] < y - 1.2 && Math.hypot(q[1] - x, q[3] - z) < 2.6);
         for(let i = 0; i < n; i++){
             const s0 = i / n * P.total, s1 = (i + 1) / n * P.total, A = P.at(s0), B = P.at(s1);
             const yaw = Math.atan2(B[0] - A[0], B[2] - A[2]), pit = Math.atan2(B[1] - A[1], Math.hypot(B[0] - A[0], B[2] - A[2])), Ln = Math.hypot(B[0] - A[0], B[1] - A[1], B[2] - A[2]) + .06;
             const mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2, mz = (A[2] + B[2]) / 2, c = Math.cos(yaw), sn = Math.sin(yaw);
-            for(const k of [-.62, .62]) S.push({t: "b", x: mx + c * k, y: my - .08, z: mz - sn * k, w: .13, h: .16, d: Ln, c: opt.rail, ry: yaw, rx: -pit});
-            S.push({t: "b", x: mx, y: my - .55, z: mz, w: .5, h: .42, d: Ln, c: opt.spine, ry: yaw, rx: -pit});
-            if(i % 2 === 0) S.push({t: "b", x: mx, y: my - .2, z: mz, w: 1.5, h: .08, d: .2, c: "#3a3a44", ry: yaw, rx: -pit});
-            if(my > 2.2 && s0 - last >= 11){ last = s0; cyl(S, mx, 0, mz, .22, .36, my - .78, opt.pole, 6); }
+            // レールは 少し 太めに（遠くから 細い 1本線に 見えて 電線みたいに ならないように）。柱も ずんぐりした トラス風の 太い 柱に する
+            for(const k of [-.64, .64]) S.push({t: "b", x: mx + c * k, y: my - .1, z: mz - sn * k, w: .24, h: .26, d: Ln, c: opt.rail, ry: yaw, rx: -pit});
+            S.push({t: "b", x: mx, y: my - .62, z: mz, w: .95, h: .56, d: Ln, c: opt.spine, ry: yaw, rx: -pit});
+            if(i % 2 === 0) S.push({t: "b", x: mx, y: my - .22, z: mz, w: 1.7, h: .1, d: .24, c: "#3a3a44", ry: yaw, rx: -pit});
+            if(my > 2.2 && s0 - last >= 13 && !underRail(s0, mx, my, mz)){ last = s0; cyl(S, mx, 0, mz, .5, .8, my - .95, opt.pole, 7); S.push({t: "b", x: mx, y: my - .98, z: mz, w: 2.6, h: .3, d: .7, c: opt.pole, ry: yaw}); }
+            // ひかる リング（うえに 細い線を わたすと 電線みたいに 見えるので、わっかに する）
             if(s0 - gate >= opt.gateEvery){ gate = s0; const col = opt.gateCols[(Math.floor(s0 / opt.gateEvery)) % opt.gateCols.length];
-                for(const k of [-3.2, 3.2]){ cyl(S, mx + c * k, my - .4, mz - sn * k, .12, .12, 6.4, "#9aa0b0", 6); sph(GL, mx + c * k, my + 5.9, mz - sn * k, 1.5, col); }
-                S.push({t: "b", x: mx, y: my + 5.9, z: mz, w: 6.8, h: .22, d: .3, c: col, ry: yaw}); GL.push({t: "b", x: mx, y: my + 5.9, z: mz, w: 6.8, h: .7, d: .9, c: col, ry: yaw}); }
+                for(let q = 0; q < 18; q++){ const a = q / 18 * TAU, ca = Math.cos(a) * 3.6, sa = Math.sin(a) * 3.6; sph(GL, mx + c * ca, my + 1.4 + sa, mz - sn * ca, .4, col, 1, 5); } }
         }
         return P;
     };
@@ -115,7 +120,7 @@ export function buildStages(h){
         const m = model("doll" + i), P = m.prims; cyl(P, 0, .4, 0, .38, .55, 1.0, c, 8); sph(P, 0, 1.75, 0, .42, "#ffe0c4", 1, 8); cyl(P, 0, 2.05, 0, .2, .46, .42, ["#ffffff", "#ffd24a", "#ff6a8a"][i % 3], 8);
         box(P, -.62, 1.0, 0, .16, .7, .16, c, 0, 0, .7); box(P, .62, 1.0, 0, .16, .7, .16, c, 0, 0, -.7); sph(P, -.14, 1.8, .36, .06, "#2a2a40"); sph(P, .14, 1.8, .36, .06, "#2a2a40");
     });
-    const K = {mk, near, bbox, rnd, h, ST}; buildSweets(K); buildAurora(K); ST_AZ.moon = AU_END_YAW(); buildTerminals(h);
+    const K = {mk, near, bbox, rnd, h, ST}; buildSweets(K); buildAurora(K); ST_AZ.moon = AU_END_YAW(); buildTerminals(h); buildExtra(K);
 }
 const AU_END_YAW = () => AU_TR.end.yaw * Math.PI / 180;
 

@@ -72,8 +72,8 @@ export const Input = {
         for(const gp of pads){
             if(!gp || !gp.connected) continue; this.padSeen = true;
             const b = (i) => !!(gp.buttons[i] && gp.buttons[i].pressed); const ax = gp.axes || [];
-            // Nintendo(Switch Proコン)：右=A(決定) 下=B(キャンセル)。Xbox/PS系は 下=決定 右=キャンセル
-            const nin = /057e|nintendo|pro controller|switch/i.test(gp.id || ""); const OK = nin ? 1 : 0, NO = nin ? 0 : 1; this.padKind = nin ? "Nintendo" : "Xbox/PS";
+            // 右=A(決定) 下=B(キャンセル)（ニンテンドー配置が標準。Xbox・Steam配置は 共通の「ボタン設定」で入れかえ）
+            const OK = 1, NO = 0; this.padKind = (window.AREPadMap && AREPadMap.layout() === "xbox") ? "Xbox/Steam" : "Nintendo";   // どのパッドでも ニンテンドー配置（右＝決定・下＝もどる）が標準。Xbox・Steam配置は「🎮ボタン設定」で切りかえ
             const lx = Math.abs(ax[0] || 0) > .18 ? ax[0] : 0, ly = Math.abs(ax[1] || 0) > .18 ? ax[1] : 0, rx = Math.abs(ax[2] || 0) > .25 ? ax[2] : 0;
             mx += lx; my -= ly; cam += rx;
             if(b(12) || ly < -.6) h.up = true; if(b(13) || ly > .6) h.down = true; if(b(14) || lx < -.6) h.left = true; if(b(15) || lx > .6) h.right = true;

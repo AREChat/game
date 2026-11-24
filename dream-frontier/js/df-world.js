@@ -108,15 +108,22 @@ export function buildWorld(){
 
     // --- レール（コースター系）---
     const rails = (a, P, opt) => { const pa = pathOf(a), n = Math.ceil(pa.total / 1.4); let last = -99;
+        const smp = []; for(let q = 0; q < pa.total; q += 3){ const a0 = pa.at(q); smp.push([q, a0[0], a0[1], a0[2]]); }
+        const underRail = (s0, x, y, z) => smp.some((q) => Math.abs(q[0] - s0) > 20 && q[2] < y - 1 && Math.hypot(q[1] - x, q[3] - z) < 2.2);   // 真下に ほかの レールが あれば 柱は たてない
         for(let i = 0; i < n; i++){ const s0 = i / n * pa.total, s1 = (i + 1) / n * pa.total; const A = pa.at(s0), Bp = pa.at(s1); const yaw = yawOf(A, Bp), pit = pitchOf(A, Bp), L = Math.hypot(Bp[0] - A[0], Bp[1] - A[1], Bp[2] - A[2]) + .08; const mx = (A[0] + Bp[0]) / 2, my = (A[1] + Bp[1]) / 2, mz = (A[2] + Bp[2]) / 2, c = Math.cos(yaw), s = Math.sin(yaw);
             if(opt.style === "rails"){ for(const k of [-.55, .55]) P.push({t: "b", x: mx + c * k, y: my - .08, z: mz - s * k, w: .12, h: .14, d: L, c: opt.color, ry: yaw, rx: -pit}); if(i % 2 === 0) P.push({t: "b", x: mx, y: my - .16, z: mz, w: 1.35, h: .08, d: .18, c: "#5a4a3a", ry: yaw, rx: -pit});
-                if(my > 1.6 && s0 - last >= 6){ last = s0; cyl(P, mx, 0, mz, .14, .2, my - .15, "#c8c0b8", 6); } }
-            else if(opt.style === "trough"){ P.push({t: "b", x: mx, y: my - .5, z: mz, w: 2.6, h: .5, d: L, c: "#3a8ad8", ry: yaw, rx: -pit}); for(const k of [-1.4, 1.4]) P.push({t: "b", x: mx + c * k, y: my - .3, z: mz - s * k, w: .22, h: .8, d: L, c: "#8a5a32", ry: yaw, rx: -pit}); if(my > 1.6 && s0 - last >= 6){ last = s0; cyl(P, mx, 0, mz, .22, .3, my - .5, "#c8c0b8", 6); } } } };
+                // まんなかの はり（ここが ないと、レールの あいだから 下の 柱が 電柱みたいに 見えてしまう）と、レールの 真下に ならぶ 2本の 支柱（まんなかには 立てない）
+                P.push({t: "b", x: mx, y: my - .3, z: mz, w: .44, h: .14, d: L, c: "#5a4a3a", ry: yaw, rx: -pit});
+                if(my > 1.6 && s0 - last >= 6 && !underRail(s0, mx, my, mz)){ last = s0; for(const k of [-.55, .55]) cyl(P, mx + c * k, 0, mz - s * k, .1, .17, my - .17, "#c8c0b8", 6); P.push({t: "b", x: mx, y: my - .34, z: mz, w: 1.3, h: .1, d: .14, c: "#b8b0a8", ry: yaw}); } }
+            else if(opt.style === "trough"){ P.push({t: "b", x: mx, y: my - .5, z: mz, w: 2.6, h: .5, d: L, c: "#3a8ad8", ry: yaw, rx: -pit}); for(const k of [-1.4, 1.4]) P.push({t: "b", x: mx + c * k, y: my - .3, z: mz - s * k, w: .22, h: .8, d: L, c: "#8a5a32", ry: yaw, rx: -pit}); if(my > 1.6 && s0 - last >= 6 && !underRail(s0, mx, my, mz)){ last = s0; cyl(P, mx, 0, mz, .22, .3, my - .5, "#c8c0b8", 6); } } } };
     rails(ATTRACTIONS.find((x) => x.id === "mine"), S, {style: "rails", color: "#8a6a4a"});
     // マインコースターの 両がわ：ほら穴の 岩と 水晶
-    { const mp = pathOf(ATTRACTIONS.find((x) => x.id === "mine")); for(let d = 0; d < mp.total; d += 3.2){ const P = mp.at(d), Q = mp.at(d + 1), yw = yawOf(P, Q), c = Math.cos(yw), sn = Math.sin(yw);
-        for(const side of [-1, 1]){ const off = (3.4 + rnd() * 2.4) * side; const x = P[0] + c * off, z = P[2] - sn * off; if(P[1] < 6){ const r0 = .5 + rnd() * .4, r1 = 1.5 + rnd() * .9, hh = 3 + rnd() * 4.5, ci = (rnd() * 3) | 0; if(has("rock_pillar")) prop("rock_pillar", x, z, hh * 1.15); else cyl(S, x, 0, z, r0, r1, hh, ["#6a5a8a", "#5a5080", "#7a6a9a"][ci], 6); }
-            if(rnd() < .55){ const ck = (rnd() * 4) | 0, col = ["#8ad8ff", "#c88aff", "#8affc8", "#ff8ad0"][ck], h = 1 + rnd() * 2.2, x2 = x - c * side * 1.4, z2 = z + sn * side * 1.4; const cn = ["crystal_blue", "crystal_violet", "crystal_mint", "crystal_rose"][ck]; if(has(cn)) prop(cn, x2, z2, h * 1.5); else cyl(S, x2, 0, z2, 0, .5, h, col, 5); sph(GLOW, x2, h * .6, z2, has(cn) ? .9 : 1.7, col); } } } }
+    { const mp = pathOf(ATTRACTIONS.find((x) => x.id === "mine")); const msm = []; for(let q = 0; q < mp.total; q += 1.5){ const a0 = mp.at(q); msm.push([q, a0[0], a0[2]]); }
+        // 岩・水晶が レールの 上や すぐ そばに のらない（絵が ごちゃごちゃ しない）ように：どの 場所の レールからも 6m 以上 はなす
+        const clearOf = (x, z, d0) => !msm.some((q) => Math.hypot(q[1] - x, q[2] - z) < 6 && Math.abs(q[0] - d0) > 2);
+        for(let d = 0; d < mp.total; d += 4.6){ const P = mp.at(d), Q = mp.at(d + 1), yw = yawOf(P, Q), c = Math.cos(yw), sn = Math.sin(yw);
+        for(const side of [-1, 1]){ const off = (5.6 + rnd() * 2.6) * side; const x = P[0] + c * off, z = P[2] - sn * off; if(!clearOf(x, z, d)){ rnd(); rnd(); rnd(); rnd(); rnd(); continue; } if(P[1] < 6){ const r0 = .5 + rnd() * .4, r1 = 1.5 + rnd() * .9, hh = 2.6 + rnd() * 3.2, ci = (rnd() * 3) | 0; if(has("rock_pillar")) prop("rock_pillar", x, z, hh * 1.15); else cyl(S, x, 0, z, r0, r1, hh, ["#6a5a8a", "#5a5080", "#7a6a9a"][ci], 6); }
+            if(rnd() < .4){ const ck = (rnd() * 4) | 0, col = ["#8ad8ff", "#c88aff", "#8affc8", "#ff8ad0"][ck], h = 1 + rnd() * 2.2, x2 = x - c * side * 1.4, z2 = z + sn * side * 1.4; const cn = ["crystal_blue", "crystal_violet", "crystal_mint", "crystal_rose"][ck]; if(has(cn)) prop(cn, x2, z2, h * 1.5); else cyl(S, x2, 0, z2, 0, .5, h, col, 5); sph(GLOW, x2, h * .6, z2, has(cn) ? .9 : 1.7, col); } } } }
     rails(ATTRACTIONS.find((x) => x.id === "sky"), S, {style: "rails", color: "#ff6a4a"});
     rails(ATTRACTIONS.find((x) => x.id === "splash"), S, {style: "trough"});
     // コースターの ステーション屋根
@@ -237,6 +244,24 @@ export function buildWorld(){
     if(has("reeds")) for(let i = 0; i < 18; i++){ const a = (i + .5) / 18 * 6.283; const x = Math.cos(a) * 23.6, z = 79 + Math.sin(a) * 14; if(Math.sin(a) > .5 && Math.abs(x) < 9) continue; prop("reeds", x, z, 1.8 + hv(i + 80) * .5); }
     if(has("mushroom_big") && has("fern_glow")) for(let i = 0; i < 26; i++){ const x = -38 - hv(i * 3 + 700) * 54, z = 6 + hv(i * 3 + 701) * 34; if(Math.hypot(x + 65, z - 22) < 7 || (Math.abs(x + 40) < 6 && Math.abs(z - 22) < 7)) continue; if(i % 2) prop("mushroom_big", x, z, 1.3 + hv(i + 900) * 1.0); else prop("fern_glow", x, z, 1.5 + hv(i + 901) * .7); }
     if(has("grass_tuft_a") && has("flower_tall_a")) for(let i = 0; i < 70; i++){ const x = (hv(i * 3 + 300) - .5) * 220, z = (hv(i * 3 + 301) - .5) * 200; if(!free(x, z)) continue; const q = i % 5; if(q < 2) prop(q ? "grass_tuft_b" : "grass_tuft_a", x, z, 1.0 + hv(i + 600) * .6); else prop(["flower_tall_a", "flower_tall_b", "bush_round"][q - 2], x, z, q === 4 ? 1.8 : 1.5); }
+    // --- しあげ：レールの 上・すぐ そばに のってしまった 木・花・岩・水晶（柱みたいに 見えて じゃま）を とりのぞく ---
+    //  ほかの 場所の 絵が かぶる ことが ないように、あとから まとめて しらべる（のりばの かんばん・たてもの・雲・山・街灯・ベンチは そのまま）
+    {
+        const KEEP = /board_station|bld\/|cloud|mountain|lamp|bench|signpost|trashcan|balloons/;
+        const samples = [];
+        for(const a of ATTRACTIONS){ if(a.kind !== "track" || !a.pts) continue; const pa = pathOf(a); for(let q = 0; q < pa.total; q += 1){ const t = pa.at(q); samples.push([t[0], t[1], t[2]]); } }
+        const removed = [];
+        for(let i = PR.length - 1; i >= 0; i--){
+            const pr = PR[i]; if(pr.far || KEEP.test(pr.img)) continue;
+            const hw = pr.w ? pr.w / 2 : (pr.h / Math.max(.3, propAspect(pr.img))) / 2, lim = 1.5 + hw * .8;
+            let hit = false; for(const t of samples){ if(Math.abs(t[0] - pr.x) > lim || Math.abs(t[2] - pr.z) > lim) continue; if(Math.hypot(t[0] - pr.x, t[2] - pr.z) < lim && t[1] < pr.h + .5){ hit = true; break; } }
+            if(hit){ removed.push([pr.x, pr.z]); PR.splice(i, 1); }
+        }
+        for(let i = solids.length - 1; i >= 0; i--){ const so = solids[i]; if(so.r <= .75 && removed.some((q) => Math.abs(q[0] - so.x) < .01 && Math.abs(q[1] - so.z) < .01)) solids.splice(i, 1); }
+        const gone = (P) => { for(let i = P.length - 1; i >= 0; i--){ const q = P[i]; if(removed.some((r) => Math.abs(r[0] - q.x) < .01 && Math.abs(r[1] - q.z) < .01)) P.splice(i, 1); } };
+        gone(SH); gone(GLOW);   // その 木・水晶の かげ・ひかりも いっしょに
+        if(typeof window !== "undefined") window.__dfRemovedProps = removed.length;
+    }
     const layers = Object.values(Ls); return {layers, models, solids, props: PR, bounds: {x0: -115, x1: 115, z0: -118, z1: 108}};
 }
 export {makePath};

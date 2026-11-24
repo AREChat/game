@@ -158,10 +158,12 @@ export class Battle{
     // ---------- 本編 ----------
     async run(foeIds, opt){
         const o = opt || {}; this._setup(foeIds, o); if(this.c.autoBattle) this.autoAll = true; if(o.tactic){ this.tactic = o.tactic; this.autoAll = true; } this.boss = !!o.boss || this.foes.some((f) => f.d.boss); await this.c.UI.encounterOpen(); if(!this.fast) await this.wait(.5);
+        this._statStart = (typeof performance !== "undefined" ? performance.now() : Date.now()); this._statRounds = 0;
         const first = this.foes.map((f) => f.name);
         this.log(first.join("、") + "があらわれた！"); if(!this.fast) this.c.UI.foeCard(this.foes.map((f) => f.id)); await this.wait(.9);
         let result = null;
         while(!result){
+            this._statRounds++;
             const cmds = this.autoAll ? this._autoCmds() : await this._chooseAll();
             if(!this.active) return "run";
             const acts = [];
@@ -185,8 +187,16 @@ export class Battle{
             if(!result) await this._endRound();
             if(this.autoAll && this.c.Input.edge.cancel) this.autoAll = false;
         }
-        if(result === "win") await this._win(); else if(result === "lose"){ this.c.A.se("lose"); this.log("{name}たちは ちからつきた…".replace("{name}", this.c.S.name)); await this.wait(1.1); }
+        let wonInfo = null;
+        if(result === "win"){ await this._win(); wonInfo = this.result; } else if(result === "lose"){ this.c.A.se("lose"); this.log("{name}たちは ちからつきた…".replace("{name}", this.c.S.name)); await this.wait(1.1); }
         this._finish(); this.result = result;
+        try{
+            if(window.QuestStats) window.QuestStats.record({
+                result, rounds: this._statRounds || 0, boss: !!this.boss,
+                gold: wonInfo ? (wonInfo.gold || 0) : 0, exp: wonInfo ? (wonInfo.exp || 0) : 0,
+                ms: Math.round((typeof performance !== "undefined" ? performance.now() : Date.now()) - (this._statStart || 0)),
+            });
+        }catch(_e){}
         return result;
     }
     _finish(){

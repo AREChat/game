@@ -3,10 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="are-orient" content="landscape">
+<script src="../shared/are-orient.js"></script>
 <title>AREshoot</title>
 <meta name="theme-color" content="#0a0420">
 <meta name="description" content="厨房を舞台に自由に走り回って撃ち合う、本格3Dガンシューティング。ライバルシェフをたおして、鬼軍曹シェフ（ボス）を撃破しよう。全14皿。">
-<script src="../protect.js"></script><script src="../shared/are-padmap.js"></script>
+<script src="../protect.js"></script><script src="../shared/are-padmap.js"></script><script src="../shared/are-pad.js"></script><script src="./js/pad9.js"></script>
 <link rel="stylesheet" href="./style.css">
 <script src="../shared/are-offline.js" defer></script>
 </head>
@@ -18,10 +20,19 @@
   <section id="s-title" class="scr on">
     <div class="logo">ARE<br>shoot</div>
     <p class="sub">美食の晩餐会 ｜ 3Dガンシューティング</p>
+    <div class="brEntry">
+      <button id="bBR" type="button" class="big">⚔ バトルロワイヤル <small>NEW</small></button>
+      <label class="brOpt">むずかしさ
+        <select id="brDiff"><option value="easy">かんたん（ボット15人）</option><option value="normal" selected>ふつう（ボット29人）</option><option value="hard">むずかしい（ボット29人）</option></select>
+      </label>
+      <label class="brOpt"><input type="checkbox" id="brAssist" checked> エイムアシスト（ねらいを すこし 助ける）</label>
+    </div>
+    <p class="sub" style="font-size:12px">▼ ステージ（本編：シェフをたおして ボスへ）</p>
     <div id="stageSelect" class="stage-select"></div>
     <div class="row">
       <button id="bHow" type="button">📖 あそびかた</button>
       <button id="bSet" type="button">⚙ せってい</button>
+      <button id="bPad" type="button" data-are-padmap>🎮 ボタン設定（プロコン）</button>
     </div>
     <p class="hint">厨房を自由に走り回り、物陰にかくれながら、むかってくるライバルシェフを銃で撃退しよう。虫は一切出てきません。</p>
   </section>
@@ -29,13 +40,16 @@
   <section id="s-how" class="scr">
     <h2>あそびかた</h2>
     <div class="panel">
-      <p><b>PC：</b> W/A/S/D（または画面左のスティック）で移動。マウスを動かして視点とねらいを操作し、左クリックで発射。R＝リロード、Shift＝食材グレネード。1/2/3キーまたはQキーで武器を持ち替え。</p>
+      <p><b>PC：</b> W/A/S/D または ↑←↓→ キー（→＝右、←＝左、↑＝前、↓＝うしろ）で移動。マウスを動かして視点とねらいを操作し、左クリックで発射。R＝リロード、Shift＝食材グレネード。1/2/3キーまたはQキーで武器を持ち替え。</p>
+      <p><b>プロコン（ゲームパッド）：</b> 左スティック／十字キー＝移動、右スティック＝視点、ZR か A＝発射、R か B＝グレネード、X＝リロード、L／ZL か Y＝武器の持ち替え、＋＝タイトルにもどる。メニューは 十字キーで選んで A で決定、B でもどります。「🎮 ボタン設定」で、Xbox・Steam 配置（下＝A）にも切りかえられます。（⚔ バトルロワイヤル：ZR／R＝発射、ZL＝ダッシュ、B＝しゃがむ、A＝ひろう・ジャンプ、X＝リロード、Y＝かいふく、L＝つぎの武器）</p>
       <p><b>スマホ・タブレット：</b> 画面左ドラッグで移動、画面右ドラッグで視点操作。右下の🔥ボタンで発射、🔄でリロード、💣でグレネード。画面下の武器アイコンをタップして持ち替え。</p>
       <p><b>武器：</b> 🔫ライフル（連射は遅いが一撃が重い）／⚡サブマシンガン（連射が速いが威力は低く射程も短い）／🎯スナイパーライフル（射程と威力は最大だが連射が非常に遅い）。弾倉は武器ごとに別々に管理されます。</p>
       <p>敵の弾（食べもの）はゆっくり飛んでくるので、見てから動いて避けられます。大きな樽やなべの物陰にかくれれば、相手の弾を防げます。</p>
       <p>目標の数のライバルシェフをたおすと、その皿の「鬼軍曹シェフ」（ボス）が登場。ボスをたおすとコースクリアです。体力（ライフ）が0になるとゲームオーバー。</p>
       <p>敵をたおすと、たまに🔵パワーオーブ（連射力アップ）や💎スコアジェムをドロップします。拾いに行くのもねらいめ。</p>
       <p>クリアした次のコースが開放されます（この端末に記録されます）。</p>
+      <p><b>⚔ バトルロワイヤル：</b> 30人（あなた＋ボット）が 島に とびおりて、さいごの1人を めざします。✈ 飛行機から <b>🪂（スペース）</b>で とびおり、スティック（WASD）で おりたい場所へ。たてもの・地面の ぶき（🔫⚡🔥💥🎯）、だん、かいふく（🩹💊）、シールド（🛡️🔰）を ひろって たたかいます。ぶきの ふち色が <b>レア度</b>（白＜青＜紫＜金）。<b>安全地帯</b>（青い円）の外は ストームで ダメージ。どんどん せまくなるので、うちあいながら 中へ。空から 📦<b>補給物資</b>（金のぶき）も おちてきます。</p>
+      <p><b>そうさ（BR）：</b> PC＝WASD 移動／マウス 視点／左クリック 発射／R リロード／1・2・3 ぶき切りかえ（Q でも）／F かいふくを つかう／E 地面のぶきと こうかん／Shift ダッシュ／C しゃがみ（ねらいが安定）。スマホ＝左スティック 移動（めいっぱいで ダッシュ）、右ドラッグ 視点、🔥 発射、🔄 リロード、🩹 かいふく、⭐ こうかん、画面下の ぶきアイコンで 切りかえ。</p>
     </div>
     <div class="row"><button id="bHowBack" type="button">とじる</button></div>
   </section>
@@ -54,6 +68,7 @@
     <canvas id="cv"></canvas>
     <div id="crosshair" aria-hidden="true"></div>
     <div id="hitmark" aria-hidden="true"></div>
+    <canvas id="radar" width="132" height="132" aria-label="レーダー（上がキャラの向き）"></canvas>
     <div id="flash" aria-hidden="true"></div>
     <div id="hud">
       <div id="hudTitles"><strong id="playTitle"></strong><small id="playSub"></small></div>
@@ -81,6 +96,31 @@
     </div>
   </section>
 
+  <section id="s-br" class="scr">
+    <canvas id="cvb"></canvas>
+    <div id="brCross" aria-hidden="true"></div><div id="brHit" aria-hidden="true"></div><div id="brStorm" aria-hidden="true"></div><div id="brDmgF" aria-hidden="true"></div>
+    <div id="brDir" aria-hidden="true"><i></i></div>
+    <div id="brDmg" aria-hidden="true"></div>
+    <div id="brTop"><span id="brAliveBox">👥 <b id="brAliveN">30</b></span><span id="brKillBox">⚔ <b id="brKillN">0</b></span></div>
+    <div id="brZoneT"></div>
+    <canvas id="brMap" width="132" height="132" aria-label="ミニマップ"></canvas>
+    <div id="brFeed"></div>
+    <div id="brKillMsg"></div>
+    <div id="brBig"></div>
+    <div id="brToast"></div>
+    <div id="brPrompt"></div>
+    <div id="brBars"><div id="brArmor"><i></i></div><div id="brHp"><i></i><span></span></div></div>
+    <div id="brSlots"></div>
+    <div id="brAmmo"></div>
+    <div id="brItems"></div>
+    <div id="brTouch"><div id="brMove"><div id="brStick"></div></div><div id="brLook"></div></div>
+    <div id="brBtns"><button id="brbPick" type="button">⭐</button><button id="brbUse" type="button">🩹</button><button id="brbRel" type="button">🔄</button><button id="brbJump" type="button" hidden>🪂</button><button id="brbFire" type="button">🔥</button></div>
+    <div id="brRes" hidden>
+      <h2 id="brResT"></h2><p id="brResB" class="sub"></p>
+      <div class="row"><button id="brAgain" type="button" class="big">🔁 もう一度</button><button id="brHome" type="button">🏠 タイトルへ</button></div>
+    </div>
+  </section>
+
   <section id="s-res" class="scr">
     <h2 id="resTitle"></h2>
     <p id="resBody" class="sub"></p>
@@ -93,6 +133,32 @@
 </main>
 
 <script src="./js/game9.wasm.js"></script>
+<script src="../shared/feature-panel.js"></script>
 <script type="module" src="js/core.js"></script>
+<script>(function(){
+    if(!window.AREFeaturePanel) return;
+    window.AREFeaturePanel.init({
+        gameId: "game9",
+        title: "🔫 ミッション せいせき分析＆実績",
+        lowerIsBetter: false,
+        unit: "点",
+        rules: [
+            {id:"g9_first", title:"はじめての出撃", desc:"1回 ミッションに挑む", icon:"🔫", field:"runs", op:"gte", value:1},
+            {id:"g9_5clears", title:"かけだしシェフ討伐隊", desc:"5回 ステージをクリア", icon:"🗡️", field:"clears", op:"gte", value:5},
+            {id:"g9_14clears", title:"鬼軍曹を超えて", desc:"全14皿 クリア", icon:"👑", field:"stagesUnlocked", op:"gte", value:14},
+            {id:"g9_score500", title:"スコアハンター", desc:"1回で 500点 こえる", icon:"⭐", field:"bestScore", op:"gte", value:500},
+            {id:"g9_score2000", title:"エースシューター", desc:"1回で 2000点 こえる", icon:"🏆", field:"bestScore", op:"gte", value:2000},
+            {id:"g9_20runs", title:"百戦錬磨", desc:"20回 出撃する", icon:"🎖️", field:"runs", op:"gte", value:20},
+            {id:"g9_br_first", title:"島へ とびおりた", desc:"バトルロワイヤルに 1回 参戦", icon:"🪂", field:"brRuns", op:"gte", value:1},
+            {id:"g9_br_5kills", title:"ごうけつ", desc:"バトルロワイヤルで 1回に 5キル", icon:"⚔️", field:"brBestKills", op:"gte", value:5},
+            {id:"g9_br_win", title:"ビクトリー・ロワイヤル", desc:"バトルロワイヤルで 1位になる", icon:"🏆", field:"brWins", op:"gte", value:1}
+        ],
+        getLiveStats: function(){
+            var rec = {runs:0, clears:0, bestScore:0, stagesUnlocked:0, brRuns:0, brWins:0, brBestKills:0};
+            try{ rec = JSON.parse(localStorage.getItem("g9_mission_rec") || "null") || rec; }catch(_e){}
+            return rec;
+        }
+    });
+})();</script>
 </body>
 </html>

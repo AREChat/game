@@ -254,6 +254,7 @@ async function showTitle(){
     mk("つづきから", () => continueGame(), !any);
     mk("📖 サブストーリー（外伝）", () => subMenu());
     mk("そうさの せつめい", () => showHelp());
+    mk("📊 せんせき分析（AI統計）", () => { if(window.QuestStats) window.QuestStats.showPanel(); });
     mk("🎮 ボタン設定（プロコン）", () => { if(window.AREPadMap) AREPadMap.open(); });
     const fb = mk("🔄 がめんの むき：" + FLIP[cfg.flip || "none"] + "（絵がさかさまなら押す）", () => { fb.textContent = "🔄 がめんの むき：" + nextFlip() + "（絵がさかさまなら押す）"; });
     mk("🗡️ ARE QUEST（1）へ", () => { location.href = "../../game/index.html"; });

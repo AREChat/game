@@ -121,6 +121,7 @@
     var g = current, sc = Math.floor(S.score), mult = jackpot ? 2 : 1, gain = Math.floor(sc * g.coinRate * mult * (fromRoulette ? 1.5 : 1));
     var best = save.best[g.id] || 0, rec = sc > best; if(rec) save.best[g.id] = sc;
     save.coins += gain; save.plays++; persist(); paintWallet();
+    try{ if(window.AREFeaturePanel) window.AREFeaturePanel.recordRun("game7", sc); }catch(_e){}
     $("rTitle").textContent = g.icon + " " + g.name;
     $("rScore").textContent = sc;
     $("rInfo").innerHTML = (rec ? "🎉 ベストスコア こうしん！<br>" : "ベスト：" + best + "<br>") + (jackpot ? "📡 通信回復ジャックポット！ コイン 2 倍！<br>" : "") + (fromRoulette ? "🎰 ルーレットボーナス ×1.5" : "");

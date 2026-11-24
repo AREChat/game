@@ -1,7 +1,7 @@
 "use strict";
 // ===== GAME8：レースモード（コースを走って 順位を競う）=====
 // コース上の移動・あたり判定（コース外ではおそくなる）・周回判定は C++(WebAssembly) 側（race_* 関数）が計算する。
-// ここでは コースの見た目（three.js）と、車の位置をその結果に合わせて動かすことをする。
+// ここでは コースの見た目（three.js）と、ランナーの位置をその結果に合わせて動かすことをする。
 import * as T from "../vendor/three/build/three.module.js";
 
 const SCALE = 1 / 8; // 物理の単位 → three.js world 単位
@@ -124,6 +124,7 @@ export function start(ctx){
     const N = track.pts.length;
     const LAPS = 3;
     toast("🏁 コース " + track.courseNo + " / " + COURSE_COUNT + "：" + track.theme.name);
+    const raceStartMs = performance.now();
 
     // アイテムボックスを置く場所（コースを8か所に分けて置く）
     const ITEMBOX_N = 8;
@@ -278,7 +279,7 @@ export function start(ctx){
     const carColors = [0xff3b3b, 0x2e7bff, 0x2fe08a, 0xffcf2e];
     const cars = carColors.map((c) => { const m = makeRunner(c); scene.add(m); return m; });
 
-    // ---------- たすけモンスター（コースから大きくはずれて 止まってしまったら、かわいいモンスターが車をコースへ運んでくれる） ----------
+    // ---------- たすけモンスター（コースから大きくはずれて 止まってしまったら、かわいいモンスターがランナーをコースへ運んでくれる） ----------
     function makeRescueMonster(){
         const g = new T.Group();
         const body = new T.Mesh(new T.SphereGeometry(0.22, 16, 12), new T.MeshStandardMaterial({color: 0xffb3e6, roughness: 0.55, emissive: 0x4a1a3a, emissiveIntensity: 0.25}));
@@ -297,7 +298,7 @@ export function start(ctx){
         cap.position.set(0, 0.26, 0); g.add(cap);
         const prop = new T.Mesh(new T.BoxGeometry(0.26, 0.02, 0.05), new T.MeshStandardMaterial({color: 0x6ecfff, roughness: 0.4}));
         prop.position.set(0, 0.33, 0); g.add(prop);
-        // ふわふわ ちいさな羽（布っぽい、虫の羽ではなく リボンのような形）
+        // ふわふわ ちいさな羽（布っぽい、リボンのような形）
         [-1, 1].forEach((side) => {
             const wing = new T.Mesh(new T.CircleGeometry(0.13, 12, 0, Math.PI), new T.MeshStandardMaterial({color: 0xffffff, roughness: 0.6, side: T.DoubleSide, transparent: true, opacity: 0.9}));
             wing.position.set(side * 0.2, 0.04, -0.02);
@@ -307,7 +308,7 @@ export function start(ctx){
             g.add(wing);
             g.userData['wing' + side] = wing;
         });
-        // 車とつながる ひも
+        // ランナーとつながる ひも
         const rope = new T.Mesh(new T.CylinderGeometry(0.012, 0.012, 1, 6), new T.MeshBasicMaterial({color: 0xffffff}));
         rope.userData.isRope = true;
         g.add(rope);
@@ -365,7 +366,7 @@ export function start(ctx){
         let fx = "";
         if(effects){
             if(effects.stagger) fx += " 😵つまずき中";
-            if(effects.slow) fx += " 🐌スロー中";
+            if(effects.slow) fx += " 🐢スロー中";
             if(effects.shield) fx += " 🧥ガード中";
             if(effects.speedBuff) fx += " 🥤ダッシュ中";
             if(effects.turnBuff) fx += " 👟スプリント中";
@@ -489,7 +490,19 @@ export function start(ctx){
             if(pinfo.finished >= 1 && !done){
                 done = true;
                 const rankTxt = pinfo.rank === 1 ? '<span class="rank1">🥇 1位</span>' : pinfo.rank + '位';
-                showResult("🏁 ゴール！", '<p>結果：' + rankTxt + ' ／ ' + LAPS + '周</p>', () => restart(), () => {});
+                const finishSec = (performance.now() - raceStartMs) / 1000;
+                try{
+                    if(window.AREFeaturePanel){
+                        window.AREFeaturePanel.recordRun("game8", finishSec);
+                        const rec = JSON.parse(localStorage.getItem("g8_race_rec") || "{\"races\":0,\"wins\":0,\"bestRank\":99}");
+                        rec.races = (rec.races || 0) + 1;
+                        if(pinfo.rank === 1) rec.wins = (rec.wins || 0) + 1;
+                        rec.bestRank = Math.min(rec.bestRank || 99, pinfo.rank || 99);
+                        rec.lastFinishSec = finishSec;
+                        localStorage.setItem("g8_race_rec", JSON.stringify(rec));
+                    }
+                }catch(_e){}
+                showResult("🏁 ゴール！", '<p>結果：' + rankTxt + ' ／ ' + LAPS + '周 ／ タイム ' + finishSec.toFixed(1) + '秒</p>', () => restart(), () => {});
             }
 
             const my = cars[0];

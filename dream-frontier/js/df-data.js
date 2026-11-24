@@ -13,7 +13,12 @@ export const ZONES = {
     mars: {fog: [.62, .3, .2], near: 90, far: 360, amb: [.7, .46, .38], light: [.6, .5, .3]},
     jupiter: {fog: [.96, .78, .58], near: 110, far: 420, amb: [.82, .72, .64], light: [.4, .9, .4]},
     sweets: {fog: [1, .8, .92], near: 70, far: 300, amb: [.8, .68, .76], light: [.3, .9, .5]},
-    aurora: {fog: [.2, .26, .5], near: 80, far: 380, amb: [.55, .6, .78], light: [.3, .8, .4]}
+    aurora: {fog: [.2, .26, .5], near: 80, far: 380, amb: [.55, .6, .78], light: [.3, .8, .4]},
+    rhythm: {fog: [.05, .02, .14], near: 60, far: 210, amb: [.6, .52, .8], light: [.3, .8, .3]},
+    maze: {fog: [.22, .16, .4], near: 7, far: 46, amb: [.7, .64, .88], light: [.4, .8, .4]},
+    loop: {fog: [.03, .05, .17], near: 100, far: 380, amb: [.52, .58, .84], light: [.3, .8, .4]},
+    jump: {fog: [.6, .84, 1], near: 120, far: 320, amb: [.74, .76, .86], light: [.4, .9, .4]},
+    kart: {fog: [.72, .87, 1], near: 110, far: 300, amb: [.68, .72, .82], light: [.4, .85, .4]}
 };
 export const AREA_NAMES = {center: "セントラル・ガーデン", grove: "ファンタジー・グローブ", sky: "スカイ・コースト", manor: "ミステリー・マナー", lagoon: "ブルー・ラグーン"};
 export const zoneAt = (x, z) => (x > 52 && Math.abs(z) < 40) ? "manor" : (x > 52 && z >= 40 && z < 56) ? "manor" : x < -30 ? "grove" : z < -30 ? "sky" : z > 56 ? "lagoon" : "center";
@@ -61,19 +66,20 @@ export const ATTRACTIONS = [
 // ============ 新アトラクション3つ（すべて オリジナル）============
 // ステージ（とおくの ばしょに つくった 専用の せかい）。のっている あいだだけ 見える
 export const STAGES = {
-    mars: {at: [1200, 0]}, jupiter: {at: [-1200, 0]}, sweets: {at: [0, 1300]}, aurora: {at: [0, -1300]}
+    mars: {at: [1200, 0]}, jupiter: {at: [-1200, 0]}, sweets: {at: [0, 1300]}, aurora: {at: [0, -1300]},
+    rhythm: {at: [1300, 1300]}, maze: {at: [-1300, -1300]}, loop: {at: [1300, -1300]}, jump: {at: [-1300, 1300]}, kart: {at: [0, 2600]}
 };
 
 // ---- ① ジェット・ワールドツアー（4分：火星 2分 ＋ 木星 2分 ／ ぎゃくそう つき）----
 const MARS_H = [
     {len: 20}, {len: 110, mark: "launch"}, {len: 100, turn: 20, mark: "hill1"}, {len: 70, turn: -25}, {len: 170, turn: -140, mark: "bottom"},
-    {len: 110, mark: "hill2"}, {len: 40}, {len: 260, turn: 340, mark: "helix"}, {len: 80, roll: 1, mark: "roll"}, {len: 40, turn: -30}, {len: 90, turn: -84}, {len: 60, mark: "spike"}];
+    {len: 110, mark: "hill2"}, {len: 40}, {len: 260, turn: 200, mark: "helix"}, {len: 80, roll: 1, mark: "roll"}, {len: 40, turn: -30}, {len: 90, turn: -84}, {len: 60, mark: "spike"}];
 const MARS_V = [[0, 2, 0], [20, 2, 0], [130, 5, 8], [225, 28, 0], [272, 13, -46], [335, 3.5, 0], [400, 3, 0], [470, 3.5, 5], [520, 15, 0], [580, 3.5, 0], [620, 3, 0], [750, 12, 6], [880, 14, 0], [960, 26, 0], [1000, 24, -6], [1040, 16, 0], [1090, 16, 10], [1150, 44, 58]];
 export const MARS_TR = buildTrack({x: STAGES.mars.at[0], z: STAGES.mars.at[1], yaw: 0}, MARS_H, MARS_V);
 const JUP_H = [
     {len: 18}, {len: 105, mark: "lift"}, {len: 26, turn: 8, mark: "crest"}, {len: 84, turn: -24, mark: "drop"}, {len: 100, turn: -48},
     {len: 80, mark: "hillA"}, {len: 80, turn: 20, mark: "hillB"}, {len: 70, turn: -85}, {len: 64, mark: "hillC"},
-    {len: 200, turn: 300, mark: "helix"}, {len: 90, roll: 1, mark: "roll"}, {len: 56, turn: 60}, {len: 80, mark: "spike"}];
+    {len: 200, turn: 200, mark: "helix"}, {len: 90, roll: 1, mark: "roll"}, {len: 56, turn: 60}, {len: 80, mark: "spike"}];
 const JUP_V = [[0, 5, 0], [18, 5, 0], [123, 38, 34], [149, 46, 0], [185, 26, -58], [258, 5, 0], [300, 4, 0], [333, 5, 3], [373, 15, 0], [413, 5, 0], [453, 17, 0], [493, 5, 0], [528, 4, 0], [563, 6, 4], [595, 16, 0], [627, 6, 0], [727, 16, 4], [827, 22, 0], [872, 28, 8], [917, 28, 0], [945, 24, -8], [973, 18, 0], [1000, 22, 16], [1028, 44, 58], [1038, 46, 0], [1053, 46, 0]];
 export const JUP_TR = buildTrack({x: STAGES.jupiter.at[0], z: STAGES.jupiter.at[1], yaw: 0}, JUP_H, JUP_V);
 // sim: 物理シミュレーションの せってい（zones は L=レールの ながさ から つくる）
@@ -93,8 +99,8 @@ export const SW_SIM = (L) => ({s0: 0, hold0: 5, endHold: 3, keys: [[0, 2], [14, 
     marks: [{name: "mid", s: L * .5}]});
 
 // ---- ③ オーロラ・スカイウィング（ひかりの つばさで 夜空を とぶ 絶叫アドベンチャー）----
-const AU_H = [{len: 32}, {len: 160, mark: "liftoff"}, {len: 144, turn: -30}, {len: 176, turn: 70, mark: "lanterns"}, {len: 224, turn: -160, mark: "castle"}, {len: 160, roll: 1, mark: "roll1"}, {len: 192, turn: 110, mark: "forest"},
-    {len: 320, turn: 300, mark: "helix"}, {len: 128, mark: "ship"}, {len: 160, turn: -80, roll: -1, mark: "roll2"}, {len: 144, turn: 50, mark: "moon"}, {len: 96, mark: "finale"}, {len: 130}];
+const AU_H = [{len: 32}, {len: 160, mark: "liftoff"}, {len: 144, turn: -30}, {len: 176, turn: 70, mark: "lanterns"}, {len: 224, turn: -160, mark: "castle"}, {len: 160, roll: 1, mark: "roll1"}, {len: 192, turn: 150, mark: "forest"},
+    {len: 320, turn: -200, mark: "helix"}, {len: 128, mark: "ship"}, {len: 160, turn: -80, roll: -1, mark: "roll2"}, {len: 144, turn: 50, mark: "moon"}, {len: 96, mark: "finale"}, {len: 130}];
 const AU_V = [[0, 6, 0], [32, 6, 0], [150, 24, 24], [260, 58, 14], [330, 68, 0], [380, 56, -38], [470, 18, -42], [560, 12, 0], [680, 26, 14], [800, 34, 0], [930, 20, -32], [1060, 18, 0], [1160, 26, 12], [1300, 38, 0], [1460, 20, -30], [1600, 18, 0],
     [1720, 24, 10], [1840, 20, 0], [1940, 48, 30], [2020, 66, 0], [2090, 70, 0], [2160, 62, -34], [2220, 20, -50], [2264, 8, -10]];
 export const AU_TR = buildTrack({x: STAGES.aurora.at[0], z: STAGES.aurora.at[1], yaw: 0}, AU_H, scV(AU_V, .855).concat([[1990, 6.5, 0], [2066, 6, 0]]));
@@ -127,13 +133,32 @@ export const NEW_ATTRACTIONS = [
                 {at: "roll2", dt: 0, text: "もういっかい ロール！ こんどは ぎゃくまわり！"}, {at: "moon", dt: -12, text: "おおきな 月が みえた。 いっきに のぼって… さいごの ダイブ、 いくよ！"}, {at: "finale", dt: 10, text: "ひゅーーーーん！ ほしぞらに ひかりの おびを のこして！"}, {m: "stop", dt: 0, text: "とうちゃく！ 夜空の たびは どうだった？"}]}]}
 ];
 
-ATTRACTIONS.push(...NEW_ATTRACTIONS);
+// ============ さらに 新アトラクション5つ（ぜんぶ オリジナル。虫は ぜったい 出ない）============
+//  リズムゲーム／鏡の3D迷路／360度ループの コースター／空中ジャンプ（3Dアクション）／ランナー・レース
+export const NEW5_ATTRACTIONS = [
+    {id: "rhythm", n: "スターライト・リズムステージ", area: "center", kind: "rhythm", board: {x: 14, z: 42, r: 3.4}, coin: 10, dur: 70,
+        desc: "ひかる 4つの レーンを ながれてくる ノーツを、リズムに あわせて たたく 音ゲー！ キーは D F J K（スマホは がめんの 4つの ばしょを タップ）。60%で スタンプ。",
+        ref: "音楽リズムゲーム系（種類の説明のみ。名前・曲・絵は ぜんぶ オリジナル）"},
+    {id: "maze", n: "ミラー・ラビリンス", area: "grove", kind: "maze", board: {x: -88, z: -30, r: 3.4}, coin: 10, dur: 240,
+        desc: "ガラスの かべで できた 3Dの めいろ。ほしを 3こ あつめて ゲートから でよう！ ちずと ヒント（E）つき。ぜんぶで 3パターン。",
+        ref: "3D迷路・脱出系（種類の説明のみ。名前・絵・音は ぜんぶ オリジナル）"},
+    {id: "loop", n: "ギャラクシー・ループ", area: "grove", kind: "loop", board: {x: -88, z: -70, r: 3.6}, coin: 25, dur: 100,
+        desc: "ぐるーん！と 360度 まわる ループが ある 絶叫コースター。ヘアピン、コークスクリュー、ダブルループ…。ネオンの リングを ぬけて 星の かなたへ！（絶叫ちゅうい）",
+        ref: "ループ・コースター系（種類の説明のみ。名前・絵・音は ぜんぶ オリジナル）"},
+    {id: "jump", n: "ふわふわ・スカイジャンプ", area: "grove", kind: "jump", board: {x: -86, z: 90, r: 3.4}, coin: 10, dur: 120,
+        desc: "空に うかぶ しまを ジャンプで わたって、ほしを あつめる 3Dアクション。Eキー（スマホは Eボタン）で ジャンプ、2だん ジャンプも できるよ！",
+        ref: "3Dジャンプ・アスレチック系（種類の説明のみ。名前・絵・音は ぜんぶ オリジナル）"},
+    {id: "kart", n: "ドリーム・ランナー・グランプリ", area: "sky", kind: "kart", board: {x: 88, z: -86, r: 3.6}, coin: 15, dur: 150,
+        desc: "ライバルの ランナーと 2しゅう きそう かけっこ レース！ ↑ダッシュ ↓ゆっくり ←→で ほうこう。ダッシュパネルを ふむと ビューン！ 3いまでに はいれば スタンプ。",
+        ref: "かけっこ・ランナー レース系（種類の説明のみ。名前・絵・音は ぜんぶ オリジナル）"}
+];
+ATTRACTIONS.push(...NEW_ATTRACTIONS, ...NEW5_ATTRACTIONS);
 export const STAMPS = ATTRACTIONS.map((a) => a.id);
 export const byId = (id) => ATTRACTIONS.find((a) => a.id === id);
 
 export const QUARTET = [
     {id: "rihito", name: "理人（りひと）", look: {shirt: "#3b6fd8", hair: "#2a2a30", style: "short", accent: "#ffd24a"}, at: [-13, 17], yaw: 1.2,
-        lines: ["ワンコロランド、ネコネランド、ウサウサランド… ぼくたち 4人で ぜんぶ 全制覇してきたんだ。", "ここ ドリーム・フロンティアは 18この スタンプが そろえば 全制覇だって。 のこりは メニューの『スタンプちょう』で かくにんできるよ。"]},
+        lines: ["ワンコロランド、ネコネランド、ウサウサランド… ぼくたち 4人で ぜんぶ 全制覇してきたんだ。", "ここ ドリーム・フロンティアは " + ATTRACTIONS.length + "この スタンプが そろえば 全制覇だって。 のこりは メニューの『スタンプちょう』で かくにんできるよ。"]},
     {id: "satoshi", name: "智司（さとし）", look: {shirt: "#e0793a", hair: "#3a2a20", style: "spiky", accent: "#ffffff"}, at: [-11.4, 18.4], yaw: 2.2,
         lines: ["高いところは にがてなんだけど… スカイ・ドロップは のらないと 全制覇に ならないんだよなあ。", "ウサウサランドの 脱出ゲームみたいに、ここの きんこも ばんごうを あわせるらしいよ。"]},
     {id: "akane", name: "赤音（あかね）", look: {shirt: "#d94a6a", hair: "#5a2a1a", style: "long", accent: "#ffe9a0"}, at: [-14.6, 18.6], yaw: .6,

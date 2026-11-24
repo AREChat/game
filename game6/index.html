@@ -6,6 +6,7 @@
 <title>推理ゲーム2</title>
 <meta name="theme-color" content="#0d1530">
 <script src="../protect.js"></script>
+<script src="../shared/are-padmap.js"></script>
 <link rel="stylesheet" href="./style.css">
 <script src="../shared/are-offline.js" defer></script>
 </head>
@@ -22,17 +23,22 @@
     </select>
   </label>
   <button id="btnSnd" class="barbtn" type="button" aria-label="音の入り切り">🔊</button>
+  <button id="btnPad" class="barbtn" type="button" data-are-padmap aria-label="ボタン設定（プロコン）">🎮</button>
 </header>
 <main id="app"></main>
 <div id="toast" role="status" aria-live="polite"></div>
 <a href="../" id="homeLink" tabindex="-1">ほかのゲームへ</a>
 <script src="../shared/are-mode.js"></script>
+<script src="../shared/are-pad.js"></script>
 <script src="../shared/game-nav.js"></script>
 <script src="../shared/game-exit.js"></script>
 <script src="./js/story.js"></script>
 <script src="./js/cast.js"></script>
+<script src="./js/pools.js"></script>
+<script src="./js/plan.js"></script>
 <script src="./js/game6.wasm.js"></script>
 <script src="./js/gen.js"></script>
+<script src="./js/pystats.js"></script>
 <script src="./js/app.js"></script>
 <script src="../shared/title-secrets.js"></script>
 <script>TitleSecrets.attach({title:function(){return !!(!!document.getElementById("goStart")&&TitleSecrets.visible("#goStart"));},host:"#app"});</script>

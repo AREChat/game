@@ -110,6 +110,7 @@ function updateHud(){
     const ar = $("meAre"); ar.className = me.areUsed ? "used" : (G.canARE(me) ? "ready" : ""); ar.title = me.areUsed ? "AREだ！は使用済み" : "本拠地HPが10以下で攻撃されると『AREだ！』が使えます";
     $("btnEnd").disabled = busy || !G || G.over || G.turn !== 0;
     const crit = Math.min(me.base.hp, foe.base.hp) <= 10; if(inMatch) Snd.play(crit ? "battle_final" : "battle");
+    if(window.PyWinRate) window.PyWinRate.update(G);
 }
 function cardEl(c, hi){
     const e = document.createElement("div"); e.className = "card " + (c.t === "spell" ? "spell " : "") + c.rar; e.dataset.hi = hi;

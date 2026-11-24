@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<script src="./protect.js"></script>
+<script src="./protect.js"></script><script src="./shared/are-padmap.js"></script><script src="./shared/are-pad.js" defer></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0a1030">
 <title>ARE ゲーム ｜ あそびたいゲームをえらぼう</title>
@@ -112,12 +112,12 @@ header.top{position:relative}
     {id:"dream", name:"ドリーム・フロンティア", sub:"3Dテーマパーク", desc:"一人称で歩く、オリジナルの3Dテーマパーク。ライドやアトラクションをめぐってスタンプを集めよう。", href:"dream-frontier/index.html", cat:"casual", tags:["3D","一人称","スタンプ集め"], emoji:"🎡", c1:"#1f6a8a", c2:"#7a4ab0", img:"thumbs/dream.webp"},
     {id:"card", name:"ARE CARD", sub:"〜そういうときは、AREだ！〜", desc:"3Dの盤面で遊ぶカードバトル。デッキを選んでCPUと対戦します。", href:"game4/card/index.html", cat:"card", tags:["カード","3D","CPU対戦"], emoji:"🃏", c1:"#5a2a7a", c2:"#2a3f8a", img:"thumbs/card.webp"},
     {id:"daifugo", name:"大富豪", sub:"本格ルール", desc:"3〜2の技・縛り・革命・階級・カード交換。ルールは自由に変えられます。", href:"https://arechat.github.io/ARE/daifugo/index.html", cat:"card", tags:["カード","ルール自由"], emoji:"👑", c1:"#7a5a1f", c2:"#4a2a60", ext:true},
-    {id:"mystery", name:"推理ゲーム", sub:"表｜全10章", desc:"会話と証言を集めて、升目（マス目）パズルで事件を解く、オリジナルの推理ゲーム。", href:"game5/play/index.html", cat:"mystery", tags:["推理","全10章"], emoji:"🔍", c1:"#26406a", c2:"#1f2a5a", img:"thumbs/mystery.webp"},
-    {id:"mystery2", name:"推理ゲーム2", sub:"裏", desc:"「表」の推理ゲームに○×をつけながら解いていく、もうひとつの推理ゲーム。", href:"game6/index.html", cat:"mystery", tags:["推理","○×"], emoji:"🕵️", c1:"#3a2a5a", c2:"#1f3a6a"},
+    {id:"mystery", name:"推理ゲーム", sub:"全20章｜やりすぎヒーロー伝説つき", desc:"会話と証言を集めて、マス目のパズルで事件を解く、オリジナルの推理ゲーム。毎回ちがう事件、ノートに○×をつけながら推理。全10章＋「やりすぎヒーロー伝説」10章（虫は一切出てきません）。", href:"game6/index.html", cat:"mystery", tags:["推理","全20章","○×メモ"], emoji:"🔍", c1:"#26406a", c2:"#1f2a5a", img:"thumbs/mystery.webp"},
     {id:"blocks", name:"ARE BLOCKS", sub:"おもちゃブロック", desc:"おもちゃブロック風の落ち物パズル。ブロックをうまく積んで、そろえて消そう。", href:"game5/blocks/index.html", cat:"mystery", tags:["落ち物パズル","ブロック"], emoji:"🧱", c1:"#a05a2a", c2:"#7a2a5a"},
     {id:"offline", name:"OFFLINE PARADISE", sub:"電波がなくてもOK", desc:"ルーレットで選ばれる5つのミニゲーム。コインをためて図鑑をうめよう。", href:"game7/index.html", cat:"casual", tags:["ミニゲーム","オフラインOK"], emoji:"🎰", c1:"#a03a6a", c2:"#3a2a8a"},
     {id:"game8", name:"GAME8", sub:"アクション＆レース", desc:"横スクロールアクションと、コースを走るレース。3Dグラフィックで描く、オリジナルの2in1ゲーム。", href:"game8/index.html", cat:"casual", tags:["3D","アクション","レース"], emoji:"🏁", c1:"#1f6ab0", c2:"#2a3a9a", img:"thumbs/game8.webp"},
-    {id:"game9", name:"AREshoot", sub:"美食の晩餐会", desc:"向かってくる食べもの・調理道具をねらって撃つ、3Dシューティングギャラリー。クラシック・オーケストラ曲にのせて全14コース（虫は一切出てきません）。", href:"game9/index.html", cat:"casual", tags:["3D","シューティング","クラシック音楽"], emoji:"🍽️", c1:"#e05a2a", c2:"#3a1c63"}
+    {id:"game9", name:"AREshoot", sub:"美食の晩餐会＋バトルロワイヤル", desc:"向かってくる食べもの・調理道具をねらって撃つ3Dシューティングギャラリー（全14コース）に、新モード「バトルロワイヤル」が登場。島に降りて武器をひろい、せばまるエリアで最後の1人をめざそう（虫は一切出てきません）。", href:"game9/index.html", cat:"casual", tags:["3D","シューティング","バトロワ","クラシック音楽"], emoji:"🍽️", c1:"#e05a2a", c2:"#3a1c63"},
+    {id:"game10", name:"ループ・ラボ", sub:"過去の自分と協力パズル", desc:"ボタンを踏んだまま「ぶんしん」を作って、つぎのループで自分のゴーストと力を合わせ、トビラを開いて出口へ。ターン制のタイムループ・パズル、全10ステージ（虫は一切出てきません）。", href:"game10/index.html", cat:"mystery", tags:["パズル","タイムループ","ターン制"], emoji:"⏪", c1:"#1f8a9a", c2:"#3a3a9a"}
   ];
 
   var grid = document.getElementById("grid"), empty = document.getElementById("empty"), resume = document.getElementById("resume");
@@ -166,6 +166,5 @@ header.top{position:relative}
 </script>
 <script>/* ゲーム入口もオフラインで開けるように、サービスワーカーを登録 */(function(){try{if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1")){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js",{scope:"./"}).catch(function(){});});}}catch(_e){}})();</script>
 <script src="./shared/first-tips.js" defer></script>
-<script src="./shared/are-pad.js" defer></script>
 </body>
 </html>
