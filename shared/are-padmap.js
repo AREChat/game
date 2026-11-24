@@ -31,6 +31,14 @@
         }catch(_e){}
     }
     function save(){ try{ localStorage.setItem(KEY, JSON.stringify(cfg)); }catch(_e){} }
+    // ---- ボタンの配置（プリセット）----
+    //   ニンテンドー配置（標準・3DS／Switch と同じ）：右のボタン＝A（決定）、下のボタン＝B（もどる）、上＝X、左＝Y
+    //   Xbox・Steam配置：下のボタン＝A（決定）、右のボタン＝B（もどる）、左＝X、上＝Y（PC の Steam などで慣れている人向け）
+    //   どちらも「ゲームが見る A／B／X／Y」を入れかえるだけ。ほかのボタンは そのまま
+    function xboxMap(){ var m = ident(); m[0] = 1; m[1] = 0; m[2] = 3; m[3] = 2; return m; }
+    function sameMap(a, b){ for(var i = 0; i < 18; i++) if(a[i] !== b[i]) return false; return true; }
+    function layoutName(){ return sameMap(cfg.map, ident()) ? "nin" : sameMap(cfg.map, xboxMap()) ? "xbox" : "custom"; }
+    function setLayout(name){ cfg.map = name === "xbox" ? xboxMap() : ident(); save(); }
     function isDefault(){ return !cfg.swap && cfg.map.every(function(v, i){ return v === i; }); }
     load();
 
@@ -73,11 +81,18 @@
             r.row.style.outline = k === sel ? "2px solid #ffd86b" : "none";
             r.val.style.color = cap === k ? "#ffd86b" : v === ROWS[k].i ? "#cfd6ff" : "#7dffb0";
         });
-        acts.forEach(function(a, k){ a.el.style.background = ROWS.length + k === sel ? "#35479a" : "#243064"; a.el.style.outline = ROWS.length + k === sel ? "2px solid #ffd86b" : "none"; });
+        acts.forEach(function(a, k){ var cs = ROWS.length + k === sel; a.el.style.background = cs ? "#35479a" : "#243064"; a.el.style.outline = cs ? "2px solid #ffd86b" : (a.el.dataset.on ? "2px solid #7dffb0" : "none"); });
         swapBtn.textContent = "🕹 スティック 左右を入れかえる：" + (cfg.swap ? "オン" : "オフ");
+        var ln = layoutName();
+        if(layBtn){
+            layBtn.nin.textContent = (ln === "nin" ? "✅ " : "") + "ニンテンドー配置（標準）　右＝A（決定）／下＝B（もどる）";
+            layBtn.xbox.textContent = (ln === "xbox" ? "✅ " : "") + "Xbox・Steam配置　下＝A（決定）／右＝B（もどる）";
+            layBtn.nin.dataset.on = ln === "nin" ? "1" : ""; layBtn.xbox.dataset.on = ln === "xbox" ? "1" : "";
+            layBtn.cur.textContent = "いまの配置： " + (ln === "nin" ? "ニンテンドー配置（標準）" : ln === "xbox" ? "Xbox・Steam配置" : "じぶんで かえた 配置");
+        }
         stEl.textContent = status;
     }
-    var swapBtn, stEl, acts = [];
+    var swapBtn, stEl, acts = [], layBtn = null;
     function total(){ return ROWS.length + acts.length; }
     function activate(k){ if(k < ROWS.length) startCap(k); else if(acts[k - ROWS.length]) acts[k - ROWS.length].fn(); }
     function startCap(k){ cap = k; capT = performance.now(); sel = k; paint(); }
@@ -142,7 +157,7 @@
     var liveEl;
     function open(){
         if(box) return;
-        panelOpen = true; sel = 0; cap = -1; wiz = -1; status = ""; prev = {};
+        panelOpen = true; sel = ROWS.length; cap = -1; wiz = -1; status = ""; prev = {};
         var p0 = rawPad(); if(p0) for(var q = 0; q < p0.buttons.length; q++) prev[q] = !!p0.buttons[q].pressed;   // ひらいた しゅんかんに おしていた ボタンは むし
         box = el("div", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;font-family:sans-serif;color:#fff");
         box.setAttribute("role", "dialog"); box.setAttribute("aria-label", "ボタン設定");
@@ -151,6 +166,20 @@
         win.appendChild(el("div", "font-size:12px;opacity:.88;margin:6px 0 8px;line-height:1.5", "「ゲームが 受けとる ボタン」を、じぶんが おしたい ボタンに かえられます。行を えらんで Enter（パッドは A）→ おしたい ボタンを おすと 入れかわります。この画面だけは、いつもの 配置（A＝決定・B＝もどる・十字＝えらぶ）で 操作します。マウスは いりません。"));
         info = el("div", "font-size:12px;color:#9fb0ff;margin-bottom:6px"); win.appendChild(info);
         liveEl = el("div", "font-size:12px;color:#7dffb0;margin-bottom:6px;min-height:1.4em"); win.appendChild(liveEl);
+        // かんたん切りかえ：ニンテンドー配置（標準）／Xbox・Steam配置
+        layBtn = {cur: el("div", "font-size:14px;font-weight:bold;color:#ffd86b;margin:2px 0 4px")};
+        win.appendChild(layBtn.cur);
+        acts = [];
+        function act(label, fn){
+            var e = el("div", "padding:9px 12px;margin:4px 0;border-radius:8px;cursor:pointer;font-size:15px;text-align:center;font-weight:bold", label);
+            var idx = ROWS.length + acts.length;
+            e.addEventListener("click", function(){ sel = idx; fn(); });
+            win.appendChild(e); acts.push({el: e, fn: fn}); return e;
+        }
+        function setLay(name){ setLayout(name); status = (name === "xbox" ? "Xbox・Steam配置" : "ニンテンドー配置（標準）") + " にしました。"; paint(); }
+        layBtn.nin = act("", function(){ setLay("nin"); });
+        layBtn.xbox = act("", function(){ setLay("xbox"); });
+        win.appendChild(el("div", "font-size:12px;opacity:.85;margin:6px 0 2px", "ボタン1つずつ かえたい ときは、下の 一覧から えらびます。"));
         rows = [];
         ROWS.forEach(function(r, k){
             var row = el("div", "display:flex;justify-content:space-between;gap:8px;padding:7px 10px;margin:3px 0;border-radius:8px;cursor:pointer;font-size:15px");
@@ -159,13 +188,6 @@
             row.addEventListener("click", function(){ sel = k; startCap(k); });
             win.appendChild(row); rows.push({row: row, val: val});
         });
-        acts = [];
-        function act(label, fn){
-            var e = el("div", "padding:9px 12px;margin:4px 0;border-radius:8px;cursor:pointer;font-size:15px;text-align:center;font-weight:bold", label);
-            var idx = ROWS.length + acts.length;
-            e.addEventListener("click", function(){ sel = idx; fn(); });
-            win.appendChild(e); acts.push({el: e, fn: fn}); return e;
-        }
         act("▶ ひとつずつ 設定（A B X Y L R ZL ZR）", function(){ wiz = 0; status = ""; startCap(ROWS.findIndex(function(r){ return r.i === WIZ[0]; })); });
         swapBtn = act("", function(){ cfg.swap = !cfg.swap; save(); status = "スティックの 左右を " + (cfg.swap ? "入れかえました。" : "もとに もどしました。"); paint(); });
         act("↩ もとにもどす", reset);
@@ -178,7 +200,8 @@
         paint(); raf = requestAnimationFrame(loop);
     }
 
-    window.AREPadMap = {open: open, close: close, isDefault: isDefault, get: function(){ return {map: cfg.map.slice(), swap: cfg.swap}; }, reset: reset};
+    window.AREPadMap = {open: open, close: close, isDefault: isDefault, get: function(){ return {map: cfg.map.slice(), swap: cfg.swap, layout: layoutName()}; }, reset: reset,
+        layout: layoutName, setLayout: function(n){ setLayout(n); }};
     // data-are-padmap を つけた ものを おすと、設定画面が ひらく（ゲームの タイトルに ボタンを 置くだけで つかえる）
     document.addEventListener("click", function(e){
         var t = e.target && e.target.closest && e.target.closest("[data-are-padmap]");

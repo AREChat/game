@@ -95,7 +95,7 @@ dream-frontier/
 │   ├── df-coaster.js      コースターの 物理（レールの 道すじ・かそく・ブレーキ・Gの かんじ・カメラ）
 │   ├── df-ride.js         新しい 3つの のりものの 進行（幕・イベント・シューティング・スコア）
 │   ├── df-extra.js        新しい 5つの アトラクション（リズム／めいろ／ジャンプ／ランナー／ループ）の 登録と、のりばの 入口ゲート
-│   ├── df-x-*.js          それぞれの ほんたい（df-x-rhythm / -maze / -jump / -kart / -loop（＋ -loop-track：ループの 3Dレールと 物理）/ -song / df-xlib）
+│   ├── df-x-*.js          それぞれの ほんたい（df-x-rhythm / -maze / -jump / -kart（ランナーの かけっこレース。ファイル名だけ むかしの kart のまま） / -loop（＋ -loop-track：ループの 3Dレールと 物理）/ -song / df-xlib）
 │   ├── df-stages.js / df-stages2.js  新しい 3つの ステージ（火星・木星・スイーツ・ランド・オーロラ）と 乗り場の たてもの
 │   ├── df-score.js        クラシック風 BGM の 合成（火星・木星・スイーツ・オーロラ。ファイルなし・WebAudio で 生成）
 │   ├── df-world.js        ワールド（プリミティブの せつめい）

@@ -446,6 +446,31 @@ function drawRadar(px, pz, yaw){
     radarCtx.restore();
 }
 
+// ---------- ゲームパッド（プロコン）：ニンテンドー配置が標準（「🎮 ボタン設定」で Xbox・Steam配置にも）----------
+//   左スティック／十字＝いどう　右スティック＝みまわし　ZR か A＝うつ　R か B＝グレネード　X＝リロード
+//   L＝前の武器　ZL か Y＝次の武器　＋＝タイトルにもどる
+window.ARE_PAD_OFF = () => !!G.running || (scrs["s-br"].classList.contains("on") && $("brRes").hidden);   // 遊んでいるあいだは、メニュー用のパッド操作（are-pad.js）を止める
+window.addEventListener("keydown", (e) => {            // B（もどる）：メニューでは ひとつ前へ（are-pad.js が B と ＋ を Esc として送ってくる）
+    if(e.key !== "Escape" || G.running) return;
+    const nowT = performance.now(); if(window.__g9EscT && nowT - window.__g9EscT < 150) return; window.__g9EscT = nowT;
+    if(window.__g9PadBackT && nowT - window.__g9PadBackT < 700) return;     // ＋ で いま もどった直後の、おしっぱなしの 2回目は 無視
+    if(scrs["s-how"].classList.contains("on") || scrs["s-set"].classList.contains("on")) showScreen("s-title");
+    else if(scrs["s-res"].classList.contains("on")) $("resTitleBtn").click();
+    else if(scrs["s-br"].classList.contains("on")){ if(!$("brRes").hidden) $("brHome").click(); }
+    else if(scrs["s-title"].classList.contains("on")) $("exitBtn").click();
+});
+function padRead(dt){
+    const o = {f: 0, s: 0, fire: false, reload: false, grenade: false, wpn: 0, back: false};
+    const P = window.Pad9 ? window.Pad9.read() : null;
+    if(!P || !P.on) return o;
+    o.s = P.s; o.f = P.f;
+    Input.yaw -= P.rx * 2.6 * settings.sens * dt;      // 右スティックを右へ ＝ 右を向く（マウスを右へ動かしたときと同じ向き）
+    o.fire = P.h.zr || P.h.a;
+    o.grenade = P.e.r || P.e.b; o.reload = P.e.x; o.back = P.e.plus;
+    if(P.e.y || P.e.zl) o.wpn = 1; else if(P.e.l) o.wpn = -1;
+    return o;
+}
+
 let lastT = 0;
 function loop(t){
     if(!G.running) return;
@@ -456,10 +481,16 @@ function loop(t){
     const km = keyboardMove();
     let moveF = km.f, moveS = km.s;
     if(Input.moveF || Input.moveS){ moveF = clampN(moveF + Input.moveF, -1, 1); moveS = clampN(moveS + Input.moveS, -1, 1); }
+    const pad = padRead(dt);
+    if(pad.f || pad.s){ moveF = clampN(moveF + pad.f, -1, 1); moveS = clampN(moveS + pad.s, -1, 1); }
+    if(pad.back){ window.__g9PadBackT = performance.now(); $("exitBtn").click(); return; }
+    if(pad.reload) Input.reload = true;
+    if(pad.grenade) Input.grenade = true;
+    if(pad.wpn) Input.weaponSwitch = (G.curWeapon + pad.wpn + WEAPONS.length) % WEAPONS.length;
 
     const reloadPressed = Input.reload ? 1 : 0; Input.reload = false;
     const grenadePressed = Input.grenade ? 1 : 0; Input.grenade = false;
-    const firing = Input.firing ? 1 : 0;
+    const firing = (Input.firing || pad.fire) ? 1 : 0;
     const weaponSwitch = Input.weaponSwitch; Input.weaponSwitch = -1;
 
     // エイムアシスト：撃っているあいだ、ねらいの近くにいる敵へ、ほんの少しだけ向きを寄せる（スマホはやや強め）
@@ -680,6 +711,9 @@ $("exitBtn").addEventListener("click", () => {
     }
     try{ const back = new URLSearchParams(location.search).get("back"); location.href = back || "../index.html"; }catch(_e){ history.back(); }
 });
+
+// 動作確認用（読むだけ）：プレイヤーの位置と、画面の「右」の向き（世界の座標で）
+window.G9Debug = {read(){ const r = new T.Vector3().setFromMatrixColumn(camera.matrixWorld, 0); return {x: scene3d.player.position.x, z: scene3d.player.position.z, yaw: Input.yaw, rx: r.x, rz: r.z, running: G.running, weapon: G.curWeapon}; }};
 
 resize();
 boot();
