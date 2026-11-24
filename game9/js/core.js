@@ -104,6 +104,9 @@ window.addEventListener("keydown", (e) => {
     if(e.code === "KeyQ" || e.code === "Tab"){ e.preventDefault(); Input.weaponSwitch = (G.curWeapon + 1) % WEAPONS.length; }
 });
 window.addEventListener("keyup", (e) => { keys[e.code] = false; });
+// 最後に触った入力がスマホ（タッチ）かどうか（エイムアシストの強さを変える）
+let lastPointerTouch = false;
+window.addEventListener("pointerdown", (e) => { lastPointerTouch = e.pointerType !== "mouse"; }, true);
 function keyboardMove(){
     let f = 0, s = 0;
     if(keys.KeyW || keys.ArrowUp) f += 1;
@@ -195,51 +198,90 @@ function paintWeaponSelect(){
 }
 
 // ---------- 見た目：共通マテリアル・ジオメトリ ----------
-function makeCharacter(bodyColor, hatColor){
+function makeCharacter(bodyColor, hatColor, isEnemy){
     const g = new T.Group();
-    const body = new T.Mesh(new T.CapsuleGeometry(0.42, 0.78, 4, 10), new T.MeshStandardMaterial({color:bodyColor, roughness:0.55, metalness:0.1}));
+    const body = new T.Mesh(new T.CapsuleGeometry(0.42, 0.78, 4, 10), new T.MeshStandardMaterial({color:bodyColor, roughness:0.55, metalness:0.1, emissive:bodyColor, emissiveIntensity:0.18}));
     body.position.y = 0.95; body.castShadow = true; g.add(body);
-    const head = new T.Mesh(new T.SphereGeometry(0.28, 16, 12), new T.MeshStandardMaterial({color:0xf0c8a0, roughness:0.6}));
+    const head = new T.Mesh(new T.SphereGeometry(0.28, 16, 12), new T.MeshStandardMaterial({color:0xf0c8a0, roughness:0.6, emissive:0x553322, emissiveIntensity:0.25}));
     head.position.y = 1.72; head.castShadow = true; g.add(head);
-    const hat = new T.Mesh(new T.CylinderGeometry(0.26, 0.3, 0.32, 14), new T.MeshStandardMaterial({color:hatColor, roughness:0.5}));
+    const hat = new T.Mesh(new T.CylinderGeometry(0.26, 0.3, 0.32, 14), new T.MeshStandardMaterial({color:hatColor, roughness:0.5, emissive:0x444444, emissiveIntensity:0.3}));
     hat.position.y = 2.02; hat.castShadow = true; g.add(hat);
+    // 目（向いている方向が わかる）
+    const eyeMat = new T.MeshBasicMaterial({color:0x111111});
+    [-0.1, 0.1].forEach((ex) => { const eye = new T.Mesh(new T.SphereGeometry(0.045, 8, 6), eyeMat); eye.position.set(ex, 1.76, 0.25); g.add(eye); });
+    // 銃は右手がわ（うしろから見て 画面の右）に持たせる：照準に かぶらない
     const gun = new T.Mesh(new T.BoxGeometry(0.14, 0.14, 0.7), new T.MeshStandardMaterial({color:0x2a2a2a, metalness:0.6, roughness:0.4}));
-    gun.position.set(0.32, 1.05, 0.5); g.add(gun);
+    gun.position.set(-0.34, 1.05, 0.5); g.add(gun);
+    // 足もとの輪：味方（あお）と敵（あか）がひと目でわかる
+    const ring = new T.Mesh(new T.RingGeometry(0.62, 0.82, 28), new T.MeshBasicMaterial({color:isEnemy ? 0xff3b3b : 0x3bd0ff, transparent:true, opacity:0.9, side:T.DoubleSide, depthWrite:false}));
+    ring.rotation.x = -Math.PI / 2; ring.position.y = 0.04; g.add(ring);
     g.userData.hitFlashMat = [body.material, head.material];
+    if(isEnemy){
+        // 頭の上の体力ゲージ（いつもカメラの方を向く）
+        const bar = new T.Group(); bar.position.y = 2.55;
+        const bg = new T.Mesh(new T.PlaneGeometry(1.1, 0.14), new T.MeshBasicMaterial({color:0x000000, transparent:true, opacity:0.7, depthTest:false}));
+        const fg = new T.Mesh(new T.PlaneGeometry(1.0, 0.09), new T.MeshBasicMaterial({color:0xff4d4d, depthTest:false}));
+        fg.position.z = 0.005; bg.renderOrder = 998; fg.renderOrder = 999;
+        bar.add(bg); bar.add(fg); g.add(bar);
+        g.userData.hpBar = bar; g.userData.hpFg = fg;
+    }
     return g;
 }
 
 const scene3d = {};
+function lighten(hex, amt){ const c = new T.Color(hex); return c.lerp(new T.Color(0xffffff), amt); }
+function makeFloorTexture(hex){
+    // 市松もよう：どれくらい動いたか・どこに壁があるかが ひと目で わかる
+    const c = document.createElement("canvas"); c.width = c.height = 128;
+    const x = c.getContext("2d");
+    const a = lighten(hex, 0.2), b = lighten(hex, 0.32);
+    x.fillStyle = "#" + a.getHexString(); x.fillRect(0, 0, 128, 128);
+    x.fillStyle = "#" + b.getHexString(); x.fillRect(0, 0, 64, 64); x.fillRect(64, 64, 64, 64);
+    x.strokeStyle = "rgba(255,255,255,.22)"; x.lineWidth = 2; x.strokeRect(1, 1, 126, 126);
+    const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(15, 15);
+    if(renderer.capabilities && renderer.capabilities.getMaxAnisotropy) t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+    return t;
+}
 function buildStageScene(stage){
-    scene.background = new T.Color(stage.sky[0]);
-    scene.fog = new T.Fog(stage.fog, 14, 60);
+    const sky = lighten(stage.sky[0], 0.28), fogC = lighten(stage.fog, 0.30);
+    scene.background = sky;
+    scene.fog = new T.Fog(fogC, 26, 95);
     while(scene.children.length) scene.remove(scene.children[0]);
 
-    const hemi = new T.HemisphereLight(stage.sky[0], 0x201810, 1.0);
-    scene.add(hemi);
-    const sun = new T.DirectionalLight(0xfff3e0, 1.15);
+    scene.add(new T.HemisphereLight(0xffffff, lighten(stage.floorColor, 0.35).getHex(), 1.05));
+    const sun = new T.DirectionalLight(0xfff3e0, 1.1);
     sun.position.set(14, 26, 10); sun.castShadow = true;
     sun.shadow.mapSize.set(1024, 1024);
     sun.shadow.camera.left = -30; sun.shadow.camera.right = 30; sun.shadow.camera.top = 30; sun.shadow.camera.bottom = -30;
     sun.shadow.camera.far = 90;
     scene.add(sun);
-    scene.add(new T.AmbientLight(0xffffff, 0.28));
+    scene.add(new T.AmbientLight(0xffffff, 0.4));
 
-    const floorMat = new T.MeshStandardMaterial({color:stage.floorColor, roughness:0.92});
+    const floorMat = new T.MeshStandardMaterial({map:makeFloorTexture(stage.floorColor), roughness:0.9});
     const floor = new T.Mesh(new T.PlaneGeometry(60, 60), floorMat);
     floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true;
     scene.add(floor);
-    const wallMat = new T.MeshStandardMaterial({color:stage.floorColor, roughness:0.95});
+    // 壁：床よりも はっきり明るく ＋ 上のふちに光る帯（フィールドの はしが わかる）
+    const wallMat = new T.MeshStandardMaterial({color:lighten(stage.sky[0], 0.3), roughness:0.85, emissive:lighten(stage.sky[0], 0.1), emissiveIntensity:0.35});
+    const trimMat = new T.MeshBasicMaterial({color:lighten(stage.enemyColor, 0.2)});
     const wallH = 6;
-    [[0,-23,46,wallH,0],[0,23,46,wallH,0],[-23,0,wallH,46,Math.PI/2],[23,0,wallH,46,Math.PI/2]].forEach(([x,z,w,h,rot]) => {
+    [[0,-22.5,46,wallH,0],[0,22.5,46,wallH,0],[-22.5,0,46,wallH,Math.PI/2],[22.5,0,46,wallH,Math.PI/2]].forEach(([x,z,w,h,rot]) => {
         const wall = new T.Mesh(new T.BoxGeometry(w, h, 1), wallMat);
         wall.position.set(x, h/2, z); wall.rotation.y = rot; wall.receiveShadow = true;
         scene.add(wall);
     });
+    // 内がわの はしの光る線（床のふち）
+    const edge = new T.Mesh(new T.RingGeometry(1, 1.01, 4, 1), trimMat); edge.visible = false; scene.add(edge);
+    [[0,-21.9,44,0],[0,21.9,44,0],[-21.9,0,44,Math.PI/2],[21.9,0,44,Math.PI/2]].forEach(([x,z,w,rot]) => {
+        const t = new T.Mesh(new T.BoxGeometry(w, 0.12, 0.12), trimMat);
+        t.position.set(x, 0.07, z); t.rotation.y = rot; scene.add(t);
+        const t2 = new T.Mesh(new T.BoxGeometry(w, 0.12, 0.12), trimMat);
+        t2.position.set(x, 3.0, z); t2.rotation.y = rot; scene.add(t2);
+    });
 
     scene3d.enemyMeshes = [];
     for(let i = 0; i < 10; i++){
-        const m = makeCharacter(stage.enemyColor, 0xffffff);
+        const m = makeCharacter(stage.enemyColor, 0xffffff, true);
         m.visible = false; scene.add(m); scene3d.enemyMeshes.push(m);
     }
     scene3d.player = makeCharacter(0x3a6fd9, 0xffffff);
@@ -322,6 +364,7 @@ async function boot(){
 const HEADER = 37, MAX_OBST = 18, MAX_ENEMY = 10, MAX_EB = 60, MAX_TR = 16, MAX_GR = 4;
 const BUF_LEN = HEADER + MAX_OBST*3 + MAX_ENEMY*8 + MAX_EB*3 + MAX_TR*6 + MAX_GR*5;
 let G = {running:false, stageIdx:0, stage:null, curWeapon:0};
+let aimEnemies = [], aimPx = 0, aimPz = 0, obstList = [];
 let lastKills = -1, lastHp = -1, lastAmmo = -1, lastCombo = -1, lastBoss = 0, lastWeapon = -1, obstaclesPlaced = false;
 
 function startStage(idx){
@@ -332,7 +375,7 @@ function startStage(idx){
     G9.g9_start_stage(idx, G.stage.killTarget, diff.hpMul, diff.speedMul, diff.fireMul, diff.bulletMul, seed);
     Input.yaw = 0; Input.moveF = 0; Input.moveS = 0; Input.firing = false; Input.weaponSwitch = -1;
     G.curWeapon = 0; paintWeaponSelect();
-    obstaclesPlaced = false; lastKills = -1; lastHp = -1; lastAmmo = -1; lastCombo = -1; lastBoss = 0; lastWeapon = -1;
+    obstaclesPlaced = false; obstList = []; aimEnemies = []; lastKills = -1; lastHp = -1; lastAmmo = -1; lastCombo = -1; lastBoss = 0; lastWeapon = -1;
     $("playTitle").textContent = G.stage.title;
     $("playSub").textContent = G.stage.composer;
     $("bossWrap").hidden = true;
@@ -374,6 +417,35 @@ function endStage(cleared, finalScore){
     showScreen("s-res");
 }
 
+
+// ---------- レーダー（上＝キャラの向き。あか＝敵、はいいろ＝遮蔽物、あお＝自分） ----------
+const radarCv = $("radar"), radarCtx = radarCv ? radarCv.getContext("2d") : null;
+function drawRadar(px, pz, yaw){
+    if(!radarCtx) return;
+    const W = radarCv.width, c = W / 2, R = c - 3, range = 24, k = R / range;
+    const sn = Math.sin(yaw), cs = Math.cos(yaw);
+    const to = (x, z) => { const dx = x - px, dz = z - pz; return [c + (-cs * dx + sn * dz) * k, c - (sn * dx + cs * dz) * k]; };
+    radarCtx.clearRect(0, 0, W, W);
+    radarCtx.save();
+    radarCtx.beginPath(); radarCtx.arc(c, c, R, 0, Math.PI * 2); radarCtx.clip();
+    radarCtx.fillStyle = "rgba(20,30,40,.55)"; radarCtx.fillRect(0, 0, W, W);
+    // フィールドのはし
+    radarCtx.strokeStyle = "rgba(255,230,120,.8)"; radarCtx.lineWidth = 2; radarCtx.beginPath();
+    [[-22,-22],[22,-22],[22,22],[-22,22]].forEach(([x, z], i) => { const [a, b] = to(x, z); if(i) radarCtx.lineTo(a, b); else radarCtx.moveTo(a, b); });
+    radarCtx.closePath(); radarCtx.stroke();
+    radarCtx.fillStyle = "rgba(190,190,190,.7)";
+    for(const o of obstList){ const [a, b] = to(o.x, o.z); radarCtx.beginPath(); radarCtx.arc(a, b, Math.max(2, o.r * k), 0, Math.PI * 2); radarCtx.fill(); }
+    for(const e of aimEnemies){
+        const [a, b] = to(e.x, e.z);
+        radarCtx.fillStyle = e.big ? "#ff9a2a" : "#ff3b3b";
+        radarCtx.beginPath(); radarCtx.arc(a, b, e.big ? 6 : 4, 0, Math.PI * 2); radarCtx.fill();
+        radarCtx.strokeStyle = "#fff"; radarCtx.lineWidth = 1; radarCtx.stroke();
+    }
+    // 自分（まん中の三角：上向き）
+    radarCtx.fillStyle = "#3bd0ff"; radarCtx.beginPath(); radarCtx.moveTo(c, c - 7); radarCtx.lineTo(c - 5, c + 5); radarCtx.lineTo(c + 5, c + 5); radarCtx.closePath(); radarCtx.fill();
+    radarCtx.restore();
+}
+
 let lastT = 0;
 function loop(t){
     if(!G.running) return;
@@ -390,7 +462,22 @@ function loop(t){
     const firing = Input.firing ? 1 : 0;
     const weaponSwitch = Input.weaponSwitch; Input.weaponSwitch = -1;
 
-    G9.g9_step(dt, moveF, moveS, Input.yaw, firing, reloadPressed, grenadePressed, weaponSwitch);
+    // エイムアシスト：撃っているあいだ、ねらいの近くにいる敵へ、ほんの少しだけ向きを寄せる（スマホはやや強め）
+    if(firing && aimEnemies.length){
+        let best = null, bestAbs = 0.30;
+        for(const e of aimEnemies){
+            const dx = e.x - aimPx, dz = e.z - aimPz, dist = Math.hypot(dx, dz);
+            if(dist < 1.2 || dist > 30) continue;
+            let d = Math.atan2(dx, dz) - Input.yaw;
+            d = Math.atan2(Math.sin(d), Math.cos(d));
+            const a = Math.abs(d) - (e.big ? 0.05 : 0);
+            if(a < bestAbs){ bestAbs = a; best = d; }
+        }
+        if(best !== null) Input.yaw += best * Math.min(1, dt * (lastPointerTouch ? 9 : 4));
+    }
+
+    // ※ 画面の右 ＝ ワールドの −x 方向なので、横移動の向きを 逆にして 物理側へ渡す（→キーで 右、←キーで 左）
+    G9.g9_step(dt, moveF, -moveS, Input.yaw, firing, reloadPressed, grenadePressed, weaponSwitch);
     const ptr = G9.g9_get_buffer();
     const buf = new Float32Array(G9.heap().buffer, ptr, BUF_LEN);
 
@@ -409,10 +496,14 @@ function loop(t){
     // プレイヤー・カメラ
     scene3d.player.position.set(px, 0, pz);
     scene3d.player.rotation.y = yaw;
+    // 肩ごしカメラ：キャラは画面の左よりに寄せて、まん中の照準に かぶらないようにする（ねらう先はキャラの正面の線上）
     const backX = -Math.sin(yaw), backZ = -Math.cos(yaw);
-    camera.position.set(px + backX * 4.6, 2.6, pz + backZ * 4.6);
-    const lookX = px + Math.sin(yaw) * 3, lookZ = pz + Math.cos(yaw) * 3;
-    camera.lookAt(lookX, 1.55, lookZ);
+    const rightX = -Math.cos(yaw), rightZ = Math.sin(yaw);
+    let camX = px + backX * 5.2 + rightX * 1.25, camZ = pz + backZ * 5.2 + rightZ * 1.25;
+    camX = clampN(camX, -21.6, 21.6); camZ = clampN(camZ, -21.6, 21.6);   // 壁の外へ出ると、壁で画面がふさがれるので、内側に収める
+    camera.position.set(camX, 3.3, camZ);
+    camera.lookAt(px + Math.sin(yaw) * 14, 1.0, pz + Math.cos(yaw) * 14);
+    aimPx = px; aimPz = pz; Input.px = px; Input.pz = pz; Input.pyaw = yaw;   // 動作確認用（ゲームの動きには関係しません）
 
     // 遮蔽物（初回のみ配置：ステージ中は不動）
     if(!obstaclesPlaced){
@@ -420,7 +511,7 @@ function loop(t){
         for(let i = 0; i < MAX_OBST; i++){
             const x = buf[o], z = buf[o+1], r = buf[o+2];
             const m = scene3d.obstMeshes[i];
-            if(i < obstacleCount && r > 0){ m.visible = true; m.position.set(x, 0, z); m.scale.set(r, 1, r); }
+            if(i < obstacleCount && r > 0){ m.visible = true; m.position.set(x, 0, z); m.scale.set(r, 1, r); obstList.push({x, z, r}); }
             else m.visible = false;
             o += 3;
         }
@@ -429,6 +520,7 @@ function loop(t){
 
     // 敵
     let o = HEADER + MAX_OBST * 3;
+    aimEnemies = [];
     for(let i = 0; i < MAX_ENEMY; i++){
         const ex = buf[o], ez = buf[o+1], eyaw = buf[o+2], ehp = buf[o+3], ehpMax = buf[o+4];
         const etype = buf[o+5] | 0, estate = buf[o+6] | 0, ehitFlash = buf[o+7];
@@ -438,8 +530,14 @@ function loop(t){
             m.position.set(ex, 0, ez); m.rotation.y = eyaw;
             const scl = etype === 1 ? 1.7 : 1.0;
             m.scale.setScalar(scl);
+            aimEnemies.push({x:ex, z:ez, big:etype === 1, hp:ehp, hpMax:ehpMax});
+            if(m.userData.hpFg){
+                const r = Math.max(0.001, Math.min(1, ehp / Math.max(1, ehpMax)));
+                m.userData.hpFg.scale.x = r; m.userData.hpFg.position.x = -(1 - r) * 0.5;
+                m.userData.hpBar.lookAt(camera.position);
+            }
             const flashOn = ehitFlash > 0;
-            m.userData.hitFlashMat.forEach((mat) => { mat.emissive.setHex(flashOn ? 0xffffff : 0x000000); mat.emissiveIntensity = flashOn ? 0.9 : 0; });
+            m.userData.hitFlashMat.forEach((mat) => { if(mat.userData.baseEm === undefined){ mat.userData.baseEm = mat.emissive.getHex(); mat.userData.baseInt = mat.emissiveIntensity; } mat.emissive.setHex(flashOn ? 0xffffff : mat.userData.baseEm); mat.emissiveIntensity = flashOn ? 0.9 : mat.userData.baseInt; });
         } else m.visible = false;
         o += 8;
     }
@@ -521,6 +619,7 @@ function loop(t){
         $("bossWrap").hidden = true;
     }
 
+    drawRadar(px, pz, yaw);
     renderer.render(scene, camera);
 
     if(gameOver && G.running){ endStage(false, score); }

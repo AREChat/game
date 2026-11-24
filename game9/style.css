@@ -185,3 +185,18 @@ body.g9br #arefp-btn{display:none!important}
  #s-title .hint{display:none}
  .stage-select{max-height:30vh}
 }
+
+/* ---- AREshoot 見やすさ改善：レーダー ---- */
+#radar{position:absolute;right:calc(10px + env(safe-area-inset-right));top:calc(46px + env(safe-area-inset-top));width:92px;height:92px;border-radius:50%;background:#000a;border:2px solid #ffffff55;z-index:5;pointer-events:none;box-shadow:0 0 12px #000a}
+#crosshair{width:34px;height:34px;margin:-17px 0 0 -17px;filter:drop-shadow(0 0 1.5px #000) drop-shadow(0 0 1.5px #000);
+ background:
+  linear-gradient(#fff,#fff) 50% 0 / 3px 11px no-repeat,
+  linear-gradient(#fff,#fff) 50% 100% / 3px 11px no-repeat,
+  linear-gradient(#fff,#fff) 0 50% / 11px 3px no-repeat,
+  linear-gradient(#fff,#fff) 100% 50% / 11px 3px no-repeat,
+  radial-gradient(circle,#ff3b3b 0 2.5px,transparent 3px) 50% 50% / 100% 100% no-repeat}
+#crosshair::before,#crosshair::after{display:none}
+#actionBtns button{width:66px;height:66px;font-size:26px;border:2px solid #fff6}
+#bFire{width:90px;height:90px;font-size:34px}
+.weaponBtn{width:50px;height:50px}
+#bossWrap[hidden]{display:none}
