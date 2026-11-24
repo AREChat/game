@@ -276,7 +276,12 @@ export class Game{
             frac = clamp((R.s + R.lap * tot) / (tot * a.laps), 0, 1);
             ev(a.events, frac); if(a.scares) for(const sc of a.scares){ if(!R.texts[sc.s] && frac >= sc.s - .02){ R.texts[sc.s] = 1; this.ui.toast(sc.text, 2600); this.sfx("boo"); } }
             R.frac = frac; if(R.done || (a.closed && R.lap + 1 >= a.laps && R.s >= tot - .1)){ if(!R.fin){ R.fin = this.t; this.ui.toast("おつかれさま！ ぶじ とうちゃく！"); } if(this.t - R.fin > 1.2) this.endRide(true); }
-        } else if(a.kind === "orbit"){ R.frac = R.t / a.dur; if(a.mode === "cup"){ R.spinV = lerpv(R.spinV === undefined ? 1 : R.spinV, 1.0 - inp.mx * 2.8, 1 - Math.pow(.15, dt)); R.spin = (R.spin || 0) + R.spinV * dt; } if(a.mode === "balloon"){ R.alt = clamp(R.alt + (inp.my > .3 ? 1 : inp.my < -.3 ? -1 : 0) * dt * .25, 0, 1); } if(R.t >= a.dur) this.endRide(true); }
+        } else if(a.kind === "orbit"){
+            // メリーゴーランド・バルーンは「1しゅう した」時点で たっせい（スタンプ）。オートプレイは 30びょう だけ まわって おりる
+            const lapKind = a.mode === "horse" || a.mode === "balloon", lim = (lapKind && this.auto.on) ? Math.min(30, a.dur) : a.dur;
+            R.frac = R.t / lim; R.lim = lim;
+            if(lapKind){ R.ang = (R.ang || 0) + a.w * dt; if(!R.lap1 && R.ang >= TAU){ R.lap1 = true; const got = this.stamp(a.id); this.ui.toast("🔄 1しゅう したよ！" + (got ? "" : "（スタンプは もう もっているよ）") + "　このまま たのしんでも、Q・Esc で おりても いいよ", 3600); } }
+            if(a.mode === "cup"){ R.spinV = lerpv(R.spinV === undefined ? 1 : R.spinV, 1.0 - inp.mx * 2.8, 1 - Math.pow(.15, dt)); R.spin = (R.spin || 0) + R.spinV * dt; } if(a.mode === "balloon"){ R.alt = clamp(R.alt + (inp.my > .3 ? 1 : inp.my < -.3 ? -1 : 0) * dt * .25, 0, 1); } if(R.t >= lim) this.endRide(true); }
         else if(a.kind === "coaster") coasterUpdate(this, dt, inp);
         else if(a.kind === "wheel"){ R.frac = R.t / a.dur; if(R.t > a.dur) this.endRide(true); }
         else if(a.kind === "sim"){ R.frac = R.t / a.dur; ev(a.events, R.frac); if(!R.texts.w && R.frac > .7){ R.texts.w = 1; this.ui.fade(); this.sfx("fan"); } if(!R.texts.s && R.frac > .34){ R.texts.s = 1; this.sfx("drop"); } this.shake = (R.frac > .34 && R.frac < .52) ? .5 : (R.frac > .7 && R.frac < .86 ? .3 : .08); if(R.t > a.dur) this.endRide(true); }

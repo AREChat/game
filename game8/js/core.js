@@ -211,7 +211,7 @@ function paintSettings(){
     sec.innerHTML =
         '<h2>⚙ せってい</h2>' +
         '<div class="panel">' +
-        '<h3>ジャンプ・アクセルのボタン</h3>' +
+        '<h3>ジャンプ・ダッシュのボタン</h3>' +
         '<p>いまのキー：<b id="jkLabel">' + keyLabel(settings.jumpKey) + '</b></p>' +
         '<button type="button" id="jkRemap">🔁 キーを変える</button>' +
         '<h3>画面のボタン</h3>' +

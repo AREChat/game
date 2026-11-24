@@ -1,7 +1,7 @@
 "use strict";
 // ===== GAME8：レースモード（コースを走って 順位を競う）=====
 // コース上の移動・あたり判定（コース外ではおそくなる）・周回判定は C++(WebAssembly) 側（race_* 関数）が計算する。
-// ここでは コースの見た目（three.js）と、車の位置をその結果に合わせて動かすことをする。
+// ここでは コースの見た目（three.js）と、ランナーの位置をその結果に合わせて動かすことをする。
 import * as T from "../vendor/three/build/three.module.js";
 
 const SCALE = 1 / 8; // 物理の単位 → three.js world 単位
@@ -279,7 +279,7 @@ export function start(ctx){
     const carColors = [0xff3b3b, 0x2e7bff, 0x2fe08a, 0xffcf2e];
     const cars = carColors.map((c) => { const m = makeRunner(c); scene.add(m); return m; });
 
-    // ---------- たすけモンスター（コースから大きくはずれて 止まってしまったら、かわいいモンスターが車をコースへ運んでくれる） ----------
+    // ---------- たすけモンスター（コースから大きくはずれて 止まってしまったら、かわいいモンスターがランナーをコースへ運んでくれる） ----------
     function makeRescueMonster(){
         const g = new T.Group();
         const body = new T.Mesh(new T.SphereGeometry(0.22, 16, 12), new T.MeshStandardMaterial({color: 0xffb3e6, roughness: 0.55, emissive: 0x4a1a3a, emissiveIntensity: 0.25}));
@@ -308,7 +308,7 @@ export function start(ctx){
             g.add(wing);
             g.userData['wing' + side] = wing;
         });
-        // 車とつながる ひも
+        // ランナーとつながる ひも
         const rope = new T.Mesh(new T.CylinderGeometry(0.012, 0.012, 1, 6), new T.MeshBasicMaterial({color: 0xffffff}));
         rope.userData.isRope = true;
         g.add(rope);
