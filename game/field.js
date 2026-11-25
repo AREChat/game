@@ -216,7 +216,8 @@ function hudHtml(){
         const mp = curMap(), ch = tileCh(S.map, S.x, S.y), danger = !!(mp && mp.enc && !S.cx.noenc && !/[DGE]/.test(ch));
         zone = danger ? '<br><b style="color:#ff9a8a">⚔ ここは モンスターが出る場所</b>' : '<br><b style="color:#8fe8a8">🕊 ここは モンスターが出ない場所</b>';
     }catch(_e){}
-    return '<div id="hud" class="win">' + lines + '</div><div id="hudr" class="win">💰' + S.gold.toLocaleString() + 'G　メモリ ' + tqMemCount() + '/6' + (G.grind ? '<br>⚡れんぞく戦闘 ' + G.grind.n + '回' : "") + (S.cx.showpos ? '<br>(' + S.x + ',' + S.y + ')' : "") + zone + '</div>';
+    let obj = ""; try{ obj = tqObjective(); }catch(_e){}
+    return '<div id="hud" class="win">' + lines + (obj ? '<div class="q">🎯 ' + esc(obj) + '</div>' : "") + '</div><div id="hudr" class="win">💰' + S.gold.toLocaleString() + 'G　メモリ ' + tqMemCount() + '/6' + (G.grind ? '<br>⚡れんぞく戦闘 ' + G.grind.n + '回' : "") + (S.cx.showpos ? '<br>(' + S.x + ',' + S.y + ')' : "") + zone + '</div>';
 }
 function updateHud(){ const h = $("hud"); if(h && G.mode === "map"){ const d = document.createElement("div"); d.innerHTML = hudHtml(); h.innerHTML = d.firstChild.innerHTML; const r = $("hudr"); if(r) r.innerHTML = d.lastChild.innerHTML; } }
 function fieldView(){

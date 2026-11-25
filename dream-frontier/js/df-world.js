@@ -69,7 +69,7 @@ export function buildWorld(){
     const tree = (x, z, s, col) => { const ti = treeI++, nm = col ? (col === "#5a58c8" ? GN[hv(ti) < .85 ? 0 : 2] : GN[hv(ti) < .85 ? 1 : 3]) : TN[(hv(ti) * TN.length) | 0];
         if(has(nm)){ prop(nm, x, z, (nm === "tree_slim" ? 6.2 : 5.4) * s); shadow(x, z, 1.5 * s); sol(x, z, .6 * s); return; }
         box(S, x, 0, z, .5 * s, 1.8 * s, .5 * s, "#7a5232"); cyl(S, x, 1.4 * s, z, 0, 1.9 * s, 3 * s, col || "#3f9a4a", 7); cyl(S, x, 3 * s, z, 0, 1.4 * s, 2.4 * s, "#4fb25a", 7); sol(x, z, .6 * s); };
-    const NOTREE = [[-55, -14, 16], [44, -16, 7], [-52, -62, 12], [62, -58, 14], [-55, -2, 6]];
+    const NOTREE = [[-55, -14, 16], [44, -16, 7], [-52, -62, 12], [62, -58, 14], [-55, -2, 6], [-84, 60, 22]];
     const free = (x, z) => !(NOTREE.some((q) => Math.hypot(x - q[0], z - q[1]) < q[2]) || Math.hypot(x, z) < 34 || (Math.abs(x) < 5 && z > 0 && z < 60) || (z > 55 && z < 100 && Math.abs(x) < 46) || (x > 56 && x < 100 && z > 8 && z < 42));
     for(let i = 0; i < 220; i++){ const x = (rnd() - .5) * 300, z = (rnd() - .5) * 280; if(!free(x, z)) continue; if(x < -36 && x > -94 && z > 6 && z < 40) continue; if(Math.abs(x) < 10 && z < -32) continue; tree(x, z, .8 + rnd() * .9, x < -36 ? (rnd() < .5 ? "#5a58c8" : "#4a8a9a") : undefined); }
     for(let i = 0; i < 40; i++){ const a = rnd() * 6.283, r = 18 + rnd() * 12; const x = Math.cos(a) * r, z = Math.sin(a) * r; if(Math.hypot(x - 0, z - 0) < 16) continue; const fn = ["flowerbed_pink", "flowerbed_yellow", "flowerbed_white", "flowerbed_violet"][i % 4]; if(has(fn)){ prop(fn, x, z, 1.1); continue; } sph(S, x, .3, z, .35, ["#ff8ab0", "#ffd24a", "#ffffff", "#c88aff"][i % 4]); }

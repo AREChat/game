@@ -14,7 +14,7 @@
         clear: function(){ [523, 659, 784, 1047].forEach(function(f, i){ setTimeout(function(){ beep(f, .22, "triangle", .16); }, i * 110); }); }, fail: function(){ beep(180, .3, "sawtooth", .12); }};
 
     // ---------- 画面 ----------
-    var scr = {title: $("s-title"), how: $("s-how"), sel: $("s-sel"), play: $("s-play")};
+    var scr = {title: $("s-title"), how: $("s-how"), sel: $("s-sel"), gen: $("s-gen"), play: $("s-play")};
     function show(k){ Object.keys(scr).forEach(function(n){ scr[n].classList.toggle("on", n === k); }); where = k; document.body.classList.toggle("g10play", k === "play"); if(window.GKI) GKI.mode(k === "play" ? "keys" : "menu"); if(k === "play") setTimeout(resize, 30); }
     var where = "title";
     function paintLevels(){
@@ -29,22 +29,107 @@
     $("bSelBack").onclick = function(){ show("title"); };
     $("levels").addEventListener("click", function(e){ var b = e.target.closest("[data-i]"); if(b && !b.disabled) start(Number(b.dataset.i)); });
     $("exitBtn").onclick = function(){
-        if(where === "play"){ paintLevels(); show("sel"); return; }
-        if(where === "sel" || where === "how"){ show("title"); return; }
+        if(where === "play"){ if(S && S.custom){ openGen(); } else{ paintLevels(); show("sel"); } return; }
+        if(where === "sel" || where === "how" || where === "gen"){ show("title"); return; }
         try{ var back = new URLSearchParams(location.search).get("back"); location.href = "../index.html" + (back ? "?back=" + encodeURIComponent(back) : ""); }catch(_e){ history.back(); }
     };
+
+    // ---------- きょうのステージ・ランダム（C++ → WebAssembly の ステージ生成。js/g10gen.js）----------
+    // このブロックの ことばは 4か国語（are_lang）。ゲームの ほかの ぶぶんは 日本語のまま。
+    var TX = {
+        gBtn: {ja: "🎲 きょうのステージ・ランダム", en: "🎲 Daily & random stages", zh: "🎲 每日·随机关卡", ko: "🎲 오늘의·랜덤 스테이지"},
+        gTitle: {ja: "🎲 きょうのステージ ＆ ランダム", en: "🎲 Daily & Random Stages", zh: "🎲 每日关卡与随机关卡", ko: "🎲 오늘의 스테이지 & 랜덤"},
+        gDaily: {ja: "きょうのステージ（{d}）", en: "Today's stage ({d})", zh: "今日关卡（{d}）", ko: "오늘의 스테이지({d})"},
+        gDailyNote: {ja: "きょうは だれでも 同じステージです。1日1回、あたらしく なります。", en: "Everyone gets the same stage today. It changes once a day.", zh: "今天所有人玩同一个关卡，每天更新一次。", ko: "오늘은 누구나 같은 스테이지예요. 하루에 한 번 바뀌어요."},
+        gRandom: {ja: "ランダムステージ", en: "Random stage", zh: "随机关卡", ko: "랜덤 스테이지"},
+        gRandomNote: {ja: "押すたびに ちがうステージ。番号を おぼえれば また あそべます。", en: "A different stage every time. Remember the number to replay it.", zh: "每次都是不同的关卡，记住编号就能重玩。", ko: "누를 때마다 다른 스테이지예요. 번호를 기억하면 다시 할 수 있어요."},
+        gLv1: {ja: "かんたん", en: "Easy", zh: "简单", ko: "쉬움"},
+        gLv2: {ja: "ふつう", en: "Normal", zh: "普通", ko: "보통"},
+        gLv3: {ja: "むずかしい", en: "Hard", zh: "困难", ko: "어려움"},
+        gNum: {ja: "ステージ番号で えらぶ（ともだちと 同じステージで あそべます）", en: "Pick by stage number (play the same stage as a friend)", zh: "按关卡编号选择（可与朋友玩同一关）", ko: "스테이지 번호로 고르기(친구와 같은 스테이지)"},
+        gGo: {ja: "▶ この番号で あそぶ", en: "▶ Play this number", zh: "▶ 玩这个编号", ko: "▶ 이 번호로 플레이"},
+        gNumBad: {ja: "0〜4294967295 の 数字を 入れてね", en: "Enter a number from 0 to 4294967295", zh: "请输入 0 到 4294967295 的数字", ko: "0~4294967295 사이의 숫자를 입력하세요"},
+        gLoading: {ja: "じゅんび中…", en: "Preparing…", zh: "准备中…", ko: "준비 중…"},
+        gFail: {ja: "ステージを つくれませんでした（この ブラウザでは WebAssembly が つかえないかも）。", en: "Could not make a stage (WebAssembly may be unavailable in this browser).", zh: "无法生成关卡（此浏览器可能不支持 WebAssembly）。", ko: "스테이지를 만들지 못했어요(이 브라우저는 WebAssembly를 쓸 수 없을지도 몰라요)."},
+        gBack: {ja: "タイトルへ", en: "Back", zh: "返回", ko: "돌아가기"},
+        gNameDaily: {ja: "🎲 きょうのステージ・{lv}", en: "🎲 Today · {lv}", zh: "🎲 今日关卡·{lv}", ko: "🎲 오늘의 스테이지·{lv}"},
+        gNameRand: {ja: "🎲 ランダム・{lv}  No.{n}", en: "🎲 Random · {lv}  No.{n}", zh: "🎲 随机·{lv}  编号 {n}", ko: "🎲 랜덤·{lv}  No.{n}"},
+        gHint: {ja: "ボタンを 先に ぶんしんに ふんでもらおう。こまったら 💡ヒント！", en: "Let your clones step on the buttons first. Stuck? Press 💡 Hint!", zh: "先让分身踩住按钮。卡住了就按 💡 提示！", ko: "먼저 분신이 버튼을 밟게 하세요. 막히면 💡 힌트!"},
+        gClearT: {ja: "🎉 クリア！", en: "🎉 Cleared!", zh: "🎉 通关！", ko: "🎉 클리어!"},
+        gClearB: {ja: "ぶんしん {n}人（お手本は {p}人）", en: "Clones: {n} (model answer: {p})", zh: "分身 {n} 个（参考答案 {p} 个）", ko: "분신 {n}명(모범 답안 {p}명)"},
+        gMore: {ja: "もっと すくなく できるかも？", en: "Maybe you can do it with fewer?", zh: "也许还能用更少的分身？", ko: "더 적게도 할 수 있을지도?"},
+        gPerfect: {ja: "かんぺき！", en: "Perfect!", zh: "完美！", ko: "완벽!"},
+        gNext: {ja: "▶ つぎの ランダム", en: "▶ Next random stage", zh: "▶ 下一个随机关卡", ko: "▶ 다음 랜덤"},
+        gRetry: {ja: "もういちど", en: "Try again", zh: "再玩一次", ko: "다시 하기"}
+    };
+    function lang(){ try{ var l = localStorage.getItem("are_lang"); return /^(ja|en|zh|ko)$/.test(l) ? l : "ja"; }catch(_e){ return "ja"; } }
+    function T(k, v){ var o = TX[k], s = o ? (o[lang()] || o.ja) : k; if(v) Object.keys(v).forEach(function(x){ s = s.split("{" + x + "}").join(String(v[x])); }); return s; }
+    function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]; }); }
+    var DKEY = "g10_daily_v1", dstars = {};
+    try{ dstars = JSON.parse(localStorage.getItem(DKEY) || "{}") || {}; if(typeof dstars !== "object" || Array.isArray(dstars)) dstars = {}; }catch(_e){ dstars = {}; }
+    function saveDaily(){ var ks = Object.keys(dstars).sort(); while(ks.length > 90) delete dstars[ks.shift()]; try{ localStorage.setItem(DKEY, JSON.stringify(dstars)); }catch(_e){} }
+    function todaySeed(){ var d = new Date(); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); }
+    function dailyKey(level){ return todaySeed() + "-" + level; }
+    function randSeed(){
+        try{ var a = new Uint32Array(1); (window.crypto || window.msCrypto).getRandomValues(a); return a[0]; }catch(_e){ return Math.floor(Math.random() * 4294967296) >>> 0; }
+    }
+    function customName(c){ return c.kind === "daily" ? T("gNameDaily", {lv: T("gLv" + c.level)}) : T("gNameRand", {lv: T("gLv" + c.level), n: c.seed}); }
+    function genMsg(t){ var e = $("gMsg"); if(e) e.textContent = t || ""; }
+    function paintGen(){
+        var d = new Date(), ds = (d.getMonth() + 1) + "/" + d.getDate(), l = lang();
+        function lvBtns(kind){
+            return [1, 2, 3].map(function(n){
+                var st = kind === "daily" ? (dstars[dailyKey(n)] || 0) : 0;
+                return '<button type="button" class="gbtn" data-k="' + kind + '" data-lv="' + n + '">' + esc(T("gLv" + n)) + (kind === "daily" ? '<br><span class="st">' + (st ? "★".repeat(st) + "☆".repeat(3 - st) : "☆☆☆") + '</span>' : '') + '</button>';
+            }).join("");
+        }
+        $("s-gen").innerHTML = '<h2>' + esc(T("gTitle")) + '</h2>' +
+            '<div class="panel"><b>' + esc(T("gDaily", {d: ds})) + '</b><p>' + esc(T("gDailyNote")) + '</p><div class="row">' + lvBtns("daily") + '</div></div>' +
+            '<div class="panel"><b>' + esc(T("gRandom")) + '</b><p>' + esc(T("gRandomNote")) + '</p><div class="row">' + lvBtns("rand") + '</div></div>' +
+            '<div class="panel"><b>' + esc(T("gNum")) + '</b><div class="row" style="margin-top:8px"><input id="gNum" type="text" inputmode="numeric" autocomplete="off" maxlength="10" data-pad-text aria-label="' + esc(T("gNum")) + '">' +
+            '<select id="gNumLv" aria-label="level">' + [1, 2, 3].map(function(n){ return '<option value="' + n + '"' + (n === 2 ? " selected" : "") + '>' + esc(T("gLv" + n)) + '</option>'; }).join("") + '</select>' +
+            '<button type="button" id="gGo">' + esc(T("gGo")) + '</button></div></div>' +
+            '<p id="gMsg" class="hint" role="status"></p><div class="row"><button type="button" id="gBack">' + esc(T("gBack")) + '</button></div>';
+        document.documentElement.lang = l;
+    }
+    function openGen(){ paintGen(); show("gen"); }
+    function startGen(kind, level, seed){
+        genMsg(T("gLoading"));
+        if(!window.G10Gen){ genMsg(T("gFail")); return; }
+        window.G10Gen.load().then(function(api){
+            var lv = api.gen(seed, level);
+            if(!lv) throw new Error("gen");
+            genMsg("");
+            begin({name: "", steps: lv.steps, par: lv.par, hint: T("gHint"), map: lv.map}, -1, {kind: kind, level: level, seed: seed});
+        }).catch(function(){ if(where !== "gen") openGen(); genMsg(T("gFail")); });
+    }
+    $("bGen").onclick = openGen;
+    $("s-gen").addEventListener("click", function(e){
+        var b = e.target.closest ? e.target.closest("button") : null; if(!b) return;
+        if(b.id === "gBack"){ show("title"); return; }
+        if(b.id === "gGo"){
+            var v = ($("gNum").value || "").trim();
+            if(!/^\d{1,10}$/.test(v) || Number(v) > 4294967295){ genMsg(T("gNumBad")); $("gNum").focus(); return; }
+            startGen("rand", Number($("gNumLv").value) || 2, Number(v)); return;
+        }
+        if(b.dataset.k){ var lv = Number(b.dataset.lv); startGen(b.dataset.k, lv, b.dataset.k === "daily" ? todaySeed() : randSeed()); }
+    });
+    window.addEventListener("storage", function(e){ if(e.key === "are_lang"){ $("bGen").textContent = T("gBtn"); if(where === "gen") paintGen(); } });
+    $("bGen").textContent = T("gBtn");
 
     // ---------- ゲーム ----------
     var cv = $("cv"), ctx = cv.getContext("2d"), G = null, S = null, W = 0, H = 0, ts = 30, ox = 0, oy = 0, dpr = 1;
     // S: {idx, g, lv, ghosts:[path], run, stepsLeft, max, won, hint, vis:{me:[x,y], gh:[[x,y]]}, face, fx:[], t0}
-    function start(i){
-        var lv = LEVELS[i], g = Sim.parse(lv);
-        S = {idx: i, g: g, lv: lv, ghosts: [], run: Sim.newRun(g), stepsLeft: lv.steps, max: lv.par + 1, won: false, hint: null, vis: {me: g.S.slice(), gh: []}, face: "R", fx: [], prevOpen: null, shake: 0};
+    function start(i){ begin(LEVELS[i], i, null); }
+    // custom：きょうのステージ／ランダム（{kind:"daily"|"rand", level, seed}）。ふつうの ステージは null
+    function begin(lv, i, custom){
+        var g = Sim.parse(lv);
+        S = {idx: i, custom: custom, g: g, lv: lv, ghosts: [], run: Sim.newRun(g), stepsLeft: lv.steps, max: lv.par + 1, won: false, hint: null, vis: {me: g.S.slice(), gh: []}, face: "R", fx: [], prevOpen: null, shake: 0};
         S.prevOpen = openNow(); $("clear").hidden = true; show("play"); paintHud(); toast(lv.hint, 5200); resize();
     }
     function openNow(){ return Sim.openState(S.g, S.ghosts.map(function(p){ return p; }), S.run.me, S.run.t); }
     function paintHud(){
-        $("lvName").textContent = "Lv." + (S.idx + 1) + "  " + S.lv.name;
+        $("lvName").textContent = S.custom ? customName(S.custom) : "Lv." + (S.idx + 1) + "  " + S.lv.name;
         $("gInfo").textContent = "ぶんしん " + S.ghosts.length + "/" + S.max;
         var sl = S.stepsLeft; $("sInfo").textContent = "のこり " + sl + "歩"; $("sInfo").classList.toggle("low", sl <= 5);
         $("bLoop").disabled = S.won || S.ghosts.length >= S.max;
@@ -70,23 +155,35 @@
         S.vis.me = S.g.S.slice(); S.vis.gh = S.ghosts.map(function(p){ return p[0].slice(); }); S.prevOpen = openNow(); sfx.loop(); paintHud(); toast("ぶんしん " + S.ghosts.length + "人目！ スタートから もういちど", 1800);
     }
     function retryLoop(){ if(!S || S.won) return; S.run = Sim.newRun(S.g); S.stepsLeft = S.lv.steps; S.vis.me = S.g.S.slice(); S.vis.gh = S.ghosts.map(function(p){ return p[0].slice(); }); S.hint = null; S.prevOpen = openNow(); paintHud(); toast("このループを やりなおし", 1200); }
-    function resetAll(){ if(!S) return; var i = S.idx; start(i); toast("ぜんぶ やりなおし", 1200); }
+    function resetAll(){ if(!S) return; if(S.custom){ begin(S.lv, -1, S.custom); } else start(S.idx); toast("ぜんぶ やりなおし", 1200); }
     function win(){
         S.won = true; sfx.clear();
         var n = S.ghosts.length, stars = n <= S.lv.par ? 3 : n <= S.lv.par + 1 ? 2 : 1;
-        var first = prog[S.idx] == null; prog[S.idx] = Math.max(prog[S.idx] || 0, stars); saveProg();
-        try{ if(window.AREFeaturePanel){ var tot = 0; Object.keys(prog).forEach(function(k){ tot += prog[k]; }); window.AREFeaturePanel.recordRun("game10", tot); } }catch(_e){}
+        if(S.custom){ if(S.custom.kind === "daily"){ var dk = dailyKey(S.custom.level); dstars[dk] = Math.max(dstars[dk] || 0, stars); saveDaily(); } }
+        else{
+            var first = prog[S.idx] == null; prog[S.idx] = Math.max(prog[S.idx] || 0, stars); saveProg();
+            try{ if(window.AREFeaturePanel){ var tot = 0; Object.keys(prog).forEach(function(k){ tot += prog[k]; }); window.AREFeaturePanel.recordRun("game10", tot); } }catch(_e){}
+        }
         for(var k = 0; k < 40; k++) S.fx.push({x: S.g.E[0] + .5, y: S.g.E[1] + .5, vx: (Math.random() - .5) * 8, vy: (Math.random() - .5) * 8, life: 1, c: GCOL[k % GCOL.length]});
         setTimeout(function(){
-            $("clT").textContent = S.idx === LEVELS.length - 1 ? "🎉 ぜんぶ クリア！" : "🎉 クリア！";
             $("clStars").innerHTML = [0, 1, 2].map(function(i){ return '<i class="' + (i < stars ? "on" : "") + '" style="animation-delay:' + (i * .18) + 's">★</i>'; }).join("");
-            $("clB").textContent = "ぶんしん " + n + "人（お手本は " + S.lv.par + "人）" + (stars < 3 ? "　もっと すくなく できるかも？" : "　かんぺき！");
-            $("clNext").hidden = S.idx >= LEVELS.length - 1; $("clear").hidden = false;
+            if(S.custom){
+                $("clT").textContent = T("gClearT");
+                $("clB").textContent = T("gClearB", {n: n, p: S.lv.par}) + "　" + T(stars < 3 ? "gMore" : "gPerfect");
+                $("clNext").textContent = T("gNext"); $("clNext").hidden = S.custom.kind !== "rand";
+                $("clRetry").textContent = T("gRetry"); $("clSel").textContent = T("gBack");
+            }else{
+                $("clT").textContent = S.idx === LEVELS.length - 1 ? "🎉 ぜんぶ クリア！" : "🎉 クリア！";
+                $("clB").textContent = "ぶんしん " + n + "人（お手本は " + S.lv.par + "人）" + (stars < 3 ? "　もっと すくなく できるかも？" : "　かんぺき！");
+                $("clNext").textContent = "▶ つぎへ"; $("clRetry").textContent = "もういちど"; $("clSel").textContent = "ステージえらび";
+                $("clNext").hidden = S.idx >= LEVELS.length - 1;
+            }
+            $("clear").hidden = false;
         }, 700);
     }
-    $("clNext").onclick = function(){ start(S.idx + 1); };
-    $("clRetry").onclick = function(){ start(S.idx); };
-    $("clSel").onclick = function(){ $("clear").hidden = true; paintLevels(); show("sel"); };
+    $("clNext").onclick = function(){ if(S.custom){ startGen("rand", S.custom.level, randSeed()); } else start(S.idx + 1); };
+    $("clRetry").onclick = function(){ if(S.custom){ startGen(S.custom.kind, S.custom.level, S.custom.seed); } else start(S.idx); };
+    $("clSel").onclick = function(){ $("clear").hidden = true; if(S && S.custom){ openGen(); } else{ paintLevels(); show("sel"); } };
     $("bLoop").onclick = newLoop; $("bRetry").onclick = retryLoop; $("bReset").onclick = resetAll; $("bWait").onclick = function(){ doStep(null); };
     $("bHint").onclick = function(){ hint(); };
 
@@ -124,7 +221,7 @@
             var d = DIRS[a];
             if(d){ stopRep(a); if(down && where === "play" && S){ doStep(d); rp[a] = {t: setTimeout(function(){ rp[a].i = setInterval(function(){ if(!GKI.held(a)){ stopRep(a); return; } if(where === "play" && S && $("clear").hidden) doStep(d); }, 130); }, 320)}; } return; }
             if(!down || where !== "play" || !S || !$("clear").hidden) return;
-            if(a === "b") doStep(null); else if(a === "a") newLoop(); else if(a === "y") retryLoop(); else if(a === "x") hint(); else if(a === "plus"){ paintLevels(); show("sel"); }
+            if(a === "b") doStep(null); else if(a === "a") newLoop(); else if(a === "y") retryLoop(); else if(a === "x") hint(); else if(a === "plus"){ if(S && S.custom){ openGen(); } else{ paintLevels(); show("sel"); } }
         });
         GKI.onBack(function(){ if(where !== "title") $("exitBtn").click(); });
     }
@@ -205,6 +302,6 @@
         S.fx = S.fx.filter(function(f){ f.life -= dt; f.x += f.vx * dt; f.y += f.vy * dt; if(f.life <= 0) return false; ctx.globalAlpha = Math.max(0, f.life); ctx.fillStyle = f.c; ctx.beginPath(); ctx.arc(tx(f.x), ty(f.y), ts * .07, 0, 6.3); ctx.fill(); ctx.globalAlpha = 1; return true; });
         ctx.restore();
     }
-    window.__g10 = {get S(){ return S; }, start: start, doStep: doStep, newLoop: newLoop, hint: hint, retryLoop: retryLoop};
+    window.__g10 = {get S(){ return S; }, start: start, begin: begin, startGen: startGen, openGen: openGen, doStep: doStep, newLoop: newLoop, hint: hint, retryLoop: retryLoop};
     requestAnimationFrame(frame); resize();
 })();

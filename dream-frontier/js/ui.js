@@ -1,5 +1,6 @@
 // ===== 画面（HUD・会話・メニュー）。DOM だけ。エンジンには ふれない =====
 import {ATTRACTIONS, STAMPS, AREA_NAMES} from "./df-data.js";
+import {waitMinutes, hasQueue, dayCurve, history, mood, fmtDate, started, daysSince, OPEN_H, LAUNCH} from "./df-wait.js";
 const $ = (id) => document.getElementById(id);
 export class UI{
     constructor(){
@@ -39,6 +40,25 @@ export class UI{
         const rows = ATTRACTIONS.map((a) => "<li class='" + (g.sv.stamps[a.id] ? "got" : "") + "'><b>" + (g.sv.stamps[a.id] ? "🏅" : "⬜") + " " + a.n + "</b><small>" + AREA_NAMES[a.area] + " ／ " + a.desc + "</small></li>").join("");
         this.open("<h2>スタンプちょう　" + g.count() + " / " + STAMPS.length + "</h2><ul class='stamps'>" + rows + "</ul><p class='hint'>ぜんぶ そろえると「全制覇しょうめいしょ」が もらえるよ。</p>");
     }
+    // まち時間ひょう：いまの まち時間・きょうの うごき・導入（2026-11-26）いらいの へいきん・あなたの きろく
+    showWaits(g, sort){
+        sort = sort || "wait"; const now = new Date(), ok = started(now), sv = g.sv.waits || {};
+        const rows = ATTRACTIONS.filter((a) => hasQueue(a.id)).map((a) => ({a, w: waitMinutes(a.id, now), h: history(a.id, now), c: dayCurve(a.id, now), my: sv[a.id]}));
+        if(sort === "name") rows.sort((x, y) => ATTRACTIONS.indexOf(x.a) - ATTRACTIONS.indexOf(y.a)); else if(sort === "me") rows.sort((x, y) => ((y.my && y.my.n) || 0) - ((x.my && x.my.n) || 0)); else rows.sort((x, y) => x.w - y.w);
+        const avg = (arr) => arr.length ? Math.round(arr.reduce((t, v) => t + v, 0) / arr.length) : 0, nowAvg = avg(rows.map((r) => r.w)), allAvg = avg(rows.map((r) => r.h.avg)), days = daysSince(now) + 1;
+        let mn = 0, ms = 0; for(const k in sv){ mn += sv[k].n; ms += sv[k].sum; }
+        const bar = (c) => { const ch = "▁▂▃▄▅▆▇█", cur = Math.min(c.length - 1, Math.max(0, now.getHours() - OPEN_H)); return c.map((v, i) => "<span style='" + (i === cur ? "color:#fff;text-decoration:underline" : "") + "'>" + ch[Math.min(7, Math.floor(v / 80 * 8))] + "</span>").join(""); };
+        const best = rows.filter((r) => r.w >= 0).slice(0, 3).map((r) => r.a.n.replace(/・/g, "")).join("・");
+        const tr = rows.map((r) => { const [m, col] = mood(r.w), my = r.my; return "<tr><td style='text-align:left'><b>" + r.a.n + "</b></td><td style='color:" + col + ";font-weight:900'>" + (r.w > 0 ? r.w + "ふん" : "0") + "<br><small>" + m + "</small></td><td style='letter-spacing:1px;color:#ffd27a'>" + bar(r.c) + "</td><td>" + Math.round(r.h.avg) + "ふん<br><small>さいだい " + r.h.max + "</small></td><td>" + (my ? my.n + "かい<br><small>へいきん " + Math.round(my.sum / my.n) + "ふん／さいご " + my.last + "</small>" : "<small>まだ</small>") + "</td></tr>"; }).join("");
+        const btn = (k, t) => "<button data-s='" + k + "' style='margin:2px;padding:4px 10px" + (sort === k ? ";outline:2px solid #ffd27a" : "") + "'>" + t + "</button>";
+        this.open("<h2>⏱ まち時間ひょう</h2><p class='hint'>" + fmtDate(now) + (ok ? "" : "<br>（2026年11月26日から はじまります。いまは まち時間は ありません）") + "</p>"
+            + "<p style='margin:4px 0'><b>いま 公園ぜんたいの へいきん：" + nowAvg + "ふん</b>　／　導入（2026-11-26）いらい " + days + "日ぶんの へいきん：<b>" + allAvg + "ふん</b></p>"
+            + "<p style='margin:4px 0'>いま いちばん すいている：" + best + "　／　あなたの きろく：ならんだ " + mn + "かい、へいきん " + (mn ? Math.round(ms / mn) : 0) + "ふん</p>"
+            + "<div>" + btn("wait", "まち時間の みじかい じゅん") + btn("name", "アトラクション じゅん") + btn("me", "あなたの きろく じゅん") + "</div>"
+            + "<div style='max-height:46vh;overflow:auto'><table style='width:100%;border-collapse:collapse;font-size:clamp(11px,2.3vw,14px);text-align:center'><thead><tr><th style='text-align:left'>アトラクション</th><th>いま</th><th>きょうの うごき<br><small>" + OPEN_H + "じ→20じ</small></th><th>導入いらい<br><small>へいきん</small></th><th>あなたの きろく</th></tr></thead><tbody>" + tr + "</tbody></table></div>"
+            + "<p class='hint'>まち時間は 時計（じかん・曜日）と その日の ようすで かわります。土日・おひる前後は こみやすく、平日の 朝と 夕方は すいています。キューラインでは「ファストパス」で とばせます。</p>");
+        this.el.modal.querySelectorAll("[data-s]").forEach((b) => b.onclick = () => this.showWaits(g, b.dataset.s));
+    }
     cert(g){
         const name = (new URLSearchParams(location.search).get("name")) || "あなた"; const d = new Date(); const ds = d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日";
         this.open("<div class='cert'><div class='ct'>全制覇しょうめいしょ</div><p class='cn'>" + name.replace(/[<>&]/g, "") + " さま</p><p>ドリーム・フロンティアの アトラクション ぜんぶ（" + STAMPS.length + "こ）を 制覇しました。<br>ここに その ゆうきと すきな きもちを たたえます。</p><p class='cd'>" + ds + "　ドリーム・フロンティア</p><div class='are'>A R E</div></div>", () => this.toast("ふんすいの うえで「A R E」が かがやいている…"));
@@ -50,7 +70,7 @@ export class UI{
     }
     menu(g, cb){
         const bgmValue = Math.round(cb.bgmVolume() * 100), seValue = Math.round(cb.seVolume() * 100);
-        this.open("<h2>メニュー</h2><div class='mn'><button data-m='stamps'>🏅 スタンプちょう</button><button data-m='pystats'>📊 らいえん分析（Python）</button><button data-m='help'>🎮 そうさ せつめい</button><button data-m='snd'>🔊 おと：" + (cb.sndOn() ? "ON" : "OFF") + "</button><button data-m='q'>🖼 がしつ：" + cb.quality() + "</button><button data-m='diag'>🛠 しんだん（おかしい時）</button><button data-m='save'>💾 セーブ</button><button data-m='reset'>🗑 はじめから</button>" + (cb.back ? "<button data-m='back'>↩ ARE QUEST 2 に もどる</button>" : "") + "</div><div class='soundSliders'><label for='bgmVolume'>BGM音量 <output id='bgmVolumeValue'>" + bgmValue + "%</output><input id='bgmVolume' type='range' min='0' max='100' step='5' value='" + bgmValue + "'></label><label for='seVolume'>効果音音量 <output id='seVolumeValue'>" + seValue + "%</output><input id='seVolume' type='range' min='0' max='100' step='5' value='" + seValue + "'></label></div><p class='hint'>ひょうじ中の えんじん：" + cb.engine() + "</p>");
+        this.open("<h2>メニュー</h2><div class='mn'><button data-m='stamps'>🏅 スタンプちょう</button><button data-m='waits'>⏱ まち時間ひょう</button><button data-m='pystats'>📊 らいえん分析（Python）</button><button data-m='help'>🎮 そうさ せつめい</button><button data-m='snd'>🔊 おと：" + (cb.sndOn() ? "ON" : "OFF") + "</button><button data-m='q'>🖼 がしつ：" + cb.quality() + "</button><button data-m='diag'>🛠 しんだん（おかしい時）</button><button data-m='save'>💾 セーブ</button><button data-m='reset'>🗑 はじめから</button>" + (cb.back ? "<button data-m='back'>↩ ARE QUEST 2 に もどる</button>" : "") + "</div><div class='soundSliders'><label for='bgmVolume'>BGM音量 <output id='bgmVolumeValue'>" + bgmValue + "%</output><input id='bgmVolume' type='range' min='0' max='100' step='5' value='" + bgmValue + "'></label><label for='seVolume'>効果音音量 <output id='seVolumeValue'>" + seValue + "%</output><input id='seVolume' type='range' min='0' max='100' step='5' value='" + seValue + "'></label></div><p class='hint'>ひょうじ中の えんじん：" + cb.engine() + "</p>");
         const connectVolume = (inputId, outputId, update) => { const input = this.el.modal.querySelector("#" + inputId), output = this.el.modal.querySelector("#" + outputId); input.addEventListener("input", () => { const value = Number(input.value); output.value = value + "%"; output.textContent = value + "%"; update(value / 100); }); };
         connectVolume("bgmVolume", "bgmVolumeValue", cb.setBgmVolume); connectVolume("seVolume", "seVolumeValue", cb.setSeVolume);
         this.el.modal.querySelectorAll("[data-m]").forEach((b) => b.onclick = () => { const m = b.dataset.m; this.close(); cb[m] && cb[m](); });
