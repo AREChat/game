@@ -418,6 +418,7 @@
     window.addEventListener("keydown", function(e){
         if(e.key !== "Escape") return;
         var nw = performance.now(); if(nw - escAt < 160) return; escAt = nw;   // パッドの B / ＋ は 2回とどく ことがあるので 1回にまとめる
+        if(e.defaultPrevented || (window.GKI && GKI.justClosed && GKI.justClosed())) return;   // GKI が 設定パネルを とじた Esc は ここでは 使わない
         var a = document.activeElement; if(a && a.tagName === "INPUT"){ a.blur(); return; }
         if(document.querySelector(".gki-modal.on")) return;
         var m = document.querySelector(".modal.on[data-closable]"); if(m){ close(m.id); e.preventDefault(); return; }

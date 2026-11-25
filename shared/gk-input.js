@@ -170,7 +170,7 @@
         "@keyframes gkiBl{50%{opacity:0}}.gki-tpg{display:grid;gap:5px;margin:6px 0}.gki-tpg button{padding:6px 0;font-size:19px;min-height:44px}.gki-tpf{display:flex;gap:6px}.gki-tpf button{flex:1;min-height:46px}.gki-tpt{display:flex;gap:6px;margin-bottom:4px}.gki-tpt button{flex:1;min-height:36px}";
     (document.head || document.documentElement).appendChild(css);
     function el(tag, cls, txt){ var e = document.createElement(tag); if(cls) e.className = cls; if(txt != null) e.textContent = txt; return e; }
-    function closeAll(){ var a = document.querySelectorAll(".gki-modal.on"); for(var i = 0; i < a.length; i++){ a[i].classList.remove("on"); if(a[i].parentNode && a[i].dataset.tmp) a[i].parentNode.removeChild(a[i]); } cap = null; }
+    function closeAll(){ var a = document.querySelectorAll(".gki-modal.on"); if(a.length) G.closedAt = performance.now(); for(var i = 0; i < a.length; i++){ a[i].classList.remove("on"); if(a[i].parentNode && a[i].dataset.tmp) a[i].parentNode.removeChild(a[i]); } cap = null; }
 
     // ---- 設定画面 ----
     var panel = null;
@@ -325,7 +325,7 @@
         axis: function(){ var p = getPad(), x = 0, y = 0; if(p){ var ax = p.axes || [], m = Math.hypot(ax[0] || 0, ax[1] || 0); if(m > cfg.dz){ x = ax[0] || 0; y = ax[1] || 0; } } return {x: x + ((heldK.right || heldP.right) ? 1 : 0) - ((heldK.left || heldP.left) ? 1 : 0), y: y + ((heldK.down || heldP.down) ? 1 : 0) - ((heldK.up || heldP.up) ? 1 : 0)}; },
         legend: function(a){ G.legend = a || []; }, onBack: function(fn){ G.backFn = fn; },
         openSettings: openSettings, close: closeAll, textpad: textpad, textpadOpts: function(o){ G.tpOpts = o; },
-        rumble: rumble, cfg: function(){ return cfg; }, keys: keysOf, lastSrc: function(){ return G.lastSrc; }, padConnected: function(){ return !!getPad(); },
+        rumble: rumble, cfg: function(){ return cfg; }, keys: keysOf, lastSrc: function(){ return G.lastSrc; }, padConnected: function(){ return !!getPad(); }, justClosed: function(ms){ return !!G.closedAt && performance.now() - G.closedAt < (ms || 220); },
         _hangul: {append: hangulAppend, back: hangulBack}, _cur: cur, _mode: function(){ return G.mode; }, ACTS: ACTS
     };
 })();
