@@ -39,6 +39,7 @@
         S.scr = id; ["title", "how", "coll", "play"].forEach(function(k){ $("s-" + k).classList.toggle("on", k === id); }); $("lgBtn").style.display = id === "play" ? "none" : "";
         document.documentElement.lang = GK.lang(); applyText();
         if(id === "coll") buildColl();
+        if(window.GKI) GKI.mode(id === "play" ? "pointer" : "menu", cv);
     }
     function applyText(){
         $("tSub").textContent = t("sub"); $("bRun").textContent = t("run"); $("bDaily").textContent = t("daily"); $("bColl").textContent = t("coll"); $("bHow").textContent = t("how");
@@ -168,8 +169,17 @@
     cv.addEventListener("pointerup", function(e){ S.down = false; });
     cv.addEventListener("pointercancel", function(){ S.down = false; });
     function mapCur(){ if(!S.R) return; var v = S.view || RR.viewOf(S.R.mods, S.R.t, S.cur); S.cur = RR.toGame(v, S.raw.x, S.raw.y, S.R.mods); }
-    window.addEventListener("keydown", function(e){ if(S.scr !== "play") return; S.keys[e.key] = 1; if(e.key === " " || e.key === "Enter"){ e.preventDefault(); if(!S.spaceDown){ S.spaceDown = true; S.tapQ = true; S.tapRaw = null; } } if(e.key.indexOf("Arrow") === 0) e.preventDefault(); });
-    window.addEventListener("keyup", function(e){ delete S.keys[e.key]; if(e.key === " " || e.key === "Enter") S.spaceDown = false; });
+    // キーボード・プロコンは 共通部品 GKI。スティック／十字＝カーソル、A＝タップ（おしっぱなし OK）、＋＝タイトルへ。キーボードは 矢印／WASD で カーソル、Enter／Space で タップ
+    if(window.GKI){
+        GKI.legend([{k: "dpad", t: {ja: "カーソルを うごかす（スティック・十字）", en: "Move the cursor (stick / D-pad)", zh: "移动光标（摇杆/方向键）", ko: "커서 이동 (스틱/방향키)"}},
+            {k: "a", t: {ja: "タップ（おしっぱなしも OK）", en: "Tap (hold works too)", zh: "点击（可按住）", ko: "탭 (누르고 있기 가능)"}}, {k: "plus", t: {ja: "タイトルに もどる", en: "Back to title", zh: "返回标题", ko: "타이틀로"}}]);
+        GKI.on(function(a, down){
+            if(S.scr !== "play") return;
+            if(a === "a"){ if(down){ if(!S.spaceDown){ S.spaceDown = true; S.tapQ = true; S.tapRaw = null; } } else S.spaceDown = false; }
+            else if(down && a === "plus") $("exitBtn").click();
+        });
+        GKI.onBack(function(){ if(S.scr !== "title") $("exitBtn").click(); });
+    }
 
     // ---- ループ ----
     function resize(){
@@ -188,7 +198,7 @@
         c.setTransform(DPR, 0, 0, DPR, 0, 0);
         if(S.phase === "play"){
             // キーボードの カーソル
-            var kx = (S.keys.ArrowRight || S.keys.d ? 1 : 0) - (S.keys.ArrowLeft || S.keys.a ? 1 : 0), ky = (S.keys.ArrowDown || S.keys.s ? 1 : 0) - (S.keys.ArrowUp || S.keys.w ? 1 : 0);
+            var ka = window.GKI ? GKI.keyAxis() : {x: 0, y: 0}, kx = ka.x, ky = ka.y;
             if(kx || ky){ var dir = (R.mods.indexOf("mirror") >= 0 || R.mods.indexOf("invert") >= 0) && kx ? -kx : kx; S.cur.x = Math.max(0, Math.min(W, S.cur.x + (R.mods.indexOf("invert") >= 0 ? -kx : kx) * KSP * dt)); S.cur.y = Math.max(0, Math.min(H, S.cur.y + (R.mods.indexOf("invert") >= 0 ? -ky : ky) * KSP * dt)); }
             var v = RR.viewOf(R.mods, R.t, S.cur); S.view = v;
             if(S.tapQ && S.tapRaw){ S.cur = RR.toGame(v, S.tapRaw.x, S.tapRaw.y, R.mods); }

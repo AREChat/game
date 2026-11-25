@@ -40,6 +40,7 @@
         S.scr = id; ["title", "how", "sel", "play"].forEach(function(k){ $("s-" + k).classList.toggle("on", k === id); }); $("lgBtn").style.display = id === "play" ? "none" : "";
         document.documentElement.lang = GK.lang(); applyText();
         if(id === "sel") buildLevels();
+        if(window.GKI) GKI.mode(id === "play" ? "keys" : "menu");
     }
     function applyText(){
         $("tSub").textContent = t("sub"); $("bStages").textContent = t("stages"); $("bDaily").textContent = t("daily"); $("bHow").textContent = t("how"); $("tNote").textContent = t("note");
@@ -230,12 +231,21 @@
     }
 
     // ---- そうさ ----
-    var KEYS = {ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3, w: 0, d: 1, s: 2, a: 3, W: 0, D: 1, S: 2, A: 3, k: 0, l: 1, j: 2, h: 3};
-    window.addEventListener("keydown", function(e){
-        if(S.scr !== "play" || $("mClear").classList.contains("on")){ if(e.key === "Enter" && $("mClear").classList.contains("on")) { if($("clNext").style.display !== "none") $("clNext").click(); else $("clRetry").click(); } return; }
-        if(e.key in KEYS){ e.preventDefault(); doMove(KEYS[e.key]); }
-        else if(e.key === "z" || e.key === "Backspace" || e.key === "u"){ e.preventDefault(); undo(); }
-        else if(e.key === "r"){ reset(); } else if(e.key === "?" || e.key === "H") hint();
+    // キーボード・プロコンは 共通部品 GKI（そうさ設定で かえられる）。十字キー／スティック＝うごく、B＝1手もどす、Y＝さいしょから、X＝ヒント、＋＝ステージえらび
+    if(window.GKI){
+        GKI.defaults({b: ["Backspace", "z", "u"], x: ["x", "h", "?"], y: ["r", "y"], plus: ["Escape", "p"]});
+        GKI.legend([{k: "dpad", t: {ja: "うごく（しゃめん スワイプも OK）", en: "Move (swipe also works)", zh: "移动（也可滑动）", ko: "이동 (스와이프도 가능)"}},
+            {k: "b", t: {ja: "1手もどす", en: "Undo a move", zh: "撤销一步", ko: "한 수 되돌리기"}}, {k: "y", t: {ja: "さいしょから やりなおす", en: "Restart", zh: "重新开始", ko: "처음부터"}},
+            {k: "x", t: {ja: "ヒント", en: "Hint", zh: "提示", ko: "힌트"}}, {k: "plus", t: {ja: "ステージえらびに もどる", en: "Back to stage list", zh: "返回关卡列表", ko: "스테이지 목록으로"}}]);
+        GKI.on(function(a, down){
+            if(!down || S.scr !== "play" || $("mClear").classList.contains("on")) return;
+            if(a === "up") doMove(0); else if(a === "right") doMove(1); else if(a === "down") doMove(2); else if(a === "left") doMove(3);
+            else if(a === "b") undo(); else if(a === "y") reset(); else if(a === "x") hint(); else if(a === "plus"){ GK.bgm("off"); show("sel"); }
+        });
+        GKI.onBack(function(){ if(S.scr !== "title") $("exitBtn").click(); });
+    }
+    window.addEventListener("keydown", function(e){   // クリアがめんの Enter（つぎへ）
+        if(e.key === "Enter" && $("mClear").classList.contains("on")){ if($("clNext").style.display !== "none") $("clNext").click(); else $("clRetry").click(); }
     });
     var sw = null;
     cv.addEventListener("pointerdown", function(e){ sw = {x: e.clientX, y: e.clientY, t: performance.now()}; });

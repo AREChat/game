@@ -172,7 +172,7 @@
         if(calm || !el || !el.animate) return;
         try{ el.animate([{transform: "translate(0,0)"}, {transform: "translate(-6px,3px)"}, {transform: "translate(5px,-4px)"}, {transform: "translate(-3px,-2px)"}, {transform: "translate(0,0)"}], {duration: ms || 260}); }catch(_e){}
     }
-    function vibrate(ms){ try{ var v = true; try{ v = JSON.parse(LS.get("are_settings", "{}")).vib !== false; }catch(_e){} if(v && navigator.vibrate) navigator.vibrate(ms || 20); }catch(_e){} }
+    function vibrate(ms){ try{ if(window.GKI) GKI.rumble(Math.max(40, (ms || 20) * 3)); }catch(_e){} try{ var v = true; try{ v = JSON.parse(LS.get("are_settings", "{}")).vib !== false; }catch(_e){} if(v && navigator.vibrate) navigator.vibrate(ms || 20); }catch(_e){} }
 
     window.GK = {LS: LS, lang: lang, i18n: i18n, t: COMMON, save: save, rng: rng, daySeed: daySeed, hashStr: hashStr,
         sfx: sfx, bgm: bgm, mute: mute, isMuted: isMuted, tone: tone, noise: noise,
