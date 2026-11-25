@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>AREUSO｜ノイズの大軍を斬りひらけ！3Dアクション</title>
+<meta name="theme-color" content="#0a0620">
+<meta name="description" content="ざらざらした光の怪物「ノイズ」の大軍を、4人の武将で斬りひらく爽快3Dアクション。5つのステージ、武将ボス、無双乱舞。プロコン・スマホ・PC対応。日本語・英語・中国語・韓国語。">
+<script src="../protect.js"></script><script src="../shared/are-padmap.js"></script>
+<link rel="stylesheet" href="./css/us.css">
+<script src="../shared/are-offline.js" defer></script>
+</head>
+<body data-scr="title">
+<canvas id="cv" aria-hidden="true"></canvas>
+<div id="vig" aria-hidden="true"></div><div id="flash" aria-hidden="true"></div><div id="hurt" aria-hidden="true"></div>
+<div id="lbT" class="lb" aria-hidden="true"></div><div id="lbB" class="lb" aria-hidden="true"></div>
+<button id="exitBtn" type="button" aria-label="back">← もどる</button>
+<button id="padBtn" type="button" aria-label="controls" data-gki-settings>🎮</button>
+<button id="sndBtn" type="button" aria-label="sound">🔊</button>
+<button id="lgBtn" type="button" aria-label="language">日本語</button>
+
+<main id="app">
+  <!-- タイトル -->
+  <section id="s-title" class="scr on">
+    <div class="logo"><span class="l1">AREUSO</span><span class="l2" id="tSub"></span></div>
+    <div class="menu">
+      <button id="bStart" type="button" class="big" data-pad-first></button>
+      <button id="bCont" type="button" class="cont"></button>
+      <div class="row2"><button id="bHow" type="button"></button><button id="bOpt" type="button"></button></div>
+    </div>
+    <p class="hint" id="tNote"></p>
+  </section>
+
+  <!-- あそびかた -->
+  <section id="s-how" class="scr">
+    <h2 id="hT"></h2>
+    <div class="panel" id="hBody"></div>
+    <button id="bHowBack" type="button" class="big" data-pad-first></button>
+  </section>
+
+  <!-- 出陣えらび -->
+  <section id="s-sel" class="scr">
+    <h2 id="selT"></h2>
+    <div id="stList" class="stlist"></div>
+    <h3 id="heroT"></h3>
+    <div id="heroList" class="herolist"></div>
+    <div id="heroInfo" class="panel hinfo"></div>
+    <div class="row" id="diffRow"></div>
+    <div class="row"><button id="bSelBack" type="button"></button><button id="bGo" type="button" class="big"></button></div>
+  </section>
+
+  <!-- せってい -->
+  <section id="s-opt" class="scr">
+    <h2 id="oT"></h2>
+    <div class="panel optp">
+      <div class="orow"><span id="oQ"></span><div class="seg" id="segQ"></div></div>
+      <div class="orow"><span id="oS"></span><div class="seg" id="segS"></div></div>
+      <div class="orow"><span id="oTc"></span><div class="seg" id="segT"></div></div>
+    </div>
+    <button id="bPadOpt" type="button" data-gki-settings></button>
+    <button id="bReset" type="button" class="warn"></button>
+    <button id="bOptBack" type="button" class="big" data-pad-first></button>
+  </section>
+
+  <!-- ステージ前の せつめい -->
+  <section id="s-brief" class="scr ovl">
+    <div class="briefbox">
+      <div class="bstage" id="brStage"></div>
+      <h2 id="brName"></h2>
+      <p id="brIntro"></p>
+      <p class="obj" id="brObj"></p>
+      <button id="bBrGo" type="button" class="big" data-pad-first></button>
+    </div>
+  </section>
+
+  <!-- 戦闘 HUD -->
+  <section id="s-play" class="scr">
+    <div id="hud">
+      <div id="hpBox"><div class="hname"><b id="hdName"></b><span id="hdHp"></span></div><div class="bar hp"><i id="hpFill"></i><i id="hpLag"></i></div><div class="bar mu"><i id="muFill"></i><span id="muTx"></span></div></div>
+      <div id="stats"><div id="stKo"><b>0</b><small></small></div><div id="stTime"></div></div>
+      <div id="bossBox"></div>
+      <div id="objBox"></div>
+      <div id="comboBox"><b id="cmN">0</b><small id="cmT"></small></div>
+      <canvas id="mm" width="120" height="120"></canvas>
+      <div id="banner"></div>
+      <div id="dmgLayer"></div>
+      <button id="pauseBtn" type="button" aria-label="pause">＋</button>
+    </div>
+    <div id="touch" hidden>
+      <div id="stickZone"></div><div id="camZone"></div>
+      <div id="stickBase"><i></i></div>
+      <div id="cluster">
+        <button type="button" class="tb tbY" data-act="weak">Y</button>
+        <button type="button" class="tb tbX" data-act="strong">X</button>
+        <button type="button" class="tb tbA" data-act="jump">A</button>
+        <button type="button" class="tb tbB" data-act="dodge">B</button>
+        <button type="button" class="tb tbZ" data-act="musou" id="tbMus">無双</button>
+        <button type="button" class="tb tbR" data-act="guard" data-hold="1">R</button>
+      </div>
+    </div>
+    <div id="keyHint"></div>
+  </section>
+
+  <!-- ポーズ -->
+  <section id="s-pause" class="scr ovl">
+    <div class="briefbox pausebox">
+      <h2 id="paT"></h2>
+      <button id="bResume" type="button" class="big" data-pad-first></button>
+      <button id="bPaOpt" type="button" data-gki-settings></button>
+      <button id="bPaQuit" type="button"></button>
+    </div>
+  </section>
+
+  <!-- リザルト -->
+  <section id="s-res" class="scr ovl">
+    <div class="briefbox resbox">
+      <h2 id="rsT"></h2>
+      <div id="rsRank" class="rank"></div>
+      <div id="rsTable" class="rtable"></div>
+      <p id="rsNew" class="newhero"></p>
+      <div class="row"><button id="bRsMenu" type="button"></button><button id="bRsRetry" type="button"></button><button id="bRsNext" type="button" class="big" data-pad-first></button></div>
+    </div>
+  </section>
+
+  <!-- エンディング -->
+  <section id="s-end" class="scr ovl">
+    <div class="briefbox endbox">
+      <h2 id="enT"></h2>
+      <p id="enBody"></p>
+      <button id="bEnd" type="button" class="big" data-pad-first></button>
+    </div>
+  </section>
+
+  <!-- 3D が使えない -->
+  <section id="s-nogl" class="scr ovl">
+    <div class="briefbox"><h2 id="ngT"></h2><button id="bNgBack" type="button" class="big" data-pad-first></button></div>
+  </section>
+</main>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="loading"><span id="loadTx"></span></div>
+
+<script src="../shared/are-pad.js"></script>
+<script src="../shared/gk-input.js"></script>
+<script src="../shared/gk.js"></script>
+<script src="./js/us-data.js"></script>
+<script src="./js/us-core.js"></script>
+<script type="module" src="./js/us-3d.js"></script>
+<script src="./js/us-ui.js" defer></script>
+</body>
+</html>
