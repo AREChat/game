@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>人気者になろう｜90日で伝説のスターへ</title>
+<meta name="theme-color" content="#150a45">
+<meta name="description" content="90日で無名の新人から「伝説」へ。ダンス・歌・トーク…12種類のミニゲームと特訓で、ファンを増やそう。50のチャレンジ、20のイベント、14のエンディング。日本語・英語・中国語・韓国語に対応。20歳以上向け。">
+<script src="../protect.js"></script><script src="../shared/are-padmap.js"></script>
+<script src="../shared/agegate.js"></script>
+<link rel="stylesheet" href="./css/st.css">
+<script src="../shared/are-offline.js" defer></script>
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas><div id="vig" aria-hidden="true"></div>
+<button id="exitBtn" type="button" aria-label="back">← もどる</button>
+<button id="padBtn" type="button" aria-label="controls" data-gki-settings>🎮</button>
+<button id="sndBtn" type="button" aria-label="sound">🔊</button>
+<button id="lgBtn" type="button" aria-label="language">日本語</button>
+<main id="app">
+  <!-- タイトル -->
+  <section id="s-title" class="scr on">
+    <div class="badge20">20+</div>
+    <div class="logo"><span class="l1" id="lg1">人気者</span><span class="l2" id="lg2">になろう</span></div>
+    <p class="sub" id="tSub"></p>
+    <div class="menu">
+      <button id="bNew" type="button" class="big" data-pad-first></button>
+      <button id="bCont" type="button" class="cont"></button>
+      <button id="bDaily" type="button"></button>
+      <div class="row2"><button id="bColl" type="button"></button><button id="bHow" type="button"></button></div>
+    </div>
+    <p class="hint" id="tNote"></p>
+  </section>
+
+  <!-- あそびかた -->
+  <section id="s-how" class="scr">
+    <h2 id="hT"></h2>
+    <div class="panel" id="hBody"></div>
+    <button id="bHowBack" type="button" class="big"></button>
+  </section>
+
+  <!-- タイプえらび -->
+  <section id="s-setup" class="scr">
+    <h2 id="suT"></h2>
+    <label class="namebox"><span id="suName"></span><input id="nameIn" type="text" maxlength="8" autocomplete="off" data-pad-text="1"></label>
+    <div id="tyList" class="tylist"></div>
+    <div class="row"><button id="bSuBack" type="button"></button><button id="bGo" type="button" class="big"></button></div>
+  </section>
+
+  <!-- ホーム -->
+  <section id="s-home" class="scr">
+    <header id="hud">
+      <div class="hrow"><div id="hDay"></div><div id="hAp" aria-live="polite"></div></div>
+      <div id="hRank"><span id="hRankEm" class="rem"></span><div class="rtx"><b id="hRankName"></b><div class="bar"><i id="hRankFill"></i></div><small id="hRankNext"></small></div></div>
+      <div class="hrow3"><div id="hFans" class="chip"></div><div id="hCoins" class="chip"></div><div id="hCond" class="chip cond"><b></b><span class="bar"><i></i></span></div></div>
+    </header>
+    <div class="homemain">
+      <div id="bubble" class="bubble"><span id="bubEm"></span><p id="bubTx"></p></div>
+      <div id="homeGrid" class="hgrid">
+        <button id="bChal" type="button" class="hb pink" data-pad-first></button>
+        <button id="bTrain" type="button" class="hb"></button>
+        <button id="bRest" type="button" class="hb"></button>
+        <button id="bShop" type="button" class="hb"></button>
+        <button id="bStat" type="button" class="hb"></button>
+        <button id="bEnd" type="button" class="hb gold"></button>
+      </div>
+      <button id="bDrink" type="button" class="drink"></button>
+    </div>
+    <div class="homebar"><button id="bHMenu" type="button"></button></div>
+  </section>
+
+  <!-- チャレンジ -->
+  <section id="s-area" class="scr">
+    <div class="topbar"><button id="bAreaBack" type="button"></button><h2 id="arT"></h2><span id="arAp" class="apchip"></span></div>
+    <div id="areaTabs" class="tabs"></div>
+    <p id="arDesc" class="hint"></p>
+    <div id="chList" class="cards"></div>
+  </section>
+
+  <!-- 特訓 -->
+  <section id="s-train" class="scr">
+    <div class="topbar"><button id="bTrBack" type="button"></button><h2 id="trT"></h2><span id="trAp" class="apchip"></span></div>
+    <div id="trList" class="cards"></div>
+  </section>
+
+  <!-- ショップ -->
+  <section id="s-shop" class="scr">
+    <div class="topbar"><button id="bShBack" type="button"></button><h2 id="shT"></h2><span id="shCoins" class="apchip"></span></div>
+    <div id="shList" class="cards"></div>
+  </section>
+
+  <!-- ステータス -->
+  <section id="s-stat" class="scr">
+    <div class="topbar"><button id="bStBack" type="button"></button><h2 id="stT"></h2><span></span></div>
+    <div id="stBody" class="statbody"></div>
+  </section>
+
+  <!-- プレイ -->
+  <section id="s-play" class="scr">
+    <div id="playBox">
+      <canvas id="gc"></canvas>
+      <button id="bPause" type="button" aria-label="pause">⏸</button>
+      <div id="playName"></div>
+      <div id="playHint"></div>
+    </div>
+  </section>
+
+  <!-- けっか -->
+  <section id="s-result" class="scr">
+    <div id="resBox" class="resbox">
+      <div id="resName" class="resname"></div>
+      <div id="resStars" class="resstars"></div>
+      <div id="resTitle" class="restitle"></div>
+      <div id="resPct" class="respct"></div>
+      <div id="resLines" class="reslines"></div>
+      <div class="row"><button id="bResOk" type="button" class="big" data-pad-first></button></div>
+    </div>
+  </section>
+
+  <!-- エンディング -->
+  <section id="s-end" class="scr">
+    <div id="endEm" class="endem"></div>
+    <div id="endKind" class="endkind"></div>
+    <h2 id="endT"></h2>
+    <p id="endB" class="endbody"></p>
+    <div class="scorebox"><div id="endRank" class="rank"></div><div><div id="endScore"></div><small id="endBest"></small></div></div>
+    <div id="endStats" class="chips"></div>
+    <div id="endAch" class="ach"></div>
+    <div class="row"><button id="bAgain" type="button" class="big" data-pad-first></button><button id="bEndColl" type="button"></button><button id="bEndTitle" type="button"></button></div>
+  </section>
+
+  <!-- ずかん -->
+  <section id="s-coll" class="scr">
+    <h2 id="cT"></h2>
+    <div class="row" id="cTabs"><button type="button" data-c="end" class="on"></button><button type="button" data-c="ach"></button><button type="button" data-c="star"></button></div>
+    <p class="hint" id="cCount"></p>
+    <div id="cGrid" class="cgrid"></div>
+    <button id="bCollBack" type="button"></button>
+  </section>
+</main>
+
+<!-- モーダル -->
+<div class="modal" id="mEvent"><div class="box evbox" id="evBox"></div></div>
+<div class="modal" id="mMenu" data-closable="1"><div class="box" id="menuBox"></div></div>
+<div class="modal" id="mInfo" data-closable="1"><div class="box" id="infoBox"></div></div>
+<div class="modal cine" id="mCine"><div class="rays" aria-hidden="true"></div><div class="bar t"></div><div class="bar b"></div><div class="cbox" id="cineBox"></div></div>
+<div id="toast" class="toast"></div>
+
+<script src="../shared/are-pad.js"></script>
+<script src="../shared/gk-input.js"></script>
+<script src="../shared/gk.js"></script>
+<script src="./js/st-data.js"></script>
+<script src="./js/st-core.js"></script>
+<script src="./js/st-text.js"></script>
+<script src="./js/st-fx.js"></script>
+<script src="./js/st-mini.js"></script>
+<script src="./js/st-ui.js"></script>
+<script src="./js/st-play.js"></script>
+</body>
+</html>

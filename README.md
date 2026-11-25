@@ -7,6 +7,7 @@ AREChat のゲーム置き場です。チャットアプリは `AREChat/ARE`、�
 - 2026-11-05：旧 `AREChat/ARE` から、game・game2〜game7（と、それらが使う shared/・dream-frontier/・protect.js・apple-touch-icon.png）をそのまま移しました。
 - 2026-11-08：パッド（プロコン）のボタン配置を、ボタン1つ1つ好きに変えられる『🎮 ボタン設定』を追加（`shared/are-padmap.js`。各ゲームのタイトルから開く。マウス不要。設定はこの端末に保存）。
 - 2026-11-08：ゲームを **4つのフォルダ** に統合しました：`game`（ARE QUEST）／`game2`（`quest2`＝ARE QUEST 2、`quest3`＝ARE QUEST 3）／`game4`（`card`＝ARE CARD、`starweaver`＝星紡ぎの旅人。旧 game6）／`game5`（`play`＝推理ゲーム、`blocks`＝ARE BLOCKS。旧 game7）。`game2`・`game4`・`game5` の `index.html` は、中の ゲームを えらぶ入口ページです。タイトル画面から お互いに行き来できます（一覧は `shared/game-nav.js` の1か所だけ。ブラウザ版のみ。exe には ARE QUEST だけが入っているので出しません）。保存データは同じ場所（同一オリジン）なので引き継がれます。
+- 2026-11-25：ゲーム共通の操作部品 `shared/gk-input.js`（プロコン・キーボード・タッチ。操作の割り当ては『🎮』から自由に変更）を追加。`game13`（20歳の冒険）・`game14`（人気者になろう：90日・12種のミニゲーム・14エンディング）を追加（どちらも 20歳以上・4言語・虫なし）。各ゲームの画像生成プロンプトは `game11/prompts/`・`game13/prompts/`・`game14/prompts/` にあります（確認用テストは `game14/tools/`）。
 
 ## exe（パソコン用アプリ）と Web（サーバー公開）の区別
 
