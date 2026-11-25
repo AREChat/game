@@ -1390,7 +1390,7 @@ ACT.autoTalk = () => {
 function winMsg(who, text, opts){
     opts = opts || {}; const por = portraitHtml(who === "me" ? "me" : who);
     const nm = who === "me" ? G.S.name : who;
-    return (por ? '<div id="por">' + por + '</div>' : "") + '<div id="msg" class="win' + (por ? " hasp" : "") + '" data-tap="1">' + (nm ? '<span class="who">' + esc(nm) + '</span>' : "") + '<span id="mt" data-full="' + esc(text) + '"></span>' + (opts.next === false ? "" : '<span class="nx">▼</span>') + '</div>';
+    return (por ? '<div id="por">' + por + '</div>' : "") + '<div id="msg" class="win' + (por ? " hasp" : "") + (G.mode === "battle" ? " bm" : "") + '" data-tap="1">' + (nm ? '<span class="who">' + esc(nm) + '</span>' : "") + '<span id="mt" data-full="' + esc(text) + '"></span>' + (opts.next === false ? "" : '<span class="nx">▼</span>') + '</div>';
 }
 
 // ---------------------------------------------------------------- 描画の入口
@@ -1519,7 +1519,7 @@ function viewSlots(){
 ACT.slotBack = () => { if(G.slotFrom === "menu"){ G.mode = "menu"; G.menuTab = "main"; } else G.mode = "title"; render(); };
 ACT.slotPickCancel = () => { G.slotPick = null; render(); };
 ACT.slotNew = (v) => {
-    const i = Number(v), r = tqReadSlot(i), go = () => { G.newSlot = i; G.draft = {name:"主人公", sex:"m", month:"", day:"", answers:[], q:0}; G.mode = "profile"; render(); };
+    const i = Number(v), r = tqReadSlot(i), go = () => { G.newSlot = i; const nowD = new Date(); /* たんじょう日は「きょう」を さいしょから 入れておく（えらばなくても すすめる） */ G.draft = {name:"主人公", sex:"m", month:String(nowD.getMonth() + 1), day:String(nowD.getDate()), answers:[], q:0}; G.mode = "profile"; render(); };
     if(r) askYes("冒険の書 " + i + " には データが あります。\n上書きして はじめますか？", go); else go();
 };
 ACT.slotSave = (v) => {
@@ -1548,13 +1548,13 @@ function viewProfile(){
     for(let i = 1; i <= 12; i++) mo += '<option value="' + i + '"' + (String(d.month) === String(i) ? " selected" : "") + '>' + i + '</option>';
     for(let i = 1; i <= 31; i++) da += '<option value="' + i + '"' + (String(d.day) === String(i) ? " selected" : "") + '>' + i + '</option>';
     const z = tqZodiac(d.month, d.day);
-    return '<div class="win panel sm scroll"><h2>🧑 プロフィール</h2><label for="pName">主人公の なまえ（10文字まで・はじめは「主人公」）</label><input id="pName" type="text" maxlength="10" value="' + esc(d.name) + '" style="width:100%">' +
+    return '<div class="win panel sm scroll"><h2>🧑 プロフィール</h2><div class="row"><button class="btn" data-a="pQuick">⚡ おまかせで すぐに はじめる</button></div><div class="meta">（まよったら これ！ なまえは「主人公」、あとは おまかせで すぐ ぼうけんが はじまります）</div><label for="pName">主人公の なまえ（10文字まで・はじめは「主人公」）</label><input id="pName" type="text" maxlength="10" value="' + esc(d.name) + '" style="width:100%">' +
         '<label for="pYomi">よみがな（ひらがな・かたかな。声で よむとき つかいます）</label><input id="pYomi" type="text" maxlength="20" value="' + esc(d.yomi || "") + '" placeholder="例：たろう（漢字の名前のときは 入れてね）" style="width:100%">' +
         (sug ? '<div class="row" style="margin:.5cqw 0"><button class="btn sub" data-a="pUse">⭐ プロフィールの名前「' + esc(sug) + '」を つかう（おすすめ）</button></div>' : '<div class="meta">（チャットの プロフィールの 名前を おすすめします。ゲームの 中でも かえられます）</div>') +
         '<label>せいべつ（話し方が かわります）</label><div class="row"><button class="btn' + (d.sex === "m" ? "" : " sub") + '" data-a="pSex" data-v="m">🧑 男の子（僕）</button><button class="btn' + (d.sex === "f" ? "" : " sub") + '" data-a="pSex" data-v="f">👩 女の子（私）</button></div>' +
         '<label for="pPron">自分の よびかた（一人称）</label><select id="pPron"><option value="">おまかせ（男の子＝僕／女の子＝私）</option>' + TQ_PRONS.map((p) => '<option value="' + p[0] + '"' + (d.pron === p[0] ? " selected" : "") + '>' + esc(p[0] === "name" ? "自分の名前（" + (d.name || "主人公") + "）" : p[1]) + '</option>').join("") + '</select>' +
         '<label>たんじょう日（星座が わかるよ）</label><div class="row">' + stp("mon", -1) + '<select id="pMon">' + mo + '</select> 月 ' + stp("mon", 1) + stp("day", -1) + '<select id="pDay">' + da + '</select> 日 ' + stp("day", 1) + '</div><div class="meta">コントローラーの人は ◀ ▶ で えらべます。</div>' +
-        '<div class="zodiac" id="zod">' + zodHtml(z) + '</div><div class="err" id="perr"></div><div class="row"><button class="btn sub" data-a="pBack">もどる</button><button class="btn" data-a="pNext">つぎへ ▶</button></div></div>';
+        '<div class="zodiac" id="zod">' + zodHtml(z) + '</div><div class="pfoot"><div class="err" id="perr"></div><div class="row"><button class="btn sub" data-a="pBack">もどる</button><button class="btn" data-a="pNext">つぎへ ▶</button></div></div></div>';
 }
 function zodHtml(z){ return z ? z.mark + " " + esc(z.name) + '<div class="meta">' + esc(z.text) + '</div>' : '<span class="meta">月と日を えらぶと、星座が ひょうじされます。</span>'; }
 function keepDraft(){ const d = G.draft; if(!d) return; if($("pName")) d.name = $("pName").value; if($("pYomi")) d.yomi = $("pYomi").value; if($("pMon")) d.month = $("pMon").value; if($("pDay")) d.day = $("pDay").value; if($("pPron")) d.pron = $("pPron").value; }
@@ -1570,6 +1570,16 @@ ACT.pStep = (v) => {
 ACT.pUse = () => { const sug = tqSuggestName().trim().slice(0, 10); if(sug){ keepDraft(); G.draft.name = sug; render(); toast("プロフィールの 名前を 使います。"); } };
 ACT.pSex = (v) => { keepDraft(); G.draft.sex = v; render(); };
 ACT.pBack = () => { keepDraft(); G.mode = "title"; render(); };
+// ⚡ おまかせ：なまえ「主人公」・たんじょう日は きょう・性格は 質問なしで きめて、そのまま ぼうけんへ
+ACT.pQuick = () => {
+    keepDraft(); const d = G.draft, nowD = new Date();
+    d.name = (d.name || "").trim() || "主人公"; if(Array.from(d.name).length > 10) d.name = Array.from(d.name).slice(0, 10).join("");
+    if(!tqZodiac(d.month, d.day)){ d.month = String(nowD.getMonth() + 1); d.day = String(nowD.getDate()); }
+    d.zodiac = tqZodiac(d.month, d.day);
+    const ym = tqNormYomi(d.yomi, d.name); d.yomi = ym === null ? "" : ym;
+    d.answers = [true, false, true]; d.q = 2; d.pers = tqPersonality(d.answers);
+    ACT.rStart();
+};
 ACT.pNext = () => {
     keepDraft(); const d = G.draft, e = $("perr"), nm = d.name.trim();
     if(!nm){ e.textContent = "主人公の なまえを いれてください。"; return; }
@@ -1603,10 +1613,12 @@ ACT.rStart = () => {
 };
 // ---------------------------------------------------------------- あそびかた・せってい
 function helpText(){
-    return "【ものがたり】\n未来の ARE かいはつラボから、過去の世界へ タイムスリップ！ ノイズ（かわいい モンスター）に 持ち去られた『大事なメモリ』6つを 取りもどして、ARE を 完成させよう。\n（ARE QUEST 2 → 3 の つづきの、さいごの 物語です）\n\n" +
-        "【そうさ】\n🎮 コントローラー（Switchプロコン等）：十字キー／左スティック＝いどう、A＝けってい、B＝もどる、X・＋＝メニュー\n・おわる：右下の「✖ おわる」かタイトルの「ゲームをおわる」（自動で記録されます）\nいどう：矢印キー／WASD／画面の ボタン（長おしで 連続）\nはなす・しらべる・けってい：Enter／Z／スペース／Aボタン\nメニュー：X／M／メニューボタン　もどる：X／Esc\n\n" +
-        "【たたかい】\nコマンドを えらんで たたかう。なかまは 自動で こうどう。『オート』を ONに すると 自動で 戦うよ。『ARE！ゲージ』が MAX で ひっさつ技！\n\n" +
-        "【ならではの きのう】\n・パーティは 最大4人\n・自動レベル上げ（メニュー→じどう）\n・冒険の書は 3つ（いつでも セーブ）\n・声は ブラウザの 読み上げ／BGMは game/bgm の mp3 を ループ再生\n・🔑チート：ひみつの コードを さがそう！ ヒント：意外と たんじゅん。";
+    return "【このゲームは どんな ゲーム？】\n未来の ラボから 過去の 世界へ タイムスリップして、ノイズ（かわいい モンスター）に うばわれた『大事なメモリ』6つを 取りもどす 冒険（ぼうけん）RPG です。ARE QUEST 2 → 3 の つづきの、さいごの 物語です。\n\n" +
+        "【はじめの 3ステップ】\n① ラボで アキトと ハルキに 話しかける（Enter／Aボタン）\n② 部屋の まんなかの 青い『ゲート』に のって、行き先を えらぶ\n③ 街の 人に 話を きいて、ノイズを たおして メモリを ゲット！\n※いま 何をするか わからなく なったら、画面の 左上の「🎯」を 見てね。メニューの「メモリ・もくてき」にも のっているよ。\n\n" +
+        "【うごかしかた】\n・いどう：矢印キー／WASD／画面の ボタン／十字キー／左スティック\n・はなす・しらべる・けってい：Enter／Z／スペース／Aボタン\n・メニュー：X／M／メニューボタン　・もどる：X／Esc／Bボタン\n・「✖ おわる」：右上。やめても 自動で 記録されるよ\n\n" +
+        "【たたかい（むずかしくないよ）】\n・「たたかう」を 押して、てきを えらぶだけ！ なかまは 自動で たすけてくれる\n・HPが へったら「どうぐ」で かいふく。ダメなら「にげる」もOK\n・めんどうな ときは「オート戦闘」！ 自動で 戦ってくれる\n・ダメージで『ARE ゲージ』が たまる。MAXで「ARE！」を 押すと ひっさつ技\n・負けても ゲームオーバーじゃ ないよ（ゴールドが 半分に なって、ラボで めがさめるだけ）\n\n" +
+        "【レベルを あげるには】\nノイズを たおすと 強く なる。つよくなるほど 先へ すすめるよ。メニューの「じどう」で 自動レベル上げも できる。\n\n" +
+        "【ほかにも】\n・冒険の書は 3つ（いつでも セーブ）\n・パーティは 最大4人\n・声は ブラウザの 読み上げ／BGMは game/bgm の mp3 を ループ再生\n・🔑 ひみつの コードを さがすと…？ ヒント：意外と たんじゅん。";
 }
 function viewHelp(){ return '<div class="win panel scroll"><h2>📘 あそびかた</h2><div style="white-space:pre-wrap;font-size:1.95cqw">' + esc(helpText()) + '</div><div class="row" style="margin-top:1cqw"><button class="btn" data-a="hBack">もどる</button></div></div>'; }
 ACT.hBack = () => { if(G.helpFrom === "menu"){ G.mode = "menu"; G.menuTab = "main"; } else G.mode = "title"; render(); };
@@ -1949,7 +1961,8 @@ function hudHtml(){
         const mp = curMap(), ch = tileCh(S.map, S.x, S.y), danger = !!(mp && mp.enc && !S.cx.noenc && !/[DGE]/.test(ch));
         zone = danger ? '<br><b style="color:#ff9a8a">⚔ ここは モンスターが出る場所</b>' : '<br><b style="color:#8fe8a8">🕊 ここは モンスターが出ない場所</b>';
     }catch(_e){}
-    return '<div id="hud" class="win">' + lines + '</div><div id="hudr" class="win">💰' + S.gold.toLocaleString() + 'G　メモリ ' + tqMemCount() + '/6' + (G.grind ? '<br>⚡れんぞく戦闘 ' + G.grind.n + '回' : "") + (S.cx.showpos ? '<br>(' + S.x + ',' + S.y + ')' : "") + zone + '</div>';
+    let obj = ""; try{ obj = tqObjective(); }catch(_e){}
+    return '<div id="hud" class="win">' + lines + (obj ? '<div class="q">🎯 ' + esc(obj) + '</div>' : "") + '</div><div id="hudr" class="win">💰' + S.gold.toLocaleString() + 'G　メモリ ' + tqMemCount() + '/6' + (G.grind ? '<br>⚡れんぞく戦闘 ' + G.grind.n + '回' : "") + (S.cx.showpos ? '<br>(' + S.x + ',' + S.y + ')' : "") + zone + '</div>';
 }
 function updateHud(){ const h = $("hud"); if(h && G.mode === "map"){ const d = document.createElement("div"); d.innerHTML = hudHtml(); h.innerHTML = d.firstChild.innerHTML; const r = $("hudr"); if(r) r.innerHTML = d.lastChild.innerHTML; } }
 function fieldView(){
@@ -2217,6 +2230,9 @@ const AUTO_DELAY = [700, 380, 130];
 function bAlive(id){ return G.S.m[id].hp > 0; }
 function bSpend(id, n){ if(!G.S.cx.infmp) G.S.m[id].mp = Math.max(0, G.S.m[id].mp - n); }
 function bDmg(atk, def, mult){
+    const o = bDmg0(atk, def, mult); G.lastCrit = !!o.crit; return o;
+}
+function bDmg0(atk, def, mult){
     const m = mult || 1, r1 = G.rnd(), r2 = G.rnd();
     const forceCrit = !!(G.S && G.S.cx && G.S.cx.gcrit && G.b && !G.inFoe);
     if(window.GCore && GCore.ready){
@@ -2274,30 +2290,49 @@ function paintBattle(g, time){
     const n = b.foes.length, big = n === 1 ? (b.foes[0].boss ? 130 : 104) : n === 2 ? 84 : n === 3 ? 70 : 58;
     b.foes.forEach((f, i) => {
         if(f.cur <= 0) return;
-        const sp = n === 1 ? 0 : Math.min(150, 440 / n), cx = (G.S.party.length > 4 ? 390 : 340) + (i - (n - 1) / 2) * sp, cy = (G.S.party.length > 4 ? 150 : 120) + (n === 1 ? 0 : (i % 2 ? 16 : -4)), bob = Math.sin(time / 420 + i) * 3;
+        const sp = n === 1 ? 0 : Math.min(150, 440 / n), cx = (G.S.party.length > 4 ? 390 : 340) + (i - (n - 1) / 2) * sp, cy = (G.S.party.length > 4 ? 138 : 108) + (n === 1 ? 0 : (i % 2 ? 16 : -4)), bob = Math.sin(time / 420 + i) * 3;
         const hit = G.hit && G.hit.idx === i && time < G.hit.until;
         g.save(); if(hit) g.translate((Math.random() - 0.5) * 8, 0);
         g.globalAlpha = hit ? 0.55 : 1;
         if(f.img){ const im = foeImg(f.img); if(im.complete && im.naturalWidth){ if(tqIsFramed(f.img)){ tqDrawFramed(g, im, cx, cy + bob + 6, n === 1 ? 196 : 120); } else{ const h = 190, w = h * im.naturalWidth / im.naturalHeight; g.drawImage(im, cx - w / 2, cy - h / 2 + bob + 6, w, h); } } }
         else{ g.font = big + "px serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#000"; g.fillText(f.e, cx, cy + bob); }
         g.restore();
-        g.fillStyle = "rgba(0,0,0,.25)"; g.beginPath(); g.ellipse(cx, 232, f.img ? 40 : big / 2.2, 6, 0, 0, 7); g.fill();
-        g.fillStyle = "#1f2937"; g.fillRect(cx - 40, 242, 80, 7); g.fillStyle = f.cur / f.hp > 0.3 ? "#34d399" : "#ef4444"; g.fillRect(cx - 40, 242, 80 * f.cur / f.hp, 7);
-        g.font = "bold 12px sans-serif"; g.textAlign = "center"; g.textBaseline = "alphabetic"; g.lineJoin = "round"; g.lineWidth = 3.5; g.strokeStyle = "rgba(255,255,255,.92)"; g.strokeText(f.label, cx, 262); g.fillStyle = "#111"; g.fillText(f.label, cx, 262);
+        g.fillStyle = "rgba(0,0,0,.25)"; g.beginPath(); g.ellipse(cx, 212, f.img ? 40 : big / 2.2, 6, 0, 0, 7); g.fill();
+        g.fillStyle = "#1f2937"; g.fillRect(cx - 40, 217, 80, 8); g.fillStyle = f.cur / f.hp > 0.3 ? "#34d399" : "#ef4444"; g.fillRect(cx - 40, 217, 80 * f.cur / f.hp, 8); g.strokeStyle = "rgba(255,255,255,.8)"; g.lineWidth = 1; g.strokeRect(cx - 40, 217, 80, 8);   // てきの HP（メッセージの わくに かくれない 高さ）
+        g.font = "bold 12px sans-serif"; g.textAlign = "center"; g.textBaseline = "alphabetic"; g.lineJoin = "round"; g.lineWidth = 3.5; g.strokeStyle = "rgba(255,255,255,.92)"; g.strokeText(f.label, cx, 238); g.fillStyle = "#111"; g.fillText(f.label, cx, 238);
         if(f.stun > 0){ g.font = "18px serif"; g.fillText("💫", cx + 30, cy - 40); }
     });
+    if(G.fx && G.fx.length){
+        const now = Date.now(); G.fx = G.fx.filter((q) => now - q.t0 < 950);
+        G.fx.forEach((q) => {
+            const age = (now - q.t0) / 950, nn = b.foes.length, sp = nn === 1 ? 0 : Math.min(150, 440 / nn);
+            const cx = q.idx < 0 ? 560 : (G.S.party.length > 4 ? 390 : 340) + (q.idx - (nn - 1) / 2) * sp, cy0 = q.idx < 0 ? 170 : 100;
+            const pop = age < 0.18 ? 1 + (0.18 - age) * 5 : 1, y = cy0 - Math.min(1, age * 2.2) * 34 + (age > 0.6 ? (age - 0.6) * 20 : 0);
+            const big = q.kind === "crit" ? 40 : q.kind === "big" ? 32 : 26;
+            g.save(); g.globalAlpha = age > 0.7 ? Math.max(0, 1 - (age - 0.7) / 0.3) : 1; g.textAlign = "center"; g.textBaseline = "middle";
+            g.font = "900 " + Math.round(big * pop) + "px sans-serif"; g.lineJoin = "round"; g.lineWidth = 6; g.strokeStyle = q.kind === "me" ? "#7f1d1d" : "#1f2937";
+            const txt = (q.v > 0 ? q.v : (q.kind === "me" ? "0" : "0")) + (q.kind === "crit" ? "!!" : "");
+            g.strokeText(txt, cx, y); g.fillStyle = q.kind === "me" ? "#ff8a8a" : q.kind === "crit" ? "#ffd84d" : "#fff"; g.fillText(txt, cx, y);
+            if(q.kind === "crit" && age < 0.5){ g.font = "900 15px sans-serif"; g.lineWidth = 4; g.strokeStyle = "#7c2d12"; g.strokeText("かいしん！", cx, y - 28); g.fillStyle = "#ffedd5"; g.fillText("かいしん！", cx, y - 28); }
+            g.restore();
+        });
+    }
     g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(250, 342, 140, 9); g.fillStyle = G.S.gauge >= 100 ? "#fbbf24" : "#60a5fa"; g.fillRect(250, 342, 140 * G.S.gauge / 100, 9);
     g.font = "bold 10px sans-serif"; g.fillStyle = "#fff"; g.textAlign = "left"; g.textBaseline = "alphabetic"; g.fillText("ARE ゲージ" + (G.S.gauge >= 100 ? "  MAX！" : ""), 250, 338);
 }
 function bLog(t){ G.b.log.push(t); }
+// ダメージの 数字を ポンと うかばせる（idx=-1 は みかたが うけた ダメージ）
+function bFloat(idx, v, kind){ if(!G.fx) G.fx = []; G.fx.push({idx, v, kind: kind || "", t0: Date.now()}); if(G.fx.length > 24) G.fx.shift(); }
 function bHit(i){ G.hit = {idx:i, until:Date.now() + 260}; }
 function bHurt(id, d){
     const m = G.S.m[id]; if(G.S.cx.god) d = 0;
+    bFloat(-1, d, "me"); try{ const app = document.getElementById("app") || document.body; app.classList.remove("tq-hitme"); void app.offsetWidth; app.classList.add("tq-hitme"); setTimeout(() => app.classList.remove("tq-hitme"), 330); }catch(_e){}
     m.hp = Math.max(0, m.hp - d); G.S.gauge = Math.min(100, G.S.gauge + 6);
     if(m.hp === 0) bLog(tqName(id) + "は たおれた…！");
 }
 function bFoeHurt(f, d){
     if(G.S.cx.onehit) d *= 100;
+    const crit = !!G.lastCrit; G.lastCrit = false; bFloat(G.b.foes.indexOf(f), d, crit ? "crit" : (d >= f.hp * 0.25 ? "big" : ""));
     f.cur = Math.max(0, f.cur - d);
     if(f.cur === 0) bLog(f.label + "を たおした！");
     else if(f.boss && !f.sayDone && f.cur <= f.hp / 2 && f.say50){ f.sayDone = true; bLog(rpgFmt(f.say50)); }
@@ -2477,7 +2512,8 @@ function endBattle(res){
     const lines = log.slice(); lines.push(rpgFmt("たたかいに しょうり！ " + Math.round(exp * (S.expmul || 1)).toLocaleString() + "EXP と " + gold + "G を てにいれた。"));
     if(!b.boss && G.rnd() < 0.18){ S.items.onigiri = Math.min(99, (S.items.onigiri || 0) + 1); lines.push("おにぎりを ひろった！"); }
     else if(!b.boss && G.rnd() < 0.03){ S.items.omamori = Math.min(99, (S.items.omamori || 0) + 1); lines.push("ふっかつのおまもりを ひろった！"); }
-    tqGain(exp).forEach((u) => lines.push(u));
+    const ups = tqGain(exp); ups.forEach((u) => lines.push(u));
+    if(ups.length) tqCelebrate("LEVEL UP！", "lv"); else if(b.boss) tqCelebrate("VICTORY！", "win");
     S.party.forEach((id) => { if(S.m[id].hp <= 0) S.m[id].hp = 1; });
     const after = b.after; G.b = null;
     if(G.grind){ G.grind.n++; S.grinds = (S.grinds || 0) + 1; }
@@ -2545,6 +2581,16 @@ function startGrindLoop(){
     }, 450);
 }
 
+// おいわいの 演出：バナーと キラキラが ふわっと 出る（レベルアップ・ボスに しょうり）
+function tqCelebrate(text, kind){
+    try{
+        const d = document.createElement("div"); d.className = "tq-cele " + (kind || "");
+        let st = ""; for(let i = 0; i < 18; i++){ const a = (i / 18) * 6.283 + Math.random() * 0.3, r = 18 + Math.random() * 30; st += '<i style="--dx:' + (Math.cos(a) * r).toFixed(1) + 'vmin;--dy:' + (Math.sin(a) * r * 0.7).toFixed(1) + 'vmin;animation-delay:' + (Math.random() * 0.25).toFixed(2) + 's">' + (i % 3 ? "✦" : "★") + '</i>'; }
+        d.innerHTML = st + '<b>' + text + '</b>'; document.body.appendChild(d);
+        if(typeof flash === "function") flash();
+        setTimeout(() => d.remove(), 1700);
+    }catch(_e){}
+}
 // 出会いの演出：「！」がとびだして、画面がゆれる
 function tqBang(){
     try{

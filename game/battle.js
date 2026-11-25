@@ -21,6 +21,9 @@ const AUTO_DELAY = [700, 380, 130];
 function bAlive(id){ return G.S.m[id].hp > 0; }
 function bSpend(id, n){ if(!G.S.cx.infmp) G.S.m[id].mp = Math.max(0, G.S.m[id].mp - n); }
 function bDmg(atk, def, mult){
+    const o = bDmg0(atk, def, mult); G.lastCrit = !!o.crit; return o;
+}
+function bDmg0(atk, def, mult){
     const m = mult || 1, r1 = G.rnd(), r2 = G.rnd();
     const forceCrit = !!(G.S && G.S.cx && G.S.cx.gcrit && G.b && !G.inFoe);
     if(window.GCore && GCore.ready){
@@ -78,30 +81,49 @@ function paintBattle(g, time){
     const n = b.foes.length, big = n === 1 ? (b.foes[0].boss ? 130 : 104) : n === 2 ? 84 : n === 3 ? 70 : 58;
     b.foes.forEach((f, i) => {
         if(f.cur <= 0) return;
-        const sp = n === 1 ? 0 : Math.min(150, 440 / n), cx = (G.S.party.length > 4 ? 390 : 340) + (i - (n - 1) / 2) * sp, cy = (G.S.party.length > 4 ? 150 : 120) + (n === 1 ? 0 : (i % 2 ? 16 : -4)), bob = Math.sin(time / 420 + i) * 3;
+        const sp = n === 1 ? 0 : Math.min(150, 440 / n), cx = (G.S.party.length > 4 ? 390 : 340) + (i - (n - 1) / 2) * sp, cy = (G.S.party.length > 4 ? 138 : 108) + (n === 1 ? 0 : (i % 2 ? 16 : -4)), bob = Math.sin(time / 420 + i) * 3;
         const hit = G.hit && G.hit.idx === i && time < G.hit.until;
         g.save(); if(hit) g.translate((Math.random() - 0.5) * 8, 0);
         g.globalAlpha = hit ? 0.55 : 1;
         if(f.img){ const im = foeImg(f.img); if(im.complete && im.naturalWidth){ if(tqIsFramed(f.img)){ tqDrawFramed(g, im, cx, cy + bob + 6, n === 1 ? 196 : 120); } else{ const h = 190, w = h * im.naturalWidth / im.naturalHeight; g.drawImage(im, cx - w / 2, cy - h / 2 + bob + 6, w, h); } } }
         else{ g.font = big + "px serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#000"; g.fillText(f.e, cx, cy + bob); }
         g.restore();
-        g.fillStyle = "rgba(0,0,0,.25)"; g.beginPath(); g.ellipse(cx, 232, f.img ? 40 : big / 2.2, 6, 0, 0, 7); g.fill();
-        g.fillStyle = "#1f2937"; g.fillRect(cx - 40, 242, 80, 7); g.fillStyle = f.cur / f.hp > 0.3 ? "#34d399" : "#ef4444"; g.fillRect(cx - 40, 242, 80 * f.cur / f.hp, 7);
-        g.font = "bold 12px sans-serif"; g.textAlign = "center"; g.textBaseline = "alphabetic"; g.lineJoin = "round"; g.lineWidth = 3.5; g.strokeStyle = "rgba(255,255,255,.92)"; g.strokeText(f.label, cx, 262); g.fillStyle = "#111"; g.fillText(f.label, cx, 262);
+        g.fillStyle = "rgba(0,0,0,.25)"; g.beginPath(); g.ellipse(cx, 212, f.img ? 40 : big / 2.2, 6, 0, 0, 7); g.fill();
+        g.fillStyle = "#1f2937"; g.fillRect(cx - 40, 217, 80, 8); g.fillStyle = f.cur / f.hp > 0.3 ? "#34d399" : "#ef4444"; g.fillRect(cx - 40, 217, 80 * f.cur / f.hp, 8); g.strokeStyle = "rgba(255,255,255,.8)"; g.lineWidth = 1; g.strokeRect(cx - 40, 217, 80, 8);   // てきの HP（メッセージの わくに かくれない 高さ）
+        g.font = "bold 12px sans-serif"; g.textAlign = "center"; g.textBaseline = "alphabetic"; g.lineJoin = "round"; g.lineWidth = 3.5; g.strokeStyle = "rgba(255,255,255,.92)"; g.strokeText(f.label, cx, 238); g.fillStyle = "#111"; g.fillText(f.label, cx, 238);
         if(f.stun > 0){ g.font = "18px serif"; g.fillText("💫", cx + 30, cy - 40); }
     });
+    if(G.fx && G.fx.length){
+        const now = Date.now(); G.fx = G.fx.filter((q) => now - q.t0 < 950);
+        G.fx.forEach((q) => {
+            const age = (now - q.t0) / 950, nn = b.foes.length, sp = nn === 1 ? 0 : Math.min(150, 440 / nn);
+            const cx = q.idx < 0 ? 560 : (G.S.party.length > 4 ? 390 : 340) + (q.idx - (nn - 1) / 2) * sp, cy0 = q.idx < 0 ? 170 : 100;
+            const pop = age < 0.18 ? 1 + (0.18 - age) * 5 : 1, y = cy0 - Math.min(1, age * 2.2) * 34 + (age > 0.6 ? (age - 0.6) * 20 : 0);
+            const big = q.kind === "crit" ? 40 : q.kind === "big" ? 32 : 26;
+            g.save(); g.globalAlpha = age > 0.7 ? Math.max(0, 1 - (age - 0.7) / 0.3) : 1; g.textAlign = "center"; g.textBaseline = "middle";
+            g.font = "900 " + Math.round(big * pop) + "px sans-serif"; g.lineJoin = "round"; g.lineWidth = 6; g.strokeStyle = q.kind === "me" ? "#7f1d1d" : "#1f2937";
+            const txt = (q.v > 0 ? q.v : (q.kind === "me" ? "0" : "0")) + (q.kind === "crit" ? "!!" : "");
+            g.strokeText(txt, cx, y); g.fillStyle = q.kind === "me" ? "#ff8a8a" : q.kind === "crit" ? "#ffd84d" : "#fff"; g.fillText(txt, cx, y);
+            if(q.kind === "crit" && age < 0.5){ g.font = "900 15px sans-serif"; g.lineWidth = 4; g.strokeStyle = "#7c2d12"; g.strokeText("かいしん！", cx, y - 28); g.fillStyle = "#ffedd5"; g.fillText("かいしん！", cx, y - 28); }
+            g.restore();
+        });
+    }
     g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(250, 342, 140, 9); g.fillStyle = G.S.gauge >= 100 ? "#fbbf24" : "#60a5fa"; g.fillRect(250, 342, 140 * G.S.gauge / 100, 9);
     g.font = "bold 10px sans-serif"; g.fillStyle = "#fff"; g.textAlign = "left"; g.textBaseline = "alphabetic"; g.fillText("ARE ゲージ" + (G.S.gauge >= 100 ? "  MAX！" : ""), 250, 338);
 }
 function bLog(t){ G.b.log.push(t); }
+// ダメージの 数字を ポンと うかばせる（idx=-1 は みかたが うけた ダメージ）
+function bFloat(idx, v, kind){ if(!G.fx) G.fx = []; G.fx.push({idx, v, kind: kind || "", t0: Date.now()}); if(G.fx.length > 24) G.fx.shift(); }
 function bHit(i){ G.hit = {idx:i, until:Date.now() + 260}; }
 function bHurt(id, d){
     const m = G.S.m[id]; if(G.S.cx.god) d = 0;
+    bFloat(-1, d, "me"); try{ const app = document.getElementById("app") || document.body; app.classList.remove("tq-hitme"); void app.offsetWidth; app.classList.add("tq-hitme"); setTimeout(() => app.classList.remove("tq-hitme"), 330); }catch(_e){}
     m.hp = Math.max(0, m.hp - d); G.S.gauge = Math.min(100, G.S.gauge + 6);
     if(m.hp === 0) bLog(tqName(id) + "は たおれた…！");
 }
 function bFoeHurt(f, d){
     if(G.S.cx.onehit) d *= 100;
+    const crit = !!G.lastCrit; G.lastCrit = false; bFloat(G.b.foes.indexOf(f), d, crit ? "crit" : (d >= f.hp * 0.25 ? "big" : ""));
     f.cur = Math.max(0, f.cur - d);
     if(f.cur === 0) bLog(f.label + "を たおした！");
     else if(f.boss && !f.sayDone && f.cur <= f.hp / 2 && f.say50){ f.sayDone = true; bLog(rpgFmt(f.say50)); }
@@ -281,7 +303,8 @@ function endBattle(res){
     const lines = log.slice(); lines.push(rpgFmt("たたかいに しょうり！ " + Math.round(exp * (S.expmul || 1)).toLocaleString() + "EXP と " + gold + "G を てにいれた。"));
     if(!b.boss && G.rnd() < 0.18){ S.items.onigiri = Math.min(99, (S.items.onigiri || 0) + 1); lines.push("おにぎりを ひろった！"); }
     else if(!b.boss && G.rnd() < 0.03){ S.items.omamori = Math.min(99, (S.items.omamori || 0) + 1); lines.push("ふっかつのおまもりを ひろった！"); }
-    tqGain(exp).forEach((u) => lines.push(u));
+    const ups = tqGain(exp); ups.forEach((u) => lines.push(u));
+    if(ups.length) tqCelebrate("LEVEL UP！", "lv"); else if(b.boss) tqCelebrate("VICTORY！", "win");
     S.party.forEach((id) => { if(S.m[id].hp <= 0) S.m[id].hp = 1; });
     const after = b.after; G.b = null;
     if(G.grind){ G.grind.n++; S.grinds = (S.grinds || 0) + 1; }
@@ -349,6 +372,16 @@ function startGrindLoop(){
     }, 450);
 }
 
+// おいわいの 演出：バナーと キラキラが ふわっと 出る（レベルアップ・ボスに しょうり）
+function tqCelebrate(text, kind){
+    try{
+        const d = document.createElement("div"); d.className = "tq-cele " + (kind || "");
+        let st = ""; for(let i = 0; i < 18; i++){ const a = (i / 18) * 6.283 + Math.random() * 0.3, r = 18 + Math.random() * 30; st += '<i style="--dx:' + (Math.cos(a) * r).toFixed(1) + 'vmin;--dy:' + (Math.sin(a) * r * 0.7).toFixed(1) + 'vmin;animation-delay:' + (Math.random() * 0.25).toFixed(2) + 's">' + (i % 3 ? "✦" : "★") + '</i>'; }
+        d.innerHTML = st + '<b>' + text + '</b>'; document.body.appendChild(d);
+        if(typeof flash === "function") flash();
+        setTimeout(() => d.remove(), 1700);
+    }catch(_e){}
+}
 // 出会いの演出：「！」がとびだして、画面がゆれる
 function tqBang(){
     try{

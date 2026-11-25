@@ -56,7 +56,7 @@ ACT.autoTalk = () => {
 function winMsg(who, text, opts){
     opts = opts || {}; const por = portraitHtml(who === "me" ? "me" : who);
     const nm = who === "me" ? G.S.name : who;
-    return (por ? '<div id="por">' + por + '</div>' : "") + '<div id="msg" class="win' + (por ? " hasp" : "") + '" data-tap="1">' + (nm ? '<span class="who">' + esc(nm) + '</span>' : "") + '<span id="mt" data-full="' + esc(text) + '"></span>' + (opts.next === false ? "" : '<span class="nx">▼</span>') + '</div>';
+    return (por ? '<div id="por">' + por + '</div>' : "") + '<div id="msg" class="win' + (por ? " hasp" : "") + (G.mode === "battle" ? " bm" : "") + '" data-tap="1">' + (nm ? '<span class="who">' + esc(nm) + '</span>' : "") + '<span id="mt" data-full="' + esc(text) + '"></span>' + (opts.next === false ? "" : '<span class="nx">▼</span>') + '</div>';
 }
 
 // ---------------------------------------------------------------- 描画の入口
@@ -185,7 +185,7 @@ function viewSlots(){
 ACT.slotBack = () => { if(G.slotFrom === "menu"){ G.mode = "menu"; G.menuTab = "main"; } else G.mode = "title"; render(); };
 ACT.slotPickCancel = () => { G.slotPick = null; render(); };
 ACT.slotNew = (v) => {
-    const i = Number(v), r = tqReadSlot(i), go = () => { G.newSlot = i; G.draft = {name:"主人公", sex:"m", month:"", day:"", answers:[], q:0}; G.mode = "profile"; render(); };
+    const i = Number(v), r = tqReadSlot(i), go = () => { G.newSlot = i; const nowD = new Date(); /* たんじょう日は「きょう」を さいしょから 入れておく（えらばなくても すすめる） */ G.draft = {name:"主人公", sex:"m", month:String(nowD.getMonth() + 1), day:String(nowD.getDate()), answers:[], q:0}; G.mode = "profile"; render(); };
     if(r) askYes("冒険の書 " + i + " には データが あります。\n上書きして はじめますか？", go); else go();
 };
 ACT.slotSave = (v) => {
@@ -214,13 +214,13 @@ function viewProfile(){
     for(let i = 1; i <= 12; i++) mo += '<option value="' + i + '"' + (String(d.month) === String(i) ? " selected" : "") + '>' + i + '</option>';
     for(let i = 1; i <= 31; i++) da += '<option value="' + i + '"' + (String(d.day) === String(i) ? " selected" : "") + '>' + i + '</option>';
     const z = tqZodiac(d.month, d.day);
-    return '<div class="win panel sm scroll"><h2>🧑 プロフィール</h2><label for="pName">主人公の なまえ（10文字まで・はじめは「主人公」）</label><input id="pName" type="text" maxlength="10" value="' + esc(d.name) + '" style="width:100%">' +
+    return '<div class="win panel sm scroll"><h2>🧑 プロフィール</h2><div class="row"><button class="btn" data-a="pQuick">⚡ おまかせで すぐに はじめる</button></div><div class="meta">（まよったら これ！ なまえは「主人公」、あとは おまかせで すぐ ぼうけんが はじまります）</div><label for="pName">主人公の なまえ（10文字まで・はじめは「主人公」）</label><input id="pName" type="text" maxlength="10" value="' + esc(d.name) + '" style="width:100%">' +
         '<label for="pYomi">よみがな（ひらがな・かたかな。声で よむとき つかいます）</label><input id="pYomi" type="text" maxlength="20" value="' + esc(d.yomi || "") + '" placeholder="例：たろう（漢字の名前のときは 入れてね）" style="width:100%">' +
         (sug ? '<div class="row" style="margin:.5cqw 0"><button class="btn sub" data-a="pUse">⭐ プロフィールの名前「' + esc(sug) + '」を つかう（おすすめ）</button></div>' : '<div class="meta">（チャットの プロフィールの 名前を おすすめします。ゲームの 中でも かえられます）</div>') +
         '<label>せいべつ（話し方が かわります）</label><div class="row"><button class="btn' + (d.sex === "m" ? "" : " sub") + '" data-a="pSex" data-v="m">🧑 男の子（僕）</button><button class="btn' + (d.sex === "f" ? "" : " sub") + '" data-a="pSex" data-v="f">👩 女の子（私）</button></div>' +
         '<label for="pPron">自分の よびかた（一人称）</label><select id="pPron"><option value="">おまかせ（男の子＝僕／女の子＝私）</option>' + TQ_PRONS.map((p) => '<option value="' + p[0] + '"' + (d.pron === p[0] ? " selected" : "") + '>' + esc(p[0] === "name" ? "自分の名前（" + (d.name || "主人公") + "）" : p[1]) + '</option>').join("") + '</select>' +
         '<label>たんじょう日（星座が わかるよ）</label><div class="row">' + stp("mon", -1) + '<select id="pMon">' + mo + '</select> 月 ' + stp("mon", 1) + stp("day", -1) + '<select id="pDay">' + da + '</select> 日 ' + stp("day", 1) + '</div><div class="meta">コントローラーの人は ◀ ▶ で えらべます。</div>' +
-        '<div class="zodiac" id="zod">' + zodHtml(z) + '</div><div class="err" id="perr"></div><div class="row"><button class="btn sub" data-a="pBack">もどる</button><button class="btn" data-a="pNext">つぎへ ▶</button></div></div>';
+        '<div class="zodiac" id="zod">' + zodHtml(z) + '</div><div class="pfoot"><div class="err" id="perr"></div><div class="row"><button class="btn sub" data-a="pBack">もどる</button><button class="btn" data-a="pNext">つぎへ ▶</button></div></div></div>';
 }
 function zodHtml(z){ return z ? z.mark + " " + esc(z.name) + '<div class="meta">' + esc(z.text) + '</div>' : '<span class="meta">月と日を えらぶと、星座が ひょうじされます。</span>'; }
 function keepDraft(){ const d = G.draft; if(!d) return; if($("pName")) d.name = $("pName").value; if($("pYomi")) d.yomi = $("pYomi").value; if($("pMon")) d.month = $("pMon").value; if($("pDay")) d.day = $("pDay").value; if($("pPron")) d.pron = $("pPron").value; }
@@ -236,6 +236,16 @@ ACT.pStep = (v) => {
 ACT.pUse = () => { const sug = tqSuggestName().trim().slice(0, 10); if(sug){ keepDraft(); G.draft.name = sug; render(); toast("プロフィールの 名前を 使います。"); } };
 ACT.pSex = (v) => { keepDraft(); G.draft.sex = v; render(); };
 ACT.pBack = () => { keepDraft(); G.mode = "title"; render(); };
+// ⚡ おまかせ：なまえ「主人公」・たんじょう日は きょう・性格は 質問なしで きめて、そのまま ぼうけんへ
+ACT.pQuick = () => {
+    keepDraft(); const d = G.draft, nowD = new Date();
+    d.name = (d.name || "").trim() || "主人公"; if(Array.from(d.name).length > 10) d.name = Array.from(d.name).slice(0, 10).join("");
+    if(!tqZodiac(d.month, d.day)){ d.month = String(nowD.getMonth() + 1); d.day = String(nowD.getDate()); }
+    d.zodiac = tqZodiac(d.month, d.day);
+    const ym = tqNormYomi(d.yomi, d.name); d.yomi = ym === null ? "" : ym;
+    d.answers = [true, false, true]; d.q = 2; d.pers = tqPersonality(d.answers);
+    ACT.rStart();
+};
 ACT.pNext = () => {
     keepDraft(); const d = G.draft, e = $("perr"), nm = d.name.trim();
     if(!nm){ e.textContent = "主人公の なまえを いれてください。"; return; }
@@ -269,10 +279,12 @@ ACT.rStart = () => {
 };
 // ---------------------------------------------------------------- あそびかた・せってい
 function helpText(){
-    return "【ものがたり】\n未来の ARE かいはつラボから、過去の世界へ タイムスリップ！ ノイズ（かわいい モンスター）に 持ち去られた『大事なメモリ』6つを 取りもどして、ARE を 完成させよう。\n（ARE QUEST 2 → 3 の つづきの、さいごの 物語です）\n\n" +
-        "【そうさ】\n🎮 コントローラー（Switchプロコン等）：十字キー／左スティック＝いどう、A＝けってい、B＝もどる、X・＋＝メニュー\n・おわる：右下の「✖ おわる」かタイトルの「ゲームをおわる」（自動で記録されます）\nいどう：矢印キー／WASD／画面の ボタン（長おしで 連続）\nはなす・しらべる・けってい：Enter／Z／スペース／Aボタン\nメニュー：X／M／メニューボタン　もどる：X／Esc\n\n" +
-        "【たたかい】\nコマンドを えらんで たたかう。なかまは 自動で こうどう。『オート』を ONに すると 自動で 戦うよ。『ARE！ゲージ』が MAX で ひっさつ技！\n\n" +
-        "【ならではの きのう】\n・パーティは 最大4人\n・自動レベル上げ（メニュー→じどう）\n・冒険の書は 3つ（いつでも セーブ）\n・声は ブラウザの 読み上げ／BGMは game/bgm の mp3 を ループ再生\n・🔑チート：ひみつの コードを さがそう！ ヒント：意外と たんじゅん。";
+    return "【このゲームは どんな ゲーム？】\n未来の ラボから 過去の 世界へ タイムスリップして、ノイズ（かわいい モンスター）に うばわれた『大事なメモリ』6つを 取りもどす 冒険（ぼうけん）RPG です。ARE QUEST 2 → 3 の つづきの、さいごの 物語です。\n\n" +
+        "【はじめの 3ステップ】\n① ラボで アキトと ハルキに 話しかける（Enter／Aボタン）\n② 部屋の まんなかの 青い『ゲート』に のって、行き先を えらぶ\n③ 街の 人に 話を きいて、ノイズを たおして メモリを ゲット！\n※いま 何をするか わからなく なったら、画面の 左上の「🎯」を 見てね。メニューの「メモリ・もくてき」にも のっているよ。\n\n" +
+        "【うごかしかた】\n・いどう：矢印キー／WASD／画面の ボタン／十字キー／左スティック\n・はなす・しらべる・けってい：Enter／Z／スペース／Aボタン\n・メニュー：X／M／メニューボタン　・もどる：X／Esc／Bボタン\n・「✖ おわる」：右上。やめても 自動で 記録されるよ\n\n" +
+        "【たたかい（むずかしくないよ）】\n・「たたかう」を 押して、てきを えらぶだけ！ なかまは 自動で たすけてくれる\n・HPが へったら「どうぐ」で かいふく。ダメなら「にげる」もOK\n・めんどうな ときは「オート戦闘」！ 自動で 戦ってくれる\n・ダメージで『ARE ゲージ』が たまる。MAXで「ARE！」を 押すと ひっさつ技\n・負けても ゲームオーバーじゃ ないよ（ゴールドが 半分に なって、ラボで めがさめるだけ）\n\n" +
+        "【レベルを あげるには】\nノイズを たおすと 強く なる。つよくなるほど 先へ すすめるよ。メニューの「じどう」で 自動レベル上げも できる。\n\n" +
+        "【ほかにも】\n・冒険の書は 3つ（いつでも セーブ）\n・パーティは 最大4人\n・声は ブラウザの 読み上げ／BGMは game/bgm の mp3 を ループ再生\n・🔑 ひみつの コードを さがすと…？ ヒント：意外と たんじゅん。";
 }
 function viewHelp(){ return '<div class="win panel scroll"><h2>📘 あそびかた</h2><div style="white-space:pre-wrap;font-size:1.95cqw">' + esc(helpText()) + '</div><div class="row" style="margin-top:1cqw"><button class="btn" data-a="hBack">もどる</button></div></div>'; }
 ACT.hBack = () => { if(G.helpFrom === "menu"){ G.mode = "menu"; G.menuTab = "main"; } else G.mode = "title"; render(); };
