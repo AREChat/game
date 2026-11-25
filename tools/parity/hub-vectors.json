@@ -1,0 +1,1851 @@
+{
+ "_doc": "Golden vectors shared by C# (native + WebAssembly), Java/TeaVM and the browser test. 'expect' is a subset match: every key written here must equal the result; arrays must have the same length and each element is subset-matched.",
+ "genreReport": [
+  {
+   "name": "empty log → start with the first game, nothing unlocked",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {},
+    "d": {}
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "totalPlays": 0,
+    "gamesTried": 0,
+    "gamesTotal": 5,
+    "percent": 0,
+    "favoriteGame": "",
+    "favoriteGenre": "",
+    "streak": {
+     "current": 0,
+     "best": 0,
+     "days": 0
+    },
+    "next": {
+     "id": "a1",
+     "reason": "start"
+    },
+    "genres": [
+     {
+      "id": "rpg",
+      "plays": 0,
+      "tried": 0,
+      "total": 2,
+      "percent": 0,
+      "tier": "none"
+     },
+     {
+      "id": "puzzle",
+      "plays": 0,
+      "tried": 0,
+      "total": 2,
+      "percent": 0,
+      "tier": "none"
+     },
+     {
+      "id": "card",
+      "plays": 0,
+      "tried": 0,
+      "total": 1,
+      "percent": 0,
+      "tier": "none"
+     },
+     {
+      "id": "sim",
+      "plays": 0,
+      "tried": 0,
+      "total": 0,
+      "percent": 0,
+      "tier": "none"
+     }
+    ],
+    "badges": [
+     {
+      "id": "first",
+      "unlocked": false
+     },
+     {
+      "id": "tried3",
+      "unlocked": false
+     },
+     {
+      "id": "triedAll",
+      "unlocked": false
+     },
+     {
+      "id": "genres3",
+      "unlocked": false
+     },
+     {
+      "id": "genresAll",
+      "unlocked": false
+     },
+     {
+      "id": "fan10",
+      "unlocked": false
+     },
+     {
+      "id": "master",
+      "unlocked": false
+     },
+     {
+      "id": "streak3",
+      "unlocked": false
+     },
+     {
+      "id": "streak7",
+      "unlocked": false
+     },
+     {
+      "id": "days7",
+      "unlocked": false
+     }
+    ]
+   }
+  },
+  {
+   "name": "mixed play, 3-day streak, favourite genre has an unplayed game",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 3,
+      "last": 300
+     },
+     "a2": {
+      "n": 1,
+      "last": 100
+     },
+     "p1": {
+      "n": 12,
+      "last": 900
+     }
+    },
+    "d": {
+     "2026-11-23": 1,
+     "2026-11-24": 2,
+     "2026-11-25": 1
+    }
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "totalPlays": 16,
+    "gamesTried": 3,
+    "gamesTotal": 5,
+    "percent": 60,
+    "favoriteGame": "p1",
+    "favoriteGenre": "puzzle",
+    "streak": {
+     "current": 3,
+     "best": 3,
+     "days": 3
+    },
+    "next": {
+     "id": "p2",
+     "reason": "sameGenre"
+    },
+    "genres": [
+     {
+      "id": "rpg",
+      "plays": 4,
+      "tried": 2,
+      "total": 2,
+      "percent": 100,
+      "tier": "gold"
+     },
+     {
+      "id": "puzzle",
+      "plays": 12,
+      "tried": 1,
+      "total": 2,
+      "percent": 50,
+      "tier": "silver"
+     },
+     {
+      "id": "card",
+      "plays": 0,
+      "tried": 0,
+      "total": 1,
+      "percent": 0,
+      "tier": "none"
+     },
+     {
+      "id": "sim",
+      "plays": 0,
+      "tried": 0,
+      "total": 0,
+      "percent": 0,
+      "tier": "none"
+     }
+    ],
+    "badges": [
+     {
+      "id": "first",
+      "unlocked": true
+     },
+     {
+      "id": "tried3",
+      "unlocked": true
+     },
+     {
+      "id": "triedAll",
+      "unlocked": false
+     },
+     {
+      "id": "genres3",
+      "unlocked": false
+     },
+     {
+      "id": "genresAll",
+      "unlocked": false
+     },
+     {
+      "id": "fan10",
+      "unlocked": true
+     },
+     {
+      "id": "master",
+      "unlocked": true
+     },
+     {
+      "id": "streak3",
+      "unlocked": true
+     },
+     {
+      "id": "streak7",
+      "unlocked": false
+     },
+     {
+      "id": "days7",
+      "unlocked": false
+     }
+    ]
+   }
+  },
+  {
+   "name": "streak is still alive on the morning after (today empty, yesterday played)",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 3
+     }
+    },
+    "d": {
+     "2026-11-22": 1,
+     "2026-11-23": 1,
+     "2026-11-24": 1
+    }
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "streak": {
+     "current": 3,
+     "best": 3,
+     "days": 3
+    }
+   }
+  },
+  {
+   "name": "a gap breaks the streak",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 3
+     }
+    },
+    "d": {
+     "2026-11-20": 1,
+     "2026-11-21": 1,
+     "2026-11-24": 1,
+     "2026-11-25": 1
+    }
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "streak": {
+     "current": 2,
+     "best": 2,
+     "days": 4
+    }
+   }
+  },
+  {
+   "name": "two idle days → current 0, best kept",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 5
+     }
+    },
+    "d": {
+     "2026-11-23": 5
+    }
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "streak": {
+     "current": 0,
+     "best": 1,
+     "days": 1
+    }
+   }
+  },
+  {
+   "name": "days in the future (wrong device clock) are ignored",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 4
+     }
+    },
+    "d": {
+     "2026-11-26": 3,
+     "2026-11-27": 1,
+     "2026-11-25": 1
+    }
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "streak": {
+     "current": 1,
+     "best": 1,
+     "days": 1
+    }
+   }
+  },
+  {
+   "name": "year boundary",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 3
+     }
+    },
+    "d": {
+     "2026-12-31": 1,
+     "2027-01-01": 1,
+     "2027-01-02": 1
+    }
+   },
+   "today": "2027-01-02",
+   "expect": {
+    "streak": {
+     "current": 3,
+     "best": 3,
+     "days": 3
+    }
+   }
+  },
+  {
+   "name": "leap day",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 3
+     }
+    },
+    "d": {
+     "2028-02-28": 1,
+     "2028-02-29": 1,
+     "2028-03-01": 1
+    }
+   },
+   "today": "2028-03-01",
+   "expect": {
+    "streak": {
+     "current": 3,
+     "best": 3,
+     "days": 3
+    }
+   }
+  },
+  {
+   "name": "not a leap year: Feb 29 does not exist, so it is ignored and Feb 28 → Mar 1 is a streak",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 3
+     }
+    },
+    "d": {
+     "2027-02-28": 1,
+     "2027-02-29": 1,
+     "2027-03-01": 1
+    }
+   },
+   "today": "2027-03-01",
+   "expect": {
+    "streak": {
+     "current": 2,
+     "best": 2,
+     "days": 2
+    }
+   }
+  },
+  {
+   "name": "malformed day keys and zero counts are ignored",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 2
+     }
+    },
+    "d": {
+     "2026-13-40": 1,
+     "abc": 2,
+     "2026-11-25": 1,
+     "2026-11-24": 0,
+     "2026-11-23": -4,
+     "26-11-22": 1,
+     "2026-1-5": 1
+    }
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "streak": {
+     "current": 1,
+     "best": 1,
+     "days": 1
+    }
+   }
+  },
+  {
+   "name": "7 different days unlocks days7, 7-day streak unlocks streak3 and streak7",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 7
+     }
+    },
+    "d": {
+     "2026-11-19": 1,
+     "2026-11-20": 1,
+     "2026-11-21": 1,
+     "2026-11-22": 1,
+     "2026-11-23": 1,
+     "2026-11-24": 1,
+     "2026-11-25": 1
+    }
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "streak": {
+     "current": 7,
+     "best": 7,
+     "days": 7
+    },
+    "badges": [
+     {
+      "id": "first"
+     },
+     {
+      "id": "tried3"
+     },
+     {
+      "id": "triedAll"
+     },
+     {
+      "id": "genres3"
+     },
+     {
+      "id": "genresAll"
+     },
+     {
+      "id": "fan10"
+     },
+     {
+      "id": "master"
+     },
+     {
+      "id": "streak3",
+      "unlocked": true
+     },
+     {
+      "id": "streak7",
+      "unlocked": true
+     },
+     {
+      "id": "days7",
+      "unlocked": true
+     }
+    ]
+   }
+  },
+  {
+   "name": "everything tried → least-played game, oldest first on a tie (rpg and card tie on plays → rpg)",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 5,
+      "last": 10
+     },
+     "a2": {
+      "n": 2,
+      "last": 200
+     },
+     "p1": {
+      "n": 2,
+      "last": 100
+     },
+     "p2": {
+      "n": 2,
+      "last": 50
+     },
+     "c1": {
+      "n": 7,
+      "last": 5
+     }
+    },
+    "d": {}
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "totalPlays": 18,
+    "gamesTried": 5,
+    "gamesTotal": 5,
+    "percent": 100,
+    "favoriteGame": "c1",
+    "favoriteGenre": "rpg",
+    "next": {
+     "id": "p2",
+     "reason": "leastPlayed"
+    },
+    "genres": [
+     {
+      "id": "rpg",
+      "plays": 7,
+      "tried": 2,
+      "total": 2,
+      "percent": 100,
+      "tier": "gold"
+     },
+     {
+      "id": "puzzle",
+      "plays": 4,
+      "tried": 2,
+      "total": 2,
+      "percent": 100,
+      "tier": "gold"
+     },
+     {
+      "id": "card",
+      "plays": 7,
+      "tried": 1,
+      "total": 1,
+      "percent": 100,
+      "tier": "gold"
+     },
+     {
+      "id": "sim",
+      "plays": 0,
+      "tried": 0,
+      "total": 0,
+      "percent": 0,
+      "tier": "none"
+     }
+    ],
+    "badges": [
+     {
+      "id": "first",
+      "unlocked": true
+     },
+     {
+      "id": "tried3",
+      "unlocked": true
+     },
+     {
+      "id": "triedAll",
+      "unlocked": true
+     },
+     {
+      "id": "genres3",
+      "unlocked": true
+     },
+     {
+      "id": "genresAll",
+      "unlocked": true
+     },
+     {
+      "id": "fan10",
+      "unlocked": false
+     },
+     {
+      "id": "master",
+      "unlocked": true
+     },
+     {
+      "id": "streak3",
+      "unlocked": false
+     },
+     {
+      "id": "streak7",
+      "unlocked": false
+     },
+     {
+      "id": "days7",
+      "unlocked": false
+     }
+    ]
+   }
+  },
+  {
+   "name": "tie on plays between genres → the earlier genre wins; tie between games → the earlier game",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 3
+     },
+     "p1": {
+      "n": 3
+     }
+    },
+    "d": {}
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "favoriteGame": "a1",
+    "favoriteGenre": "rpg",
+    "next": {
+     "id": "a2",
+     "reason": "sameGenre"
+    }
+   }
+  },
+  {
+   "name": "favourite genre fully played → first genre never tried",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 4
+     },
+     "a2": {
+      "n": 2
+     }
+    },
+    "d": {}
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "favoriteGenre": "rpg",
+    "next": {
+     "id": "p1",
+     "reason": "newGenre"
+    }
+   }
+  },
+  {
+   "name": "every genre tried, favourite genre still has an unplayed game → stay in the genre",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 4
+     },
+     "p1": {
+      "n": 2
+     },
+     "c1": {
+      "n": 1
+     }
+    },
+    "d": {}
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "favoriteGenre": "rpg",
+    "next": {
+     "id": "a2",
+     "reason": "sameGenre"
+    }
+   }
+  },
+  {
+   "name": "favourite genre done, other genres tried, one game left → unplayed",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 4
+     },
+     "a2": {
+      "n": 4
+     },
+     "p1": {
+      "n": 2
+     },
+     "c1": {
+      "n": 1
+     }
+    },
+    "d": {}
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "favoriteGenre": "rpg",
+    "next": {
+     "id": "p2",
+     "reason": "unplayed"
+    }
+   }
+  },
+  {
+   "name": "a 20+ game that was played counts, and is never recommended",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a3": {
+      "n": 4,
+      "last": 1
+     }
+    },
+    "d": {}
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "totalPlays": 4,
+    "gamesTried": 1,
+    "gamesTotal": 6,
+    "percent": 17,
+    "favoriteGame": "a3",
+    "favoriteGenre": "rpg",
+    "next": {
+     "id": "a1",
+     "reason": "sameGenre"
+    },
+    "genres": [
+     {
+      "id": "rpg",
+      "plays": 4,
+      "tried": 1,
+      "total": 3,
+      "percent": 33,
+      "tier": "bronze"
+     },
+     {
+      "id": "puzzle",
+      "plays": 0,
+      "tried": 0,
+      "total": 2,
+      "percent": 0,
+      "tier": "none"
+     },
+     {
+      "id": "card",
+      "plays": 0,
+      "tried": 0,
+      "total": 1,
+      "percent": 0,
+      "tier": "none"
+     },
+     {
+      "id": "sim",
+      "plays": 0,
+      "tried": 0,
+      "total": 0,
+      "percent": 0,
+      "tier": "none"
+     }
+    ]
+   }
+  },
+  {
+   "name": "unknown ids are ignored",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "zzz": {
+      "n": 5
+     },
+     "__proto__": {
+      "n": 3
+     },
+     "constructor": {
+      "n": 3
+     }
+    },
+    "d": {}
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "totalPlays": 0,
+    "gamesTried": 0,
+    "next": {
+     "id": "a1",
+     "reason": "start"
+    }
+   }
+  },
+  {
+   "name": "bad counts: negative, text, NaN-like, null, array, huge → only the cap survives",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": -3
+     },
+     "a2": {
+      "n": "x"
+     },
+     "p1": {
+      "n": 1000000000
+     },
+     "p2": {
+      "n": null
+     },
+     "c1": [
+      1,
+      2
+     ]
+    },
+    "d": {}
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "totalPlays": 99999,
+    "gamesTried": 1,
+    "favoriteGame": "p1"
+   }
+  },
+  {
+   "name": "fractions are floored; below 1 is nothing",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 2.9
+     },
+     "a2": {
+      "n": 0.9
+     }
+    },
+    "d": {}
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "totalPlays": 2,
+    "gamesTried": 1
+   }
+  },
+  {
+   "name": "bad 'today' falls back to the newest day in the log",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": {
+    "g": {
+     "a1": {
+      "n": 2
+     }
+    },
+    "d": {
+     "2026-11-24": 1,
+     "2026-11-25": 1
+    }
+   },
+   "today": "not-a-date",
+   "expect": {
+    "streak": {
+     "current": 2,
+     "best": 2,
+     "days": 2
+    }
+   }
+  },
+  {
+   "name": "log that is not an object is treated as empty",
+   "games": {
+    "genres": [
+     "rpg",
+     "puzzle",
+     "card",
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "a1",
+      "genre": "rpg"
+     },
+     {
+      "id": "a2",
+      "genre": "rpg"
+     },
+     {
+      "id": "a3",
+      "genre": "rpg",
+      "adult": true
+     },
+     {
+      "id": "p1",
+      "genre": "puzzle"
+     },
+     {
+      "id": "p2",
+      "genre": "puzzle"
+     },
+     {
+      "id": "c1",
+      "genre": "card"
+     }
+    ]
+   },
+   "log": [
+    1,
+    2,
+    3
+   ],
+   "today": "2026-11-25",
+   "expect": {
+    "totalPlays": 0,
+    "next": {
+     "id": "a1",
+     "reason": "start"
+    }
+   }
+  },
+  {
+   "name": "no games at all",
+   "games": {
+    "genres": [],
+    "games": []
+   },
+   "log": {
+    "g": {},
+    "d": {}
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "totalPlays": 0,
+    "gamesTotal": 0,
+    "percent": 0,
+    "next": {
+     "id": "",
+     "reason": "none"
+    },
+    "genres": [],
+    "badges": [
+     {
+      "id": "first",
+      "unlocked": false
+     },
+     {
+      "id": "tried3",
+      "unlocked": false
+     },
+     {
+      "id": "triedAll",
+      "unlocked": false
+     },
+     {
+      "id": "genres3",
+      "unlocked": false
+     },
+     {
+      "id": "genresAll",
+      "unlocked": false
+     },
+     {
+      "id": "fan10",
+      "unlocked": false
+     },
+     {
+      "id": "master",
+      "unlocked": false
+     },
+     {
+      "id": "streak3",
+      "unlocked": false
+     },
+     {
+      "id": "streak7",
+      "unlocked": false
+     },
+     {
+      "id": "days7",
+      "unlocked": false
+     }
+    ]
+   }
+  },
+  {
+   "name": "bare array of games is accepted; duplicate ids keep the first",
+   "games": [
+    {
+     "id": "x",
+     "genre": "one"
+    },
+    {
+     "id": "x",
+     "genre": "two"
+    },
+    {
+     "id": "y",
+     "genre": "two"
+    },
+    {
+     "id": "",
+     "genre": "two"
+    },
+    {
+     "genre": "two"
+    },
+    5,
+    null
+   ],
+   "log": {
+    "g": {
+     "x": {
+      "n": 2
+     },
+     "y": {
+      "n": 1
+     }
+    },
+    "d": {}
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "gamesTotal": 2,
+    "gamesTried": 2,
+    "percent": 100,
+    "genres": [
+     {
+      "id": "one",
+      "plays": 2,
+      "tried": 1,
+      "total": 1,
+      "percent": 100,
+      "tier": "gold"
+     },
+     {
+      "id": "two",
+      "plays": 1,
+      "tried": 1,
+      "total": 1,
+      "percent": 100,
+      "tier": "gold"
+     }
+    ]
+   }
+  },
+  {
+   "name": "only 20+ games exist → nothing to recommend",
+   "games": {
+    "genres": [
+     "sim"
+    ],
+    "games": [
+     {
+      "id": "s1",
+      "genre": "sim",
+      "adult": true
+     },
+     {
+      "id": "s2",
+      "genre": "sim",
+      "adult": true
+     }
+    ]
+   },
+   "log": {
+    "g": {},
+    "d": {}
+   },
+   "today": "2026-11-25",
+   "expect": {
+    "gamesTotal": 0,
+    "gamesTried": 0,
+    "next": {
+     "id": "",
+     "reason": "none"
+    }
+   }
+  }
+ ],
+ "habits": [
+  {
+   "name": "nothing played",
+   "hours": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+   "weekdays": "0,0,0,0,0,0,0",
+   "expect": {
+    "total": 0,
+    "peakHour": -1,
+    "band": "none",
+    "bands": {
+     "morning": 0,
+     "day": 0,
+     "evening": 0,
+     "night": 0
+    },
+    "weekendShare": 0,
+    "peakWeekday": -1
+   }
+  },
+  {
+   "name": "evening player, weekends",
+   "hours": "0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,2,6,1,0",
+   "weekdays": "3,1,0,0,1,1,4",
+   "expect": {
+    "total": 10,
+    "peakHour": 21,
+    "band": "evening",
+    "bands": {
+     "morning": 1,
+     "day": 0,
+     "evening": 8,
+     "night": 1
+    },
+    "weekendShare": 70,
+    "peakWeekday": 6
+   }
+  },
+  {
+   "name": "band edges (4h night, 5h morning, 11h day, 17h evening, 22h night)",
+   "hours": "0,0,0,0,1,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1,0",
+   "weekdays": "1,0,0,0,0,0,0",
+   "expect": {
+    "total": 5,
+    "peakHour": 4,
+    "bands": {
+     "morning": 1,
+     "day": 1,
+     "evening": 1,
+     "night": 2
+    }
+   }
+  },
+  {
+   "name": "short / dirty input",
+   "hours": "1,2,x,-4",
+   "weekdays": ",,5",
+   "expect": {
+    "total": 3,
+    "peakHour": 1,
+    "peakWeekday": 2
+   }
+  }
+ ]
+}

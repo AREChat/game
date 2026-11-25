@@ -28,11 +28,22 @@
       <artifactId>teavm-classlib</artifactId>
       <version>${teavm.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.10.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
     <finalName>stats-analyzer</finalName>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+      </plugin>
       <plugin>
         <groupId>org.teavm</groupId>
         <artifactId>teavm-maven-plugin</artifactId>
@@ -47,6 +58,7 @@
             <configuration>
               <mainClass>statsanalyzer.StatsAnalyzer</mainClass>
               <targetDirectory>${project.basedir}/target/generated/js</targetDirectory>
+              <targetFileName>stats-analyzer.js</targetFileName>
               <minifying>true</minifying>
               <sourceMapsGenerated>false</sourceMapsGenerated>
             </configuration>

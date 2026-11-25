@@ -30,6 +30,11 @@ from PIL import Image, ImageDraw
 EXIT_OK, EXIT_USAGE, EXIT_NOSPRITE = 0, 1, 2
 
 
+def _rgba(path):
+    with Image.open(path) as im:
+        return im.convert("RGBA")
+
+
 class SliceError(Exception):
     pass
 
@@ -269,23 +274,24 @@ def selftest() -> int:
         m = slice_sheet(sheet, os.path.join(tmp, "g"), grid=(4, 2), names=names, fmt="png")
         check(m["count"] == 8 and m["skippedEmpty"] == 0, f"格子の数 {m['count']}")
         for it in m["sprites"]:
-            im = Image.open(os.path.join(tmp, "g", it["file"])).convert("RGBA")
+            im = _rgba(os.path.join(tmp, "g", it["file"]))
             a = np.asarray(im)
             # 不透明な ところに 緑かぶりが 残っていない
             op = a[..., 3] > 200
             green_spill = (a[..., 1].astype(int) - np.maximum(a[..., 0], a[..., 2]).astype(int))[op]
             check(green_spill.size == 0 or green_spill.max() <= 12, f"{it['name']}: 緑かぶり {green_spill.max() if green_spill.size else 0}")
             check(op.sum() > 50, f"{it['name']}: 絵が 消えた")
-        c = np.asarray(Image.open(os.path.join(tmp, "g", "circle.png")).convert("RGBA"))
+        c = np.asarray(_rgba(os.path.join(tmp, "g", "circle.png")))
         check(c[0, 0, 3] < 30, "円の 角が 透明でない")
         check(c[c.shape[0] // 2, c.shape[1] // 2, 3] > 240, "円の 中心が 不透明でない")
-        r = np.asarray(Image.open(os.path.join(tmp, "g", "ring.png")).convert("RGBA"))
+        r = np.asarray(_rgba(os.path.join(tmp, "g", "ring.png")))
         check(r[r.shape[0] // 2, r.shape[1] // 2, 3] < 30, "輪の あなが 透明でない（あなまで 塗りつぶされた）")
-        b = np.asarray(Image.open(os.path.join(tmp, "g", "black.png")).convert("RGBA"))
+        b = np.asarray(_rgba(os.path.join(tmp, "g", "black.png")))
         check(b[b.shape[0] // 2, b.shape[1] // 2, 3] > 240 and b[b.shape[0] // 2, b.shape[1] // 2, :3].max() < 80, "黒が 残らない")
-        w = np.asarray(Image.open(os.path.join(tmp, "g", "white.png")).convert("RGBA"))
+        w = np.asarray(_rgba(os.path.join(tmp, "g", "white.png")))
         check(w[w.shape[0] // 2, w.shape[1] // 2, 3] > 240 and w[w.shape[0] // 2, w.shape[1] // 2, :3].min() > 200, "白が 残らない")
-        mf = json.load(open(os.path.join(tmp, "g", "manifest.json"), encoding="utf-8"))
+        with open(os.path.join(tmp, "g", "manifest.json"), encoding="utf-8") as fh:
+            mf = json.load(fh)
         check(mf["count"] == 8 and [s["name"] for s in mf["sprites"]] == names, "manifest の 順番")
         # 2) 自動
         # 「dots」は 2つの四角が はなれているので、自動では 2つに 分かれる（9個）。AIの絵の 浮いた かざりも 同じ。→ 格子が おすすめ
@@ -300,8 +306,8 @@ def selftest() -> int:
                 check(abs(gg["x"] - aa["x"]) <= 3 and abs(gg["y"] - aa["y"]) <= 3 and abs(gg["w"] - aa["w"]) <= 6 and abs(gg["h"] - aa["h"]) <= 6, f"{n}: 自動と格子の 位置が ずれ {gg} {aa}")
         # 3) 正方形に ならべる
         mfit = slice_sheet(sheet, os.path.join(tmp, "f"), grid=(4, 2), names=names, fit=128, fmt="png")
-        im = Image.open(os.path.join(tmp, "f", "tri.png"))
-        check(im.size == (128, 128) and im.mode == "RGBA", "fit の 大きさ")
+        with Image.open(os.path.join(tmp, "f", "tri.png")) as im:
+            check(im.size == (128, 128) and im.mode == "RGBA", "fit の 大きさ")
         # 4) 色抜きなし（もとから透明）
         tr = Image.new("RGBA", (200, 100), (0, 0, 0, 0))
         ImageDraw.Draw(tr).ellipse((20, 20, 80, 80), fill=(255, 0, 0, 255))
@@ -313,7 +319,8 @@ def selftest() -> int:
         # 5) 失敗のしかた
         check(raises(lambda: slice_sheet(os.path.join(tmp, "none.png"), tmp, grid=(2, 2)), "ファイルが ありません"), "ファイルなし")
         bad = os.path.join(tmp, "bad.png")
-        open(bad, "wb").write(b"not an image at all")
+        with open(bad, "wb") as fh:
+            fh.write(b"not an image at all")
         check(raises(lambda: slice_sheet(bad, tmp, grid=(2, 2)), "画像として 読めません"), "画像でない")
         check(raises(lambda: slice_sheet(sheet, tmp, grid=(4, 2), names=["a"]), "名前の数"), "名前の数ちがい")
         check(raises(lambda: slice_sheet(sheet, tmp, grid=(4, 2), names=["a"] * 8), "同じ名前"), "名前の重なり")
@@ -345,7 +352,12 @@ def selftest() -> int:
         import hashlib
 
         def h(dirp):
-            return hashlib.sha256(b"".join(open(os.path.join(dirp, n), "rb").read() for n in sorted(os.listdir(dirp)) if n != "manifest.json")).hexdigest()
+            blob = b""
+            for n in sorted(os.listdir(dirp)):
+                if n != "manifest.json":
+                    with open(os.path.join(dirp, n), "rb") as fh:
+                        blob += fh.read()
+            return hashlib.sha256(blob).hexdigest()
 
         slice_sheet(sheet, os.path.join(tmp, "g2"), grid=(4, 2), names=names)
         slice_sheet(sheet, os.path.join(tmp, "g3"), grid=(4, 2), names=names, fmt="png")

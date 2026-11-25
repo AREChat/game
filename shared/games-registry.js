@@ -62,6 +62,7 @@
     recClear: {ja: "記録を消す", en: "Clear record", zh: "清除记录", ko: "기록 지우기"},
     recClearAsk: {ja: "あそんだ記録を消します。セーブデータは消えません。よろしいですか？", en: "This clears your play record only. Save data is not deleted. Continue?", zh: "将清除游戏记录。存档数据不会被删除。要继续吗？", ko: "플레이 기록만 지워요. 저장 데이터는 지워지지 않아요. 계속할까요?"},
     notFound: {ja: "そのジャンルは見つかりませんでした。一覧にもどります。", en: "That genre was not found. Returning to the list.", zh: "没有找到该类型，返回列表。", ko: "그 장르를 찾지 못했어요. 목록으로 돌아가요."},
+    myStats: {ja: "📊 あなたの記録", en: "📊 Your record", zh: "📊 你的记录", ko: "📊 나의 기록"},
     navHead: {ja: "🎮 ほかのゲームへ", en: "🎮 Other games", zh: "🎮 去玩别的游戏", ko: "🎮 다른 게임으로"},
     navNote: {ja: "いまのゲームは、できるだけ セーブしてから うつってね。", en: "Please save the current game before you move on.", zh: "切换前请尽量先保存当前游戏。", ko: "옮기기 전에 지금 게임을 저장해 주세요."},
     navClose: {ja: "とじる", en: "Close", zh: "关闭", ko: "닫기"},
@@ -117,7 +118,14 @@
       var e = o.g[id];
       if(byId(id) && e && typeof e === "object" && isFinite(e.n) && e.n > 0) g2[id] = {n: Math.min(Math.floor(e.n), 99999), last: isFinite(e.last) ? e.last : 0};
     });
-    o.g = g2; return o;
+    o.g = g2;
+    o.h = hist(o.h, 24); o.w = hist(o.w, 7); // あそんだ時間帯（0〜23時）・曜日（日=0）。ない／こわれていれば 0 で うめる
+    return o;
+  }
+  function hist(a, n){
+    var r = [];
+    for(var i = 0; i < n; i++){ var v = Array.isArray(a) ? a[i] : 0; r.push(typeof v === "number" && isFinite(v) && v > 0 ? Math.min(Math.floor(v), 99999) : 0); }
+    return r;
   }
   function dayKey(ms){ var d = new Date(ms); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
   function recordPlay(id, now){
@@ -126,6 +134,7 @@
     var o = readLog(), e = o.g[id] || {n: 0, last: 0};
     e.n = Math.min(e.n + 1, 99999); e.last = now; o.g[id] = e;
     var k = dayKey(now); o.d[k] = (o.d[k] || 0) + 1;
+    var dt = new Date(now); o.h[dt.getHours()] = Math.min(o.h[dt.getHours()] + 1, 99999); o.w[dt.getDay()] = Math.min(o.w[dt.getDay()] + 1, 99999);
     var keys = Object.keys(o.d).sort(); while(keys.length > 90) delete o.d[keys.shift()];
     lsSet(LOG_KEY, JSON.stringify(o)); lsSet(LAST_KEY, id);
     return true;

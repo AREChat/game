@@ -21,6 +21,7 @@
     <h1 id="h1">あそびたいゲームを<br>えらぼう</h1>
     <p class="lead" id="lead">ぜんぶブラウザでそのままあそべます（無料）。スマホ・タブレットは<b>横向き</b>がおすすめです。</p>
     <div class="resume" id="resume"></div>
+    <div class="recrow"><button type="button" class="recbtn" id="recBtn" aria-haspopup="dialog">📊 あなたの記録</button></div>
   </header>
 
   <h2 class="sect" id="tilesH">ジャンルから えらぶ</h2>
@@ -43,6 +44,7 @@
 
 <script src="./shared/games-data.js"></script>
 <script src="./shared/games-registry.js"></script>
+<script src="./shared/hub-record.js"></script>
 <script>
 (function(){
   "use strict";
@@ -65,6 +67,7 @@
     $("h1").innerHTML = G.ui("h1"); $("lead").innerHTML = G.ui("lead");
     $("learn").textContent = G.ui("learn"); $("helpLink").textContent = G.ui("help"); $("note").textContent = G.ui("note");
     $("tilesH").textContent = G.ui("genreTiles");
+    $("recBtn").textContent = G.ui("myStats"); $("recBtn").hidden = !window.AREHubRecord;
     $("chips").setAttribute("aria-label", G.ui("chipsLabel"));
     $("empty").textContent = G.ui("empty");
 
@@ -117,6 +120,7 @@
     var a = e.target.closest ? e.target.closest("a[data-id]") : null;
     if(a) G.recordPlay(a.dataset.id);
   });
+  $("recBtn").addEventListener("click", function(){ if(window.AREHubRecord) window.AREHubRecord.open({prefix: "", back: back}); });
   $("chips").addEventListener("click", function(e){
     var b = e.target.closest ? e.target.closest(".chip") : null;
     if(!b) return;

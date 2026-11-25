@@ -18,6 +18,7 @@
     </div>
     <span class="logo">ARE GAMES</span>
     <div class="gp-head" id="gphead"></div>
+    <div class="recrow"><button type="button" class="recbtn" id="recBtn" aria-haspopup="dialog">📊 あなたの記録</button></div>
   </header>
   <main id="main"></main>
   <div class="foot">
@@ -28,6 +29,7 @@
 </div>
 <script src="../shared/games-data.js"></script>
 <script src="../shared/games-registry.js"></script>
+<script src="../shared/hub-record.js"></script>
 <script>
 (function(){
   "use strict";
@@ -48,6 +50,7 @@
     $("hubBottom").textContent = G.ui("navAll"); $("hubBottom").href = "../index.html" + bq();
     $("backBottom").textContent = G.ui("backChat2"); $("backBottom").href = chat;
     $("note").textContent = G.ui("note");
+    $("recBtn").textContent = G.ui("myStats"); $("recBtn").hidden = !window.AREHubRecord;
     if(!gn){
       document.title = "ARE GAMES";
       $("gphead").innerHTML = "";
@@ -80,6 +83,7 @@
   document.addEventListener("click", function(e){
     var a = e.target.closest ? e.target.closest(".card") : null;
     if(a){ G.recordPlay(a.dataset.id); return; }
+    if(e.target.closest && e.target.closest("#recBtn")){ if(window.AREHubRecord) window.AREHubRecord.open({prefix: "../", back: back}); return; }
     var c = e.target.closest ? e.target.closest("#recClear") : null;
     if(c){ var ok = true; try{ ok = window.confirm(G.ui("recClearAsk")); }catch(_e){} if(ok){ G.clearLog(); render(); } return; }
     var b = e.target.closest ? e.target.closest(".lb") : null;
