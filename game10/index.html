@@ -6,12 +6,13 @@
 <title>ループ・ラボ 〜過去の自分と協力パズル〜</title>
 <meta name="theme-color" content="#0b1230">
 <meta name="description" content="過去の自分（ぶんしん）と力を合わせて、トビラを開いて出口へ。タイムループ協力パズル「ループ・ラボ」。全10ステージ。">
-<script src="../protect.js"></script>
+<script src="../protect.js"></script><script src="../shared/are-padmap.js"></script>
 <link rel="stylesheet" href="./style.css">
 <script src="../shared/are-offline.js" defer></script>
 </head>
 <body>
 <button id="exitBtn" type="button" aria-label="もどる">← もどる</button>
+<button id="padBtn" type="button" aria-label="controls" data-gki-settings>🎮</button>
 <main id="app">
   <section id="s-title" class="scr on">
     <div class="logo"><span>LOOP</span><span>LAB</span></div>
@@ -62,7 +63,7 @@
         </div>
       </div>
     </div>
-    <div id="clear" hidden>
+    <div id="clear" hidden data-gki-modal>
       <h2 id="clT"></h2><div id="clStars" class="stars"></div><p id="clB" class="sub"></p>
       <div class="row"><button id="clNext" type="button" class="big">▶ つぎへ</button><button id="clRetry" type="button">もういちど</button><button id="clSel" type="button">ステージえらび</button></div>
     </div>
@@ -92,6 +93,8 @@
         }
     });
 })();</script>
+<script src="../shared/are-pad.js"></script>
+<script src="../shared/gk-input.js"></script>
 <script src="./js/levels.js"></script>
 <script src="./js/sim.js"></script>
 <script src="./js/game.js"></script>

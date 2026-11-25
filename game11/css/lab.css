@@ -19,6 +19,7 @@ h2{margin:0;font-size:22px}
 .panel{width:min(94vw,560px);text-align:left;background:rgba(20,22,70,.78);border:1px solid #5a63d8;border-radius:16px;padding:12px 18px;backdrop-filter:blur(4px)}
 .panel p{margin:8px 0;font-size:14px;line-height:1.75;color:#e8ecff}
 #exitBtn{position:fixed;left:8px;top:calc(8px + env(safe-area-inset-top));z-index:40;padding:6px 12px;font-size:13px;border-radius:999px}
+#padBtn{position:fixed;right:52px;top:calc(8px + env(safe-area-inset-top));z-index:40;padding:6px 10px;font-size:15px;border-radius:999px}
 #sndBtn{position:fixed;right:8px;top:calc(8px + env(safe-area-inset-top));z-index:40;padding:6px 11px;font-size:15px;border-radius:999px}
 .grid{display:grid;gap:10px;width:min(96vw,640px)}
 .cardbtn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 6px;border-radius:16px;background:linear-gradient(#2c2f86,#1d2060);border:1px solid #6b73f0;position:relative}
@@ -35,4 +36,6 @@ h2{margin:0;font-size:22px}
 .modal .box{width:min(92vw,440px);background:linear-gradient(#26297a,#171a52);border:2px solid #8a8fff;border-radius:20px;padding:18px;text-align:center;box-shadow:0 0 40px rgba(120,100,255,.5)}
 .modal h2{font-size:26px;margin-bottom:6px}
 .stars{font-size:38px;letter-spacing:6px;color:#ffd35a;text-shadow:0 0 14px rgba(255,200,60,.8);margin:6px 0}
+button:focus-visible{outline:3px solid #ffd86b;outline-offset:2px}
+@media (pointer:coarse){button{min-height:44px}#exitBtn,#sndBtn,#padBtn{min-height:40px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

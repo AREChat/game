@@ -6,7 +6,7 @@
 <title>ARE 前代未聞ラボ｜打った言葉が「もの」になる</title>
 <meta name="theme-color" content="#0d0a2a">
 <meta name="description" content="打った言葉がそのまま物になる「ことばクラフト」ほか、ARE オリジナルの新しいしくみのゲームを集めた「前代未聞ラボ」。日本語・英語・中国語・韓国語に対応。">
-<script src="../protect.js"></script>
+<script src="../protect.js"></script><script src="../shared/are-padmap.js"></script>
 <link rel="stylesheet" href="./css/lab.css">
 <style>
 #lab{gap:12px}
@@ -27,6 +27,7 @@
 </head>
 <body>
 <button id="exitBtn" type="button" aria-label="back">← もどる</button>
+<button id="padBtn" type="button" aria-label="controls" data-gki-settings>🎮</button>
 <main id="app">
   <section id="lab" class="scr on">
     <div class="logo">ARE<br>前代未聞ラボ</div>
@@ -36,6 +37,8 @@
     <p class="hint" id="note"></p>
   </section>
 </main>
+<script src="../shared/are-pad.js"></script>
+<script src="../shared/gk-input.js"></script>
 <script src="../shared/gk.js"></script>
 <script>
 (function(){
