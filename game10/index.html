@@ -18,6 +18,7 @@
     <div class="logo"><span>LOOP</span><span>LAB</span></div>
     <p class="sub">過去の自分と きょうりょくする タイムループ・パズル</p>
     <div class="row"><button id="bPlay" type="button" class="big">▶ あそぶ</button></div>
+    <div class="row"><button id="bGen" type="button">🎲 きょうのステージ・ランダム</button></div>
     <div class="row"><button id="bHow" type="button">📖 あそびかた</button></div>
     <p class="hint">虫は 一切 出てきません。この端末の中に 進み具合が 記録されます。</p>
   </section>
@@ -39,6 +40,8 @@
     <div id="levels" class="levels"></div>
     <div class="row"><button id="bSelBack" type="button">タイトルへ</button></div>
   </section>
+
+  <section id="s-gen" class="scr" aria-live="polite"></section>
 
   <section id="s-play" class="scr">
     <div id="bar">
@@ -96,6 +99,7 @@
 <script src="../shared/are-pad.js"></script>
 <script src="../shared/gk-input.js"></script>
 <script src="./js/levels.js"></script>
+<script src="./js/g10gen.js"></script>
 <script src="./js/sim.js"></script>
 <script src="./js/game.js"></script>
 <script src="../shared/first-tips.js" defer></script>

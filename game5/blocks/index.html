@@ -57,7 +57,7 @@ main{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:start;
 .btn:disabled{opacity:.45}
 .help{font-size:12px;line-height:1.7;color:var(--ink2)}
 .help kbd{display:inline-block;min-width:22px;text-align:center;padding:0 5px;border:2px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);font:inherit;font-size:11px;box-shadow:0 2px 0 var(--ink)}
-.touch{display:none;grid-template-columns:repeat(6,1fr);gap:6px}
+.touch{display:none;grid-template-columns:repeat(5,1fr);gap:6px}
 .touch button{padding:12px 0;border:3px solid var(--ink);border-radius:14px;background:var(--card);box-shadow:0 4px 0 var(--ink);font-size:18px}
 .touch button:active{transform:translateY(4px);box-shadow:none;background:var(--yellow)}
 @media (pointer:coarse){.touch{display:grid}.help{display:none}}
@@ -168,10 +168,9 @@ body.sab .side.left .help{display:none}
   <div class="touch" id="touch">
     <button data-a="L" type="button">◀</button>
     <button data-a="R" type="button">▶</button>
-    <button data-a="D" type="button">▼</button>
+    <button data-a="hard" type="button" aria-label="いっきに おとす">▼</button>
     <button data-a="rot" type="button">⟳</button>
     <button data-a="hold" type="button">HOLD</button>
-    <button data-a="hard" type="button">⤓</button>
   </div>
 </div>
 
@@ -191,7 +190,7 @@ body.sab .side.left .help{display:none}
       <button class="chip" data-d="2" type="button">むずかしい</button>
     </div>
     <div class="row"><button class="chip" type="button" data-are-padmap>🎮 ボタン設定（プロコン）</button></div>
-    <p style="font-size:12px">⏎ Enter で いっきに した まで おとせる／ HOLD で パーツを とっておける／<br>ちゃくちの しゅんかんでも すこし のあいだ ずらせる（ギリギリ入れ）</p>
+    <p style="font-size:12px">⏎ Enter か ↓ で いっきに した まで おとせる／ HOLD で パーツを とっておける／<br>ちゃくちの しゅんかんでも すこし のあいだ ずらせる（ギリギリ入れ）</p>
   </div>
 </div>
 
@@ -377,7 +376,7 @@ bgmApply();
 
 /* ---------- ゲームの じょうたい ---------- */
 var role="erase", diff=1, state="menu";
-var G=null, A=null, lastT=0, held={L:0,R:0,D:0}, das={L:0,R:0}, arr={L:0,R:0}, pauseAt=0;
+var G=null, A=null, lastT=0, held={L:0,R:0}, das={L:0,R:0}, arr={L:0,R:0}, pauseAt=0;
 var best={erase:0,sab:0};
 try{ best.erase=+localStorage.getItem("are7_best_erase")||0; best.sab=+localStorage.getItem("are7_best_sab")||0; }catch(e){}
 
@@ -390,13 +389,13 @@ function startGame(r){
   try{document.activeElement&&document.activeElement.blur();}catch(e){}
   $("sabBox").style.display=r==="sab"?"":"none"; $("warn").style.display=r==="erase"?"":"none"; $("pocket").style.display=r==="erase"?"":"none";
   $("nextTitle").textContent=r==="erase"?"NEXT":"AIの つぎ";
-  held={L:0,R:0,D:0};das={L:0,R:0};arr={L:0,R:0};
+  held={L:0,R:0};das={L:0,R:0};arr={L:0,R:0};
   if(r==="erase")initErase(); else initSab();
   buildHelp(); state="play"; lastT=performance.now(); bgmStartOnce();
 }
 function buildHelp(){
   $("helpBox").innerHTML=role==="erase"
-   ? '<kbd>←</kbd><kbd>→</kbd> いどう　<kbd>↓</kbd> そっと おろす<br><kbd>↑</kbd><kbd>X</kbd> まわす　<kbd>Z</kbd> ぎゃくまわし<br><kbd>Enter</kbd><kbd>Space</kbd> いっきに おとす<br><kbd>C</kbd><kbd>Shift</kbd> HOLD　<kbd>P</kbd><kbd>Esc</kbd> ポーズ<br>プロコン：十字=いどう A/B=まわす<br>ZR=いっきに L/R=HOLD +=ポーズ'
+   ? '<kbd>←</kbd><kbd>→</kbd> いどう　<kbd>↑</kbd><kbd>X</kbd> まわす　<kbd>Z</kbd> ぎゃくまわし<br><kbd>↓</kbd><kbd>Space</kbd><kbd>Enter</kbd> いっきに おとす<br><kbd>C</kbd><kbd>Shift</kbd> HOLD　<kbd>P</kbd><kbd>Esc</kbd> ポーズ<br>プロコン：十字←→=いどう ↑=まわす ↓=いっきに<br>R/A=まわす L/B=ぎゃくまわし ZL/ZR=いっきに Y=HOLD +=ポーズ'
    : '<kbd>1</kbd>〜<kbd>7</kbd> パーツを おくる<br><kbd>G</kbd> おじゃまブロック<br><kbd>F</kbd> AIを あせらせる<br><kbd>←</kbd><kbd>→</kbd> えらぶ　<kbd>Enter</kbd> おくる<br><kbd>P</kbd><kbd>Esc</kbd> ポーズ<br>プロコン：十字=えらぶ A=おくる X=おじゃま Y=あせらせる';
 }
 
@@ -464,12 +463,12 @@ function stepErase(dt){
     var dx=k==="L"?-1:1;
     if(held[k]){ das[k]+=dt; if(das[k]>=DAS){ arr[k]+=dt; while(arr[k]>=ARR){arr[k]-=ARR; if(!move(dx))break;} } }
   });
-  var gms=held.D?Math.min(40,eraseGravityMs()):eraseGravityMs();
+  var gms=eraseGravityMs();
   if(grounded()){
     G.lockT+=dt; if(G.lockT>=LOCK_MS){ lockPiece(); if(G.over)return; }
   } else {
     G.fall+=dt;
-    while(G.fall>=gms){ G.fall-=gms; if(!collide(G.grid,G.cur.m,G.cur.x,G.cur.y+1)){G.cur.y++; if(held.D)G.score+=1; G.lockT=0;} else break; }
+    while(G.fall>=gms){ G.fall-=gms; if(!collide(G.grid,G.cur.m,G.cur.x,G.cur.y+1)){G.cur.y++; G.lockT=0;} else break; }
   }
   G.garbT+=dt; var every=Math.max(5000,G.garbEvery-(G.level-1)*700);
   if(G.garbT>=every){G.garbT=0;G.pending=Math.min(6,G.pending+1);}
@@ -614,7 +613,7 @@ function updSab(){
 
 /* ---------- ポーズ・やりなおし ---------- */
 function pause(){ if(state!=="play")return; state="pause"; pauseAt=performance.now(); showOv("ovPause",true); }
-function resume(){ if(state!=="pause")return; showOv("ovPause",false); state="play"; lastT=performance.now(); held={L:0,R:0,D:0};das={L:0,R:0}; }
+function resume(){ if(state!=="pause")return; showOv("ovPause",false); state="play"; lastT=performance.now(); held={L:0,R:0};das={L:0,R:0}; }
 function toMenu(){ document.body.classList.remove("sab"); state="menu"; showOv("ovPause",false);showOv("ovOver",false);showOv("ovMenu",true); $("roleBadge").textContent="—"; }
 $("pauseBtn").addEventListener("click",function(){ try{this.blur();}catch(e){} state==="pause"?resume():pause(); });
 $("resumeBtn").addEventListener("click",resume);
@@ -633,9 +632,9 @@ document.addEventListener("visibilitychange",function(){ if(document.hidden&&sta
 function act(name,down){
   if(state!=="play")return;
   if(role==="erase"){
-    if(name==="L"||name==="R"||name==="D"){
-      if(down){ if(!held[name]){held[name]=1; if(name==="L"){das.L=0;arr.L=0;move(-1);} else if(name==="R"){das.R=0;arr.R=0;move(1);} else {G.fall=9999;} } }
-      else { held[name]=0; if(name!=="D"){das[name]=0;arr[name]=0;} }
+    if(name==="L"||name==="R"){
+      if(down){ if(!held[name]){held[name]=1; if(name==="L"){das.L=0;arr.L=0;move(-1);} else {das.R=0;arr.R=0;move(1);} } }
+      else { held[name]=0; das[name]=0;arr[name]=0; }
       return;
     }
     if(!down)return;
@@ -648,7 +647,7 @@ function act(name,down){
     else if(name==="garb")sendGarbage(); else if(name==="boost")boostAI();
   }
 }
-var KEYMAP={ArrowLeft:"L",ArrowRight:"R",ArrowDown:"D",ArrowUp:"rot",x:"rot",X:"rot",z:"rotCCW",Z:"rotCCW",Enter:"hard"," ":"hard",Spacebar:"hard",c:"hold",C:"hold",Shift:"hold"};
+var KEYMAP={ArrowLeft:"L",ArrowRight:"R",ArrowDown:"hard",ArrowUp:"rot",x:"rot",X:"rot",z:"rotCCW",Z:"rotCCW",Enter:"hard"," ":"hard",Spacebar:"hard",c:"hold",C:"hold",Shift:"hold"};
 window.addEventListener("keydown",function(e){
   var k=e.key;
   if(k==="Escape"||k==="p"||k==="P"){
@@ -664,32 +663,34 @@ window.addEventListener("keydown",function(e){
   var a=KEYMAP[k];
   if(a){ e.preventDefault(); if(e.repeat)return; act(a,true); }
 },true);
-window.addEventListener("keyup",function(e){ var a=KEYMAP[e.key]; if(a==="L"||a==="R"||a==="D")act(a,false); },true);
-window.addEventListener("blur",function(){ held={L:0,R:0,D:0}; if(state==="play")pause(); });
+window.addEventListener("keyup",function(e){ var a=KEYMAP[e.key]; if(a==="L"||a==="R")act(a,false); },true);
+window.addEventListener("blur",function(){ held={L:0,R:0}; if(state==="play")pause(); });
 
 Array.prototype.forEach.call(document.querySelectorAll("#touch button"),function(b){
   var a=b.dataset.a;
   b.addEventListener("pointerdown",function(e){ e.preventDefault(); act(a,true); });
-  ["pointerup","pointercancel","pointerleave"].forEach(function(ev){ b.addEventListener(ev,function(){ if(a==="L"||a==="R"||a==="D")act(a,false); }); });
+  ["pointerup","pointercancel","pointerleave"].forEach(function(ev){ b.addEventListener(ev,function(){ if(a==="L"||a==="R")act(a,false); }); });
 });
 
 /* ---------- ゲームパッド（Switchプロコン ほか）---------- */
 window.ARE_PAD_OFF=function(){return state==="play";};
-var padPrev={}, padDir={L:0,R:0,D:0};
+var padPrev={}, padDir={L:0,R:0};
 function padEdge(id,on){var was=padPrev[id];padPrev[id]=on;return on&&!was;}
 function pollPad(){
   if(state!=="play"||!navigator.getGamepads)return;
   var pads=navigator.getGamepads(),p=null;for(var i=0;i<pads.length;i++)if(pads[i]&&pads[i].connected){p=pads[i];break;}
   if(!p)return;
   var b=p.buttons,ax=p.axes||[];function P(i){return !!(b[i]&&b[i].pressed);}
-  var L=P(14)||ax[0]<-.55, R=P(15)||ax[0]>.55, D=P(13)||ax[1]>.6;
-  [["L",L],["R",R],["D",D]].forEach(function(kv){ var on=!!kv[1]; if(on!==!!padDir[kv[0]]){padDir[kv[0]]=on?1:0; act(kv[0],on);} });
-  if(padEdge("up",P(12)||ax[1]<-.8)) act("hard",true);
+  var L=P(14)||ax[0]<-.55, R=P(15)||ax[0]>.55;
+  [["L",L],["R",R]].forEach(function(kv){ var on=!!kv[1]; if(on!==!!padDir[kv[0]]){padDir[kv[0]]=on?1:0; act(kv[0],on);} });
+  if(padEdge("down",P(13)||ax[1]>.8)) act("hard",true);
+  if(padEdge("up",P(12)||ax[1]<-.8)) act("rot",true);
   if(padEdge("a",P(1)))act(role==="sab"?"hard":"rot",true);
-  if(padEdge("x",P(3))){ act(role==="sab"?"garb":"rot",true); }
+  if(padEdge("x",P(3))){ if(role==="sab")act("garb",true); }
   if(padEdge("b",P(0)))act("rotCCW",true);
   if(padEdge("y",P(2))){ act(role==="sab"?"boost":"hold",true); }
-  if(padEdge("l",P(4)||P(5)))act("hold",true);
+  if(padEdge("l",P(4))&&role==="erase")act("rotCCW",true);   /* L＝ぎゃくまわし */
+  if(padEdge("r",P(5))&&role==="erase")act("rot",true);      /* R＝まわす */
   if(padEdge("zr",P(7)||P(6)))act("hard",true);
   if(padEdge("plus",P(9)))pause();
 }

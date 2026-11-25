@@ -18,7 +18,10 @@ export const ZONES = {
     maze: {fog: [.22, .16, .4], near: 7, far: 46, amb: [.7, .64, .88], light: [.4, .8, .4]},
     loop: {fog: [.03, .05, .17], near: 100, far: 380, amb: [.52, .58, .84], light: [.3, .8, .4]},
     jump: {fog: [.6, .84, 1], near: 120, far: 320, amb: [.74, .76, .86], light: [.4, .9, .4]},
-    kart: {fog: [.72, .87, 1], near: 110, far: 300, amb: [.68, .72, .82], light: [.4, .85, .4]}
+    kart: {fog: [.72, .87, 1], near: 110, far: 300, amb: [.68, .72, .82], light: [.4, .85, .4]},
+    qline: {fog: [.82, .9, 1], near: 40, far: 140, amb: [.86, .84, .8], light: [.3, .85, .4]},
+    cheeseq: {fog: [.42, .3, .16], near: 30, far: 120, amb: [.86, .74, .56], light: [.3, .8, .4]},
+    cheese: {fog: [.5, .36, .2], near: 40, far: 170, amb: [.84, .72, .56], light: [.3, .85, .4]}
 };
 export const AREA_NAMES = {center: "セントラル・ガーデン", grove: "ファンタジー・グローブ", sky: "スカイ・コースト", manor: "ミステリー・マナー", lagoon: "ブルー・ラグーン"};
 export const zoneAt = (x, z) => (x > 52 && Math.abs(z) < 40) ? "manor" : (x > 52 && z >= 40 && z < 56) ? "manor" : x < -30 ? "grove" : z < -30 ? "sky" : z > 56 ? "lagoon" : "center";
@@ -67,7 +70,7 @@ export const ATTRACTIONS = [
 // ステージ（とおくの ばしょに つくった 専用の せかい）。のっている あいだだけ 見える
 export const STAGES = {
     mars: {at: [1200, 0]}, jupiter: {at: [-1200, 0]}, sweets: {at: [0, 1300]}, aurora: {at: [0, -1300]},
-    rhythm: {at: [1300, 1300]}, maze: {at: [-1300, -1300]}, loop: {at: [1300, -1300]}, jump: {at: [-1300, 1300]}, kart: {at: [0, 2600]}
+    rhythm: {at: [1300, 1300]}, maze: {at: [-1300, -1300]}, loop: {at: [1300, -1300]}, jump: {at: [-1300, 1300]}, kart: {at: [0, 2600]}, cheese: {at: [-2600, 0]}, qline: {at: [2600, 0]}
 };
 
 // ---- ① ジェット・ワールドツアー（4分：火星 2分 ＋ 木星 2分 ／ ぎゃくそう つき）----
@@ -150,7 +153,10 @@ export const NEW5_ATTRACTIONS = [
         ref: "3Dジャンプ・アスレチック系（種類の説明のみ。名前・絵・音は ぜんぶ オリジナル）"},
     {id: "kart", n: "ドリーム・ランナー・グランプリ", area: "sky", kind: "kart", board: {x: 88, z: -86, r: 3.6}, coin: 15, dur: 150,
         desc: "ライバルの ランナーと 2しゅう きそう かけっこ レース！ ↑ダッシュ ↓ゆっくり ←→で ほうこう。ダッシュパネルを ふむと ビューン！ 3いまでに はいれば スタンプ。",
-        ref: "かけっこ・ランナー レース系（種類の説明のみ。名前・絵・音は ぜんぶ オリジナル）"}
+        ref: "かけっこ・ランナー レース系（種類の説明のみ。名前・絵・音は ぜんぶ オリジナル）"},
+    {id: "cheese", n: "チーズいせきの ドタバタ大ぼうけん", area: "grove", kind: "cheese", vehicle: "cheese", board: {x: -72, z: 56, r: 3.6}, coin: 20, dur: 677,
+        desc: "ライバルだけど なかよしの ガクと ミミの ジープで、いたずらねこ モフゾーと ちゃっかりねずみ チュッピの ドタバタ おいかけっこへ！ まずは 6ふんの キューライン（まち時間 約25ふん）、そのあと 5ふんの ぐるぐる ライド。E で チーズを なげて しかけを ねらえ！",
+        ref: "ドタバタ ダークライド系（種類の説明のみ。名前・キャラ・絵・音は ぜんぶ オリジナル。BGM は 制作者が 用意した 曲）"}
 ];
 ATTRACTIONS.push(...NEW_ATTRACTIONS, ...NEW5_ATTRACTIONS);
 export const STAMPS = ATTRACTIONS.map((a) => a.id);

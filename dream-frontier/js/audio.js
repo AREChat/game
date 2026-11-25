@@ -8,7 +8,8 @@ let bgmVol = clamp(prefs.bgmVol === undefined ? .48 : prefs.bgmVol), seVol = cla
 let bgmTimer = null, step = 0, key = "town", activeAudio = null, activeKey = "", pendingAudio = null, fadeToken = 0;
 const tracks = {}, failedTracks = {};
 // 火星・木星（ジェット・ワールドツアー）だけは、本物のクラシック音源をこの自前フォルダから読む（他のエリアは従来どおりgame2/quest2/bgm/）
-const LOCAL_BGM = {mars: 1, jupiter: 1};
+const LOCAL_BGM = {mars: 1, jupiter: 1, cheeseq: 1, cheeseride: 1};   // チーズいせき：ならぶ間（0:00〜6:00）／ライド（6:00〜さいごまで）は、曲の 切りだし
+const RESTART = {cheeseq: 1, cheeseride: 1};   // はじまるたびに あたまから
 const hz = (n) => 261.63 * Math.pow(2, n / 12);
 
 function ensure(){
@@ -81,7 +82,7 @@ async function syncBgm(){
     if(next === activeAudio && !next.paused){ next.volume = bgmVol; stopSynthBgm(); return; }
     if(next === pendingAudio) return;
     const token = ++fadeToken, previous = activeAudio, previousVolume = previous ? previous.volume : 0;
-    pendingAudio = next; next.volume = 0;
+    pendingAudio = next; next.volume = 0; if(RESTART[requestKey]){ try{ next.currentTime = 0; }catch(_e){} }
     try{ await next.play(); }
     catch(error){ if(pendingAudio === next) pendingAudio = null; if(error && error.name === "NotAllowedError") return; failedTracks[requestKey] = true; startSynthBgm(); return; }
     if(token !== fadeToken){ next.pause(); if(pendingAudio === next) pendingAudio = null; return; }

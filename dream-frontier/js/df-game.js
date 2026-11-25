@@ -1,6 +1,7 @@
 // ===== ゲームロジック（描画エンジンに よらない）=====
 import {DF} from "./config.js";
 import {ZONES, AREA_NAMES, zoneAt, ATTRACTIONS, STAMPS, byId, QUARTET, BOAT_PTS} from "./df-data.js";
+import {waitMinutes, hasQueue, started as waitStarted} from "./df-wait.js";
 import {yawOf, pitchOf} from "./df-path.js";
 import {pathOf} from "./df-world.js";
 import {coasterInit, coasterUpdate, coasterCamera, stageName} from "./df-ride.js";
@@ -148,7 +149,7 @@ export class Game{
     // ---- 近くの もの ----
     scan(){
         let best = null, bd = 1e9; const cand = (id, label, x, z, r, kind, extra) => { const d = Math.hypot(x - this.x, z - this.z); if(d < r && d < bd){ bd = d; best = Object.assign({id, label, x, z, kind}, extra); } };
-        for(const a of ATTRACTIONS) if(a.board) cand(a.id, (this.sv.stamps[a.id] ? "✓ " : "") + a.n + " に のる", a.board.x, a.board.z, a.board.r + .6, "ride", {a});
+        for(const a of ATTRACTIONS) if(a.board) cand(a.id, (this.sv.stamps[a.id] ? "✓ " : "") + a.n + " に のる" + (waitStarted() && hasQueue(a.id) ? "（まち時間 " + (waitMinutes(a.id) || "0") + "ふん）" : ""), a.board.x, a.board.z, a.board.r + .6, "ride", {a});
         for(const q of QUARTET){ const p = this.npcPos(q); cand(q.id, q.name + " と はなす", p[0], p[1], 2.6, "npc", {q}); }
         cand("info", "インフォメーション（スタンプちょう）", 0, -12, 5.2, "info");
         cand("fountain", "ふんすいに コインを なげる", 0, 0, 5.2, "fountain");
@@ -187,6 +188,7 @@ export class Game{
     board(a){
         if(a.kind === "quest") return this.ui.toast("ここは「やかた」の きんこの なぞ。 やかたの なかの てがかりを さがそう！");
         if(a.kind === "show"){ const ps = this.paradeState(); return this.ui.say("ドリーム・パレード", [ps.on ? "いま パレードの まっさいちゅう！ ひろばの ちかくで 4びょう みていよう。" : "つぎの パレードまで あと " + Math.ceil(ps.next) + "びょう。 ひろばで まっていよう！", "（ひろばの ふんすいの まわりを パレードが とおるよ）"]); }
+        if(!this._noQueue && X.queue && X.queue.begin(this, a)) return; this._noQueue = false;   // まち時間（キューライン）：2026-11-26 から
         const free = !!this.auto.on;   // オートプレイ中は コインなしで のれる（おまかせ見物）
         if(!free && this.sv.coins < (a.coin || 0) && a.coin) { return this.ui.toast("コインが たりない… (" + a.coin + "コイン ひつよう)"); }
         const R = {a, t: 0, s: 0, lap: 0, text: null, texts: {}, alt: .3, spd: 1, hits: 0, targets: [], fire: 0, spawn: 0, done: false, fade: 1};
@@ -331,7 +333,7 @@ export class Game{
     cosmoZ(t, a){ const T1 = a.dur * .7, T2 = a.dur * .86; const v = (u) => u < T1 ? 14 : u < T2 ? 14 + 56 * ease((u - T1) / (T2 - T1)) : 14 + 56 * (1 - ease((u - T2) / (a.dur - T2))); let z = 0; for(let u = 0; u < t; u += .1) z += v(u) * Math.min(.1, t - u); return z; }
     env(){ let z = this.zone || "center"; if(this.mode === "ride"){ const r = this.ride, e = (r.A && r.A.env) || r.a.env; if(e) z = e; } return ZONES[z] || ZONES.center; }
     stageName(){ return stageName(this); }
-    bgmKey(){ if(this.mode === "ride"){ const r = this.ride; if(r.A && r.A.music){ return (r.A.music === "mars" || r.A.music === "jupiter") ? r.A.music : "score:" + r.A.music; } const e = r.a.env; if(e === "ghost") return "demoncastle"; if(e === "dark") return "town"; if(e === "night") return "sea"; if(e === "space") return "field"; } return ({center: "town", grove: "cave", sky: "field", manor: "demoncastle", lagoon: "sea"})[this.zone || "center"]; }
+    bgmKey(){ if(this.mode === "ride"){ const r = this.ride; if(r.A && r.A.music){ return (r.A.music === "mars" || r.A.music === "jupiter" || r.A.music === "cheeseq" || r.A.music === "cheeseride") ? r.A.music : "score:" + r.A.music; } const e = r.a.env; if(e === "ghost") return "demoncastle"; if(e === "dark") return "town"; if(e === "night") return "sea"; if(e === "space") return "field"; } return ({center: "town", grove: "cave", sky: "field", manor: "demoncastle", lagoon: "sea"})[this.zone || "center"]; }
 
     dyn(t){
         const D = [], R = this.ride, riding = (id) => R && R.a.id === id; const T = this.t;
@@ -339,6 +341,7 @@ export class Game{
         D.push({m: "windmill", x: -14 + 1.1, y: 9, z: -34, rx: T * 1.2});
         // ゲスト
         for(const g of this.guests){ const x = Math.cos(g.a) * g.r * 1.7, z = Math.sin(g.a) * g.r * 1.7 + 2; const dir = g.w > 0 ? 1 : -1; D.push({m: g.m, p: g.m, x, y: 0, z, yaw: Math.atan2(-Math.sin(g.a) * dir, Math.cos(g.a) * dir) + (dir > 0 ? 0 : Math.PI) * 0}); }
+        for(const k of Object.keys(X)) if(X[k].walkDyn && this.mode === "walk") X[k].walkDyn(this, D, ATTRACTIONS);   // 入口の ならび場など
         // 4人
         for(const q of QUARTET) D.push({m: "npc_" + q.id, p: q.id, x: q.at[0], y: 0, z: q.at[1], yaw: Math.atan2(this.x - q.at[0], this.z - q.at[1]) });
         // ナビ

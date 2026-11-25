@@ -138,6 +138,97 @@ public final class StatsAnalyzer {
         return "pong-from-java-teavm";
     }
 
+
+    /**
+     * Play-habit summary for the ARE GAMES hub ("あそび方の傾向").
+     *
+     * @param hoursCsv    24 comma separated counts: plays that started in each hour of the
+     *                    day (0..23, device local time). Missing / negative / malformed
+     *                    entries count as 0; extra entries are ignored.
+     * @param weekdaysCsv 7 comma separated counts, Sunday = 0 .. Saturday = 6.
+     * @return JSON such as
+     *         {"total":12,"peakHour":21,"band":"evening","bands":{"morning":1,"day":2,"evening":6,"night":3},
+     *          "weekendShare":50,"peakWeekday":6}
+     *         ("band" is "none" and the peaks are -1 when nothing has been played yet.)
+     *         Bands: morning 5-10, day 11-16, evening 17-21, night 22-4. Ties go to the earliest.
+     */
+    @JSExport
+    public static String habits(String hoursCsv, String weekdaysCsv) {
+        long[] h = parseCounts(hoursCsv, 24);
+        long[] w = parseCounts(weekdaysCsv, 7);
+        long total = 0;
+        int peakHour = -1;
+        long peakVal = 0;
+        long[] bands = new long[4]; // morning, day, evening, night
+        for (int i = 0; i < 24; i++) {
+            total += h[i];
+            if (h[i] > peakVal) {
+                peakVal = h[i];
+                peakHour = i;
+            }
+            bands[bandOf(i)] += h[i];
+        }
+        int band = -1;
+        long bandVal = 0;
+        for (int b = 0; b < 4; b++) {
+            if (bands[b] > bandVal) {
+                bandVal = bands[b];
+                band = b;
+            }
+        }
+        long wTotal = 0;
+        int peakWeekday = -1;
+        long wPeak = 0;
+        for (int i = 0; i < 7; i++) {
+            wTotal += w[i];
+            if (w[i] > wPeak) {
+                wPeak = w[i];
+                peakWeekday = i;
+            }
+        }
+        long weekend = w[0] + w[6];
+        long share = wTotal == 0 ? 0 : Math.round(100.0 * weekend / wTotal);
+        String[] names = {"morning", "day", "evening", "night"};
+        StringBuilder json = new StringBuilder();
+        json.append("{\"total\":").append(total);
+        json.append(",\"peakHour\":").append(peakHour);
+        json.append(",\"band\":\"").append(band < 0 ? "none" : names[band]).append('"');
+        json.append(",\"bands\":{");
+        for (int b = 0; b < 4; b++) {
+            if (b > 0) json.append(',');
+            json.append('"').append(names[b]).append("\":").append(bands[b]);
+        }
+        json.append('}');
+        json.append(",\"weekendShare\":").append(share);
+        json.append(",\"peakWeekday\":").append(peakWeekday);
+        json.append('}');
+        return json.toString();
+    }
+
+    private static int bandOf(int hour) {
+        if (hour >= 5 && hour <= 10) return 0;
+        if (hour >= 11 && hour <= 16) return 1;
+        if (hour >= 17 && hour <= 21) return 2;
+        return 3;
+    }
+
+    private static long[] parseCounts(String csv, int size) {
+        long[] out = new long[size];
+        if (csv == null || csv.isEmpty()) {
+            return out;
+        }
+        String[] parts = csv.split(",");
+        for (int i = 0; i < size && i < parts.length; i++) {
+            try {
+                long v = Long.parseLong(parts[i].trim());
+                out[i] = v < 0 ? 0 : Math.min(v, 1_000_000_000L);
+            } catch (NumberFormatException ignored) {
+                out[i] = 0;
+            }
+        }
+        return out;
+    }
+
     private static double average(double[] values, int fromInclusive, int toExclusive) {
         double s = 0;
         int c = 0;

@@ -59,7 +59,10 @@
       d: {ja: "かがみあわせの 2つの せかいを、1つの ボタンで 同時に あやつる パズル。", en: "Control two mirrored worlds at once with one set of buttons.", zh: "用同一组按键同时操控两个镜像世界的解谜游戏。", ko: "거울처럼 마주한 두 세계를 한 번에 조종하는 퍼즐."}},
     {em: "🎰", href: "rules.html", ready: 1,
       n: {ja: "ルール・ルーレット", en: "Rule Roulette", zh: "规则轮盘", ko: "룰 룰렛"},
-      d: {ja: "ミニゲームの「ルール」が 毎回 かわる！ ルーレットで きまった ルールで ハイスコアを めざそう。", en: "The rules change every round! Chase a high score under whatever the roulette picks.", zh: "小游戏的「规则」每次都会改变！在轮盘选出的规则下冲击高分。", ko: "미니게임의 \"규칙\"이 매번 바뀌어요! 룰렛이 정한 규칙으로 하이스코어에 도전!"}}
+      d: {ja: "ミニゲームの「ルール」が 毎回 かわる！ ルーレットで きまった ルールで ハイスコアを めざそう。", en: "The rules change every round! Chase a high score under whatever the roulette picks.", zh: "小游戏的「规则」每次都会改变！在轮盘选出的规则下冲击高分。", ko: "미니게임의 \"규칙\"이 매번 바뀌어요! 룰렛이 정한 규칙으로 하이스코어에 도전!"}},
+    {em: "🔔", href: "echo.html", ready: 1,
+      n: {ja: "こだまの部屋", en: "Echo Rooms", zh: "回声之间", ko: "메아리 방"},
+      d: {ja: "きみの うごきが「こだま」に なって、もういちど うごきだす。スイッチを おして とびらを あけ、⭐ を めざす パズル。", en: "Your moves become an echo that plays them again. Hold switches, open doors and reach the star.", zh: "你的动作会变成“回声”再走一遍。踩开关、开门，前往 ⭐ 的谜题。", ko: "내 움직임이 메아리가 되어 다시 움직여요. 스위치를 눌러 문을 열고 ⭐을 향하는 퍼즐."}},
   ];
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]; }); }
   function L(o){ var l = GK.lang(); return o[l] || o.ja; }
@@ -82,5 +85,6 @@
   render();
 })();
 </script>
+<script src="../shared/first-tips.js" defer></script>
 </body>
 </html>

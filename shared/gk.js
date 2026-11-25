@@ -36,10 +36,12 @@
     // ---------- 保存 ----------
     function save(ns){
         var key = "gk_" + ns;
+        // 保存データが こわれていて（null・配列・文字など）も、つかえる形に もどす（そのままだと ずっと 保存できなくなる）
+        function read(){ var o; try{ o = JSON.parse(LS.get(key, "{}")); }catch(_e){ o = null; } return o && typeof o === "object" && !Array.isArray(o) ? o : {}; }
         return {
-            get: function(k, d){ try{ var o = JSON.parse(LS.get(key, "{}")); return o[k] === undefined ? d : o[k]; }catch(_e){ return d; } },
-            set: function(k, v){ try{ var o = JSON.parse(LS.get(key, "{}")); o[k] = v; LS.set(key, JSON.stringify(o)); }catch(_e){} },
-            all: function(){ try{ return JSON.parse(LS.get(key, "{}")); }catch(_e){ return {}; } }
+            get: function(k, d){ var o = read(); return o[k] === undefined ? d : o[k]; },
+            set: function(k, v){ try{ var o = read(); o[k] = v; LS.set(key, JSON.stringify(o)); }catch(_e){} },
+            all: function(){ return read(); }
         };
     }
 

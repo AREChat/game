@@ -7,3 +7,8 @@ desktop/dist/
 3ds/**/docs/AUTOMATION.md
 3ds/**/build_host/
 **/desktop.ini
+
+# 道具のビルド生成物
+tools/csharp/**/bin/
+tools/csharp/**/obj/
+**/__pycache__/

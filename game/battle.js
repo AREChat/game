@@ -21,6 +21,9 @@ const AUTO_DELAY = [700, 380, 130];
 function bAlive(id){ return G.S.m[id].hp > 0; }
 function bSpend(id, n){ if(!G.S.cx.infmp) G.S.m[id].mp = Math.max(0, G.S.m[id].mp - n); }
 function bDmg(atk, def, mult){
+    const o = bDmg0(atk, def, mult); G.lastCrit = !!o.crit; return o;
+}
+function bDmg0(atk, def, mult){
     const m = mult || 1, r1 = G.rnd(), r2 = G.rnd();
     const forceCrit = !!(G.S && G.S.cx && G.S.cx.gcrit && G.b && !G.inFoe);
     if(window.GCore && GCore.ready){
@@ -35,12 +38,14 @@ function battleStart(ids, after){
     const cnt = {}, seen = {};
     foes.forEach((f) => { cnt[f.n] = (cnt[f.n] || 0) + 1; });
     foes.forEach((f) => { if(cnt[f.n] > 1){ seen[f.n] = (seen[f.n] || 0) + 1; f.label = f.n + "ABCD"[seen[f.n] - 1]; } else f.label = f.n; });
-    G.b = {foes, menu:"top", after, turn:1, buff:{atk:0, def:0}, boss:foes.some((f) => f.boss), spar:foes.some((f) => f.spar), log:[], guard:false, busy:false, text:foes.map((f) => f.label).join("、") + "が あらわれた！"};
+    G.b = {foes, menu:"top", after, turn:1, buff:{atk:0, def:0}, boss:foes.some((f) => f.boss), spar:foes.some((f) => f.spar), log:[], guard:false, busy:false, text:foes.map((f) => f.label).join("、") + "が あらわれた！" + ((!G.S.f.tut_b && !G.grind && !G.autoPref && !foes.some((f) => f.boss)) ? "\n💡「たたかう」→ てきを えらぶだけ！ HPが へったら「どうぐ」、こまったら「オート戦闘」" : "")};
+    if(!G.S.f.tut_b && !G.grind && !G.autoPref) G.S.f.tut_b = 1;
     G.mode = "battle"; G.pend = null; G.bg = "";
     if(G.S.cx.areall) G.S.gauge = 100;
     G.auto = !!(G.autoPref || G.grind);
     render(); scheduleAuto();
     if(!G.grind && !G.auto) tqBang();
+    if(G.b.boss && !G.grind && !G.auto) setTimeout(() => { if(G.mode === "battle") tqCelebrate("⚠ ボスせん！", "boss"); }, 520);
 }
 function foesAlive(){ return G.b.foes.filter((f) => f.cur > 0); }
 function areBonus(){ return [1, 2, 3, 4].filter((i) => G.S.f["fu_m" + i]).length; }
@@ -78,30 +83,49 @@ function paintBattle(g, time){
     const n = b.foes.length, big = n === 1 ? (b.foes[0].boss ? 130 : 104) : n === 2 ? 84 : n === 3 ? 70 : 58;
     b.foes.forEach((f, i) => {
         if(f.cur <= 0) return;
-        const sp = n === 1 ? 0 : Math.min(150, 440 / n), cx = (G.S.party.length > 4 ? 390 : 340) + (i - (n - 1) / 2) * sp, cy = (G.S.party.length > 4 ? 150 : 120) + (n === 1 ? 0 : (i % 2 ? 16 : -4)), bob = Math.sin(time / 420 + i) * 3;
+        const sp = n === 1 ? 0 : Math.min(135, 400 / n), cx = (G.S.party.length > 4 ? 435 : 405) + (i - (n - 1) / 2) * sp, cy = (G.S.party.length > 4 ? 138 : 108) + (n === 1 ? 0 : (i % 2 ? 16 : -4)), bob = Math.sin(time / 420 + i) * 3;
         const hit = G.hit && G.hit.idx === i && time < G.hit.until;
         g.save(); if(hit) g.translate((Math.random() - 0.5) * 8, 0);
         g.globalAlpha = hit ? 0.55 : 1;
         if(f.img){ const im = foeImg(f.img); if(im.complete && im.naturalWidth){ if(tqIsFramed(f.img)){ tqDrawFramed(g, im, cx, cy + bob + 6, n === 1 ? 196 : 120); } else{ const h = 190, w = h * im.naturalWidth / im.naturalHeight; g.drawImage(im, cx - w / 2, cy - h / 2 + bob + 6, w, h); } } }
         else{ g.font = big + "px serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#000"; g.fillText(f.e, cx, cy + bob); }
         g.restore();
-        g.fillStyle = "rgba(0,0,0,.25)"; g.beginPath(); g.ellipse(cx, 232, f.img ? 40 : big / 2.2, 6, 0, 0, 7); g.fill();
-        g.fillStyle = "#1f2937"; g.fillRect(cx - 40, 242, 80, 7); g.fillStyle = f.cur / f.hp > 0.3 ? "#34d399" : "#ef4444"; g.fillRect(cx - 40, 242, 80 * f.cur / f.hp, 7);
-        g.font = "bold 12px sans-serif"; g.textAlign = "center"; g.textBaseline = "alphabetic"; g.lineJoin = "round"; g.lineWidth = 3.5; g.strokeStyle = "rgba(255,255,255,.92)"; g.strokeText(f.label, cx, 262); g.fillStyle = "#111"; g.fillText(f.label, cx, 262);
+        g.fillStyle = "rgba(0,0,0,.25)"; g.beginPath(); g.ellipse(cx, 212, f.img ? 40 : big / 2.2, 6, 0, 0, 7); g.fill();
+        g.fillStyle = "#1f2937"; g.fillRect(cx - 40, 217, 80, 8); g.fillStyle = f.cur / f.hp > 0.3 ? "#34d399" : "#ef4444"; g.fillRect(cx - 40, 217, 80 * f.cur / f.hp, 8); g.strokeStyle = "rgba(255,255,255,.8)"; g.lineWidth = 1; g.strokeRect(cx - 40, 217, 80, 8);   // てきの HP（メッセージの わくに かくれない 高さ）
+        g.font = "bold 12px sans-serif"; g.textAlign = "center"; g.textBaseline = "alphabetic"; g.lineJoin = "round"; g.lineWidth = 3.5; g.strokeStyle = "rgba(255,255,255,.92)"; g.strokeText(f.label, cx, 238); g.fillStyle = "#111"; g.fillText(f.label, cx, 238);
         if(f.stun > 0){ g.font = "18px serif"; g.fillText("💫", cx + 30, cy - 40); }
     });
+    if(G.fx && G.fx.length){
+        const now = Date.now(); G.fx = G.fx.filter((q) => now - q.t0 < 950);
+        G.fx.forEach((q) => {
+            const age = (now - q.t0) / 950, nn = b.foes.length, sp = nn === 1 ? 0 : Math.min(135, 400 / nn);
+            const cx = q.idx === -2 ? 270 : q.idx < 0 ? 560 : (G.S.party.length > 4 ? 435 : 405) + (q.idx - (nn - 1) / 2) * sp, cy0 = q.idx === -2 ? 160 : q.idx < 0 ? 170 : 100;
+            const pop = age < 0.18 ? 1 + (0.18 - age) * 5 : 1, y = cy0 - Math.min(1, age * 2.2) * 34 + (age > 0.6 ? (age - 0.6) * 20 : 0);
+            const big = q.kind === "crit" ? 40 : q.kind === "big" ? 32 : 26;
+            g.save(); g.globalAlpha = age > 0.7 ? Math.max(0, 1 - (age - 0.7) / 0.3) : 1; g.textAlign = "center"; g.textBaseline = "middle";
+            g.font = "900 " + Math.round(big * pop) + "px sans-serif"; g.lineJoin = "round"; g.lineWidth = 6; g.strokeStyle = q.kind === "me" ? "#7f1d1d" : q.kind === "heal" ? "#14532d" : "#1f2937";
+            const txt = (q.kind === "heal" ? "+" : "") + (q.v > 0 || q.kind === "heal" ? q.v : "0") + (q.kind === "crit" ? "!!" : "");
+            g.strokeText(txt, cx, y); g.fillStyle = q.kind === "me" ? "#ff8a8a" : q.kind === "heal" ? "#7dffa8" : q.kind === "crit" ? "#ffd84d" : "#fff"; g.fillText(txt, cx, y);
+            if(q.kind === "crit" && age < 0.5){ g.font = "900 15px sans-serif"; g.lineWidth = 4; g.strokeStyle = "#7c2d12"; g.strokeText("かいしん！", cx, y - 28); g.fillStyle = "#ffedd5"; g.fillText("かいしん！", cx, y - 28); }
+            g.restore();
+        });
+    }
     g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(250, 342, 140, 9); g.fillStyle = G.S.gauge >= 100 ? "#fbbf24" : "#60a5fa"; g.fillRect(250, 342, 140 * G.S.gauge / 100, 9);
     g.font = "bold 10px sans-serif"; g.fillStyle = "#fff"; g.textAlign = "left"; g.textBaseline = "alphabetic"; g.fillText("ARE ゲージ" + (G.S.gauge >= 100 ? "  MAX！" : ""), 250, 338);
 }
 function bLog(t){ G.b.log.push(t); }
+// ダメージの 数字を ポンと うかばせる（idx=-1 は みかたが うけた ダメージ）
+function bFloat(idx, v, kind){ if(!G.fx) G.fx = []; G.fx.push({idx, v, kind: kind || "", t0: Date.now()}); if(G.fx.length > 24) G.fx.shift(); }
 function bHit(i){ G.hit = {idx:i, until:Date.now() + 260}; }
 function bHurt(id, d){
     const m = G.S.m[id]; if(G.S.cx.god) d = 0;
+    bFloat(-1, d, "me"); try{ const app = document.getElementById("app") || document.body; app.classList.remove("tq-hitme"); void app.offsetWidth; app.classList.add("tq-hitme"); setTimeout(() => app.classList.remove("tq-hitme"), 330); }catch(_e){}
     m.hp = Math.max(0, m.hp - d); G.S.gauge = Math.min(100, G.S.gauge + 6);
     if(m.hp === 0) bLog(tqName(id) + "は たおれた…！");
 }
 function bFoeHurt(f, d){
     if(G.S.cx.onehit) d *= 100;
+    const crit = !!G.lastCrit; G.lastCrit = false; bFloat(G.b.foes.indexOf(f), d, crit ? "crit" : (d >= f.hp * 0.25 ? "big" : ""));
     f.cur = Math.max(0, f.cur - d);
     if(f.cur === 0) bLog(f.label + "を たおした！");
     else if(f.boss && !f.sayDone && f.cur <= f.hp / 2 && f.say50){ f.sayDone = true; bLog(rpgFmt(f.say50)); }
@@ -179,7 +203,7 @@ function heroAction(act){
         if(it.revive){ if(bAlive(to)){ bLog("たおれていない…！"); return false; } S.items[act.id]--; S.m[to].hp = Math.ceil(tqStat(to).maxhp / 2); bLog(tqName(to) + "は ふっかつした！"); return false; }
         if(!bAlive(to)){ bLog("たおれていて つかえない！"); return false; }
         S.items[act.id]--; const mm = S.m[to], mx = tqStat(to);
-        if(it.hp){ const before = mm.hp; mm.hp = Math.min(mx.maxhp, mm.hp + it.hp); bLog(it.n + "を つかった。" + tqName(to) + "の HPが " + (mm.hp - before) + " かいふく！"); }
+        if(it.hp){ const before = mm.hp; mm.hp = Math.min(mx.maxhp, mm.hp + it.hp); bLog(it.n + "を つかった。" + tqName(to) + "の HPが " + (mm.hp - before) + " かいふく！"); bFloat(-2, mm.hp - before, "heal"); }
         if(it.mp){ const before = mm.mp; mm.mp = Math.min(mx.maxmp, mm.mp + it.mp); bLog(it.n + "を のんだ。" + tqName(to) + "の MPが " + (mm.mp - before) + " かいふく！"); }
         return false;
     }
@@ -187,7 +211,7 @@ function heroAction(act){
         const sk = TQ_SKILLS[act.id], m = S.m.hero; if(m.mp < sk.mp && !S.cx.infmp) return false; bSpend("hero", sk.mp);
         if(act.id === "code"){ let t = act.t; if(!t || t.cur <= 0) t = foesAlive()[0]; if(!t) return false; const r = bDmg(st.atk * atkB, t.def, sk.p), d = bFoeHurt(t, r.d); bHit(b.foes.indexOf(t)); S.gauge = Math.min(100, S.gauge + 12); bLog(hn + "の コードアタック！" + (r.crit ? "（かいしん！）" : "") + " " + t.label + "に " + d + "のダメージ！"); }
         else if(act.id === "beam"){ bLog(hn + "は デバッグ・ビームを はなった！"); foesAlive().forEach((t) => { const r = bDmg(st.atk * atkB, t.def, sk.p), d = bFoeHurt(t, r.d); bHit(b.foes.indexOf(t)); bLog(t.label + "に " + d + "のダメージ！"); }); S.gauge = Math.min(100, S.gauge + 12); }
-        else if(act.id === "recover"){ const to = act.to || "hero", mm = S.m[to]; if(!bAlive(to)){ bLog("たおれていて きかない！"); return false; } const h = 40 + S.lv * 5, before = mm.hp; mm.hp = Math.min(tqStat(to).maxhp, mm.hp + h); bLog("「そういうときは、AREだ！」リカバリー！ " + tqName(to) + "の HPが " + (mm.hp - before) + " かいふく！"); }
+        else if(act.id === "recover"){ const to = act.to || "hero", mm = S.m[to]; if(!bAlive(to)){ bLog("たおれていて きかない！"); return false; } const h = 40 + S.lv * 5, before = mm.hp; mm.hp = Math.min(tqStat(to).maxhp, mm.hp + h); bFloat(-2, mm.hp - before, "heal"); bLog("「そういうときは、AREだ！」リカバリー！ " + tqName(to) + "の HPが " + (mm.hp - before) + " かいふく！"); }
         else if(act.id === "freeze"){ bLog(hn + "は タイムストップを となえた！"); foesAlive().forEach((t) => { if(G.rnd() < (t.boss ? 0.35 : 0.7)){ t.stun = 2; bLog(t.label + "は うごけなくなった！"); } else bLog(t.label + "には きかなかった！"); }); }
         return false;
     }
@@ -207,7 +231,7 @@ function weakestAlly(){
 function allyAction(id){
     const b = G.b, S = G.S, st = tqStat(id), m = S.m[id], nm = tqName(id), atkB = b.buff.atk > 0 ? 1.25 : 1, w = weakestAlly(), cls = RPG_CLASS[id];
     const role = id === "haruki" ? "heal" : id === "akito" ? "buff" : (cls.role || "atk");
-    const healUp = (mult, txt) => { const h = Math.round((28 + S.lv * 4) * mult), mm = S.m[w.id], before = mm.hp; mm.hp = Math.min(tqStat(w.id).maxhp, mm.hp + h); bLog(nm + "の " + txt + "！ " + tqName(w.id) + "の HPが " + (mm.hp - before) + " かいふく！"); };
+    const healUp = (mult, txt) => { const h = Math.round((28 + S.lv * 4) * mult), mm = S.m[w.id], before = mm.hp; mm.hp = Math.min(tqStat(w.id).maxhp, mm.hp + h); bFloat(-2, mm.hp - before, "heal"); bLog(nm + "の " + txt + "！ " + tqName(w.id) + "の HPが " + (mm.hp - before) + " かいふく！"); };
     if(role === "heal" && w && w.r < 0.55 && (m.mp >= 3 || S.cx.infmp)){ bSpend(id, 3); healUp(1, id === "haruki" ? "コーヒーブレイク" : "いやしの うた"); return; }
     if(id === "haruki" && S.lv >= 5 && b.buff.def <= 0 && (m.mp >= 5 || S.cx.infmp) && G.rnd() < 0.3){ bSpend(id, 5); b.buff.def = 3; bLog(nm + "の ファイアウォール！ みんなの ぼうぎょが あがった！"); return; }
     if(id === "akito" && S.lv >= 3 && b.buff.atk <= 0 && (m.mp >= 4 || S.cx.infmp) && G.rnd() < 0.3){ bSpend(id, 4); b.buff.atk = 3; bLog(nm + "「そうだ！ そういうときは…！」チアアップ！ みんなの こうげきが あがった！"); return; }
@@ -281,7 +305,8 @@ function endBattle(res){
     const lines = log.slice(); lines.push(rpgFmt("たたかいに しょうり！ " + Math.round(exp * (S.expmul || 1)).toLocaleString() + "EXP と " + gold + "G を てにいれた。"));
     if(!b.boss && G.rnd() < 0.18){ S.items.onigiri = Math.min(99, (S.items.onigiri || 0) + 1); lines.push("おにぎりを ひろった！"); }
     else if(!b.boss && G.rnd() < 0.03){ S.items.omamori = Math.min(99, (S.items.omamori || 0) + 1); lines.push("ふっかつのおまもりを ひろった！"); }
-    tqGain(exp).forEach((u) => lines.push(u));
+    const ups = tqGain(exp); ups.forEach((u) => lines.push(u));
+    if(ups.length) tqCelebrate("LEVEL UP！", "lv"); else if(b.boss) tqCelebrate("VICTORY！", "win");
     S.party.forEach((id) => { if(S.m[id].hp <= 0) S.m[id].hp = 1; });
     const after = b.after; G.b = null;
     if(G.grind){ G.grind.n++; S.grinds = (S.grinds || 0) + 1; }
@@ -349,6 +374,16 @@ function startGrindLoop(){
     }, 450);
 }
 
+// おいわいの 演出：バナーと キラキラが ふわっと 出る（レベルアップ・ボスに しょうり）
+function tqCelebrate(text, kind){
+    try{
+        const d = document.createElement("div"); d.className = "tq-cele " + (kind || "");
+        let st = ""; for(let i = 0; i < 18; i++){ const a = (i / 18) * 6.283 + Math.random() * 0.3, r = 18 + Math.random() * 30; st += '<i style="--dx:' + (Math.cos(a) * r).toFixed(1) + 'vmin;--dy:' + (Math.sin(a) * r * 0.7).toFixed(1) + 'vmin;animation-delay:' + (Math.random() * 0.25).toFixed(2) + 's">' + (i % 3 ? "✦" : "★") + '</i>'; }
+        d.innerHTML = st + '<b>' + text + '</b>'; document.body.appendChild(d);
+        if(typeof flash === "function") flash();
+        setTimeout(() => d.remove(), 1700);
+    }catch(_e){}
+}
 // 出会いの演出：「！」がとびだして、画面がゆれる
 function tqBang(){
     try{
