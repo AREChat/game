@@ -170,9 +170,11 @@ body[data-mode=map] #top,body[data-mode=battle] #top{bottom:auto;top:8.2cqw;righ
 .tq-hitme{animation:tqhm .32s ease-out}
 #hud .q{white-space:normal;max-width:44cqw;margin-top:.3cqw;padding-top:.3cqw;border-top:1px solid rgba(255,255,255,.3);font-size:1.5cqw;line-height:1.35;color:#ffe9a8}
 .tq-cele{position:fixed;left:50%;top:30%;width:0;height:0;z-index:85;pointer-events:none}
-.tq-cele b{position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;font:900 min(9vh,7vw)/1 sans-serif;color:#ffe066;-webkit-text-stroke:.06em #7c2d12;text-shadow:0 .08em .16em #000;animation:tqcb 1.6s ease-out forwards}
+.tq-cele b{paint-order:stroke fill;position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;font:900 min(9vh,7vw)/1 sans-serif;color:#ffe066;-webkit-text-stroke:.06em #7c2d12;text-shadow:0 .08em .16em #000;animation:tqcb 1.6s ease-out forwards}
 .tq-cele.win b{color:#fff3b0;-webkit-text-stroke-color:#9a3412}
 .tq-cele i{position:absolute;left:0;top:0;font-style:normal;font-size:min(5vh,4vw);color:#fff3b0;text-shadow:0 0 .4em #ffb400;opacity:0;animation:tqci 1.2s ease-out forwards}
 @keyframes tqcb{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.25)}30%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%) scale(1)}}
 @keyframes tqci{0%{opacity:0;transform:translate(0,0) scale(.4)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.1) rotate(200deg)}}
 body[data-info="1"] #dp{display:none}
+.tq-cele.boss b{color:#fff1f1;-webkit-text-stroke-color:#b91c1c;text-shadow:0 0 .35em #ff0000,0 .08em .16em #000}
+.tq-cele.boss i{color:#ffb4b4;text-shadow:0 0 .4em #ff2a2a}

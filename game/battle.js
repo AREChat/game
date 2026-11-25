@@ -38,12 +38,14 @@ function battleStart(ids, after){
     const cnt = {}, seen = {};
     foes.forEach((f) => { cnt[f.n] = (cnt[f.n] || 0) + 1; });
     foes.forEach((f) => { if(cnt[f.n] > 1){ seen[f.n] = (seen[f.n] || 0) + 1; f.label = f.n + "ABCD"[seen[f.n] - 1]; } else f.label = f.n; });
-    G.b = {foes, menu:"top", after, turn:1, buff:{atk:0, def:0}, boss:foes.some((f) => f.boss), spar:foes.some((f) => f.spar), log:[], guard:false, busy:false, text:foes.map((f) => f.label).join("、") + "が あらわれた！"};
+    G.b = {foes, menu:"top", after, turn:1, buff:{atk:0, def:0}, boss:foes.some((f) => f.boss), spar:foes.some((f) => f.spar), log:[], guard:false, busy:false, text:foes.map((f) => f.label).join("、") + "が あらわれた！" + ((!G.S.f.tut_b && !G.grind && !G.autoPref && !foes.some((f) => f.boss)) ? "\n💡「たたかう」→ てきを えらぶだけ！ HPが へったら「どうぐ」、こまったら「オート戦闘」" : "")};
+    if(!G.S.f.tut_b && !G.grind && !G.autoPref) G.S.f.tut_b = 1;
     G.mode = "battle"; G.pend = null; G.bg = "";
     if(G.S.cx.areall) G.S.gauge = 100;
     G.auto = !!(G.autoPref || G.grind);
     render(); scheduleAuto();
     if(!G.grind && !G.auto) tqBang();
+    if(G.b.boss && !G.grind && !G.auto) setTimeout(() => { if(G.mode === "battle") tqCelebrate("⚠ ボスせん！", "boss"); }, 520);
 }
 function foesAlive(){ return G.b.foes.filter((f) => f.cur > 0); }
 function areBonus(){ return [1, 2, 3, 4].filter((i) => G.S.f["fu_m" + i]).length; }
