@@ -348,7 +348,7 @@ async function setLang(page, l){ await page.evaluate((x) => localStorage.setItem
         const wantN = REG.games.filter((x) => !(x.id === g.id && !x.multi)).length + 1;
         check(links.length === wantN, `ほかのゲームへ(${g.id}/${l}): リンク数 ${links.length} ≠ ${wantN}`);
         check(!links.some((x) => x.h && x.h.endsWith(g.href) && !g.multi && !x.h.startsWith("http")), `ほかのゲームへ(${g.id}): 自分を出さない`);
-        const hasNew = ["game11", "game12", "game13", "game14"].every((f) => links.some((x) => x.h && x.h.includes(f + "/index.html")));
+        const hasNew = ["game11", "game12", "game13", "game14", "game15"].every((f) => links.some((x) => x.h && x.h.includes(f + "/index.html")));
         check(hasNew, `ほかのゲームへ(${g.id}/${l}): game11〜14 が ある`);
         for(const x of links){
           if(!x.h || /^https?:/.test(x.h)) continue;

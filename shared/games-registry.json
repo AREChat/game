@@ -260,6 +260,19 @@
       "tags": {"ja": ["3D", "シューティング", "バトロワ", "クラシック音楽"], "en": ["3D", "Shooting", "Battle royale", "Classical music"], "zh": ["3D", "射击", "大逃杀", "古典音乐"], "ko": ["3D", "슈팅", "배틀로얄", "클래식"]}
     },
     {
+      "id": "game15", "genre": "action", "folder": "game15", "href": "game15/index.html", "emoji": "🥁", "c1": "#5a1f6a", "c2": "#e0442e",
+      "order": 4, "isNew": true, "gamepad": true, "inGameLangs": ["ja", "en", "zh", "ko"],
+      "name": {"ja": "ポコポコ太鼓", "en": "Poko-Poko Drum", "zh": "咚咚太鼓", "ko": "포코포코 북"},
+      "sub": {"ja": "赤と青の音符をたたく、お祭りリズムゲーム", "en": "A festival rhythm game: hit the red and blue notes", "zh": "敲打红蓝音符的庙会节奏游戏", "ko": "빨강·파랑 음표를 두드리는 축제 리듬 게임"},
+      "desc": {
+        "ja": "流れてくる赤（ドン）と青（カッ）の音符を、リズムに合わせてたたく和のリズムゲーム。5曲 × 4つのむずかしさ（かんたん・ふつう・むずかしい・おに）、大きい音符と連打、魂ゲージでクリア。曲も絵もすべてオリジナル。キーボード・タッチ・ゲームパッド対応、オートプレイつき。",
+        "en": "A Japanese-festival-style rhythm game: hit the red (don) and blue (ka) notes in time. 5 songs × 4 difficulties (Easy, Normal, Hard, Oni), big notes, rolls and a soul gauge to clear. All songs and art are original. Keyboard, touch and gamepad supported, with auto play.",
+        "zh": "和风庙会节奏游戏：跟着节奏敲打红色（咚）和蓝色（咔）音符。5首歌 × 4种难度（简单、普通、困难、鬼），含大音符、连打与灵魂槽通关。歌曲和画面全部原创。支持键盘、触屏和手柄，并有自动演奏。",
+        "ko": "일본 축제 분위기의 리듬 게임: 빨강(둥)·파랑(캇) 음표를 리듬에 맞춰 두드려요. 5곡 × 4단계 난이도(쉬움·보통·어려움·도깨비), 큰 음표와 연타, 영혼 게이지로 클리어. 곡과 그림은 모두 오리지널. 키보드·터치·게임패드와 오토 플레이 지원."
+      },
+      "tags": {"ja": ["リズム", "5曲", "オート", "4か国語"], "en": ["Rhythm", "5 songs", "Auto play", "4 languages"], "zh": ["节奏", "5首歌", "自动演奏", "四语言"], "ko": ["리듬", "5곡", "오토", "4개 언어"]}
+    },
+    {
       "id": "game12", "genre": "action", "folder": "game12", "href": "game12/index.html", "emoji": "⚔️", "c1": "#2a1a7a", "c2": "#d03a9a",
       "order": 3, "isNew": true, "gamepad": true, "inGameLangs": ["ja", "en", "zh", "ko"],
       "name": {"ja": "AREUSO", "en": "AREUSO", "zh": "AREUSO", "ko": "AREUSO"},

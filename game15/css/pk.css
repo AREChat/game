@@ -1,0 +1,78 @@
+:root{--bg1:#2a1450;--bg2:#5a1f6a;--don:#ee4b3a;--ka:#37a2ee;--gold:#ffd24a;--ink:#fff7e8;--panel:rgba(20,8,48,.82)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 0%,var(--bg2),var(--bg1) 70%);color:var(--ink);font-family:system-ui,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+button{font:inherit;color:inherit;border:0;border-radius:14px;padding:12px 20px;background:rgba(255,255,255,.14);cursor:pointer;min-height:46px}
+button:hover{background:rgba(255,255,255,.24)}
+button:focus-visible,[data-pad-focus]{outline:3px solid var(--gold);outline-offset:2px}
+button.big{background:linear-gradient(#ff7a4a,#e0442e);font-size:1.25em;font-weight:800;padding:14px 34px;box-shadow:0 5px 0 #8f2416}
+#exitBtn,#padBtn,#lgBtn{position:fixed;top:max(8px,env(safe-area-inset-top));z-index:20;min-height:40px;padding:8px 12px;font-size:.9em;background:rgba(0,0,0,.4)}
+#exitBtn{left:8px}#padBtn{right:8px}#lgBtn{right:58px}
+#app{position:fixed;inset:0}
+.scr{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:56px 16px 16px;overflow:auto;text-align:center}
+.scr.on{display:flex}
+/* タイトル */
+.logo{display:flex;align-items:baseline;gap:10px;font-weight:900;text-shadow:0 4px 0 #6a1a2a,0 0 30px rgba(255,150,60,.6)}
+.logo .l1{font-size:clamp(2.2em,9vw,4.2em);color:var(--gold)}.logo .l2{font-size:clamp(2.6em,11vw,5em);color:#ff6a4a}
+.sub{margin:0;opacity:.9;max-width:34em}.hint{margin:0;font-size:.85em;opacity:.75;max-width:36em}
+.menu{display:flex;flex-direction:column;gap:10px;align-items:center}
+.festival{position:absolute;top:44px;left:0;right:0;display:flex;justify-content:space-around;pointer-events:none}
+.festival i{display:block;width:34px;height:46px;border-radius:50% 50% 45% 45%;background:radial-gradient(circle at 35% 30%,#fff6,transparent 40%),var(--c,#ee4b3a);box-shadow:0 0 16px var(--c,#ee4b3a);animation:sway 3s ease-in-out infinite}
+.festival i:nth-child(2){--c:#ffd24a;animation-delay:.4s}.festival i:nth-child(3){--c:#37a2ee;animation-delay:.8s}.festival i:nth-child(4){--c:#7ad66a;animation-delay:1.2s}
+@keyframes sway{50%{transform:translateY(8px) rotate(4deg)}}
+/* マスコット（ぽこたん：丸い太鼓のこ） */
+.mascot{width:84px;height:84px;position:relative;transition:transform .08s}
+.mascot.big{width:150px;height:150px;animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px) scale(1.03)}}
+.mascot.hit{transform:scale(1.12) rotate(-4deg)}
+.mascot svg{width:100%;height:100%;display:block}
+/* パネル */
+.panel{background:var(--panel);border-radius:18px;padding:18px 22px;max-width:640px;width:100%;text-align:left;line-height:1.8;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+h2{margin:0;font-size:1.5em;color:var(--gold)}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.topbar{display:flex;align-items:center;gap:16px;width:min(760px,100%);justify-content:space-between}
+.auto{font-size:.9em;display:flex;gap:6px;align-items:center}
+/* 曲えらび */
+.songs{display:flex;flex-direction:column;gap:10px;width:min(760px,100%);max-height:calc(100% - 130px);overflow:auto;padding:4px}
+.song{display:flex;align-items:center;gap:12px;background:var(--panel);border-radius:16px;padding:10px 14px;border-left:10px solid var(--c);text-align:left;flex-wrap:wrap}
+.song .nm{flex:1 1 180px}.song .nm b{display:block;font-size:1.15em}.song .nm small{opacity:.75}
+.song .diffs{display:flex;gap:6px;flex-wrap:wrap}
+.song .diffs button{padding:6px 10px;min-height:40px;font-size:.85em;line-height:1.3;background:var(--d)}
+.song .diffs button small{display:block;opacity:.85}
+.crown{font-size:.85em}
+/* あそぶ */
+#s-play{padding:0;gap:0;justify-content:flex-start;background:radial-gradient(ellipse at 50% 100%,#6a2a7a,#1d0c3c 70%)}
+#stage{position:absolute;inset:0;display:flex;flex-direction:column}
+body.playing #lgBtn{display:none}
+#hud{display:flex;align-items:center;gap:10px;padding:8px 62px 6px 96px;min-height:64px}
+.hm{flex:1;min-width:0}.hr{display:flex;align-items:center;gap:10px}
+.gaugeRow{display:flex;align-items:center;gap:8px;font-size:.8em}
+.gauge{position:relative;flex:1;height:16px;border-radius:9px;background:rgba(0,0,0,.5);overflow:hidden;border:2px solid #ffffff55}
+.gauge i{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,#4acbff,#7ad66a,var(--gold));transition:width .15s}
+.gauge .mark{position:absolute;left:70%;top:0;bottom:0;width:3px;background:#fff}
+.songName{font-size:.85em;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.score{font-size:1.7em;font-weight:900;font-variant-numeric:tabular-nums;min-width:4.6em;text-align:right;text-shadow:0 2px 0 #0008}
+#bPause{padding:6px 12px;min-height:40px}
+#laneWrap{position:relative;flex:0 0 auto;height:clamp(110px,24vh,190px);margin-top:4px}
+#lane{width:100%;height:100%;display:block}
+#combo{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-weight:900;font-size:1.9em;color:var(--gold);text-shadow:0 3px 0 #0009;pointer-events:none;opacity:0}
+#combo.on{opacity:1}#combo small{display:block;font-size:.4em;color:#fff}
+#judge{position:absolute;left:var(--hx,18%);top:-4px;transform:translateX(-50%);font-weight:900;font-size:1.3em;pointer-events:none;opacity:0;text-shadow:0 2px 0 #000a}
+#judge.show{animation:jp .5s ease-out}
+@keyframes jp{0%{opacity:1;transform:translate(-50%,6px) scale(1.3)}100%{opacity:0;transform:translate(-50%,-22px) scale(1)}}
+#drumArea{flex:1;display:grid;grid-template-columns:1fr 1.2fr 1.2fr 1fr;gap:6px;padding:10px;min-height:120px}
+.pad{height:100%;max-height:300px;align-self:center;border-radius:50% 50% 40% 40%/60% 60% 40% 40%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.3em;touch-action:none;transition:transform .06s,filter .06s;text-shadow:0 2px 0 #0007}
+.pad.face{background:radial-gradient(circle at 50% 35%,#ff8a74,var(--don) 70%);box-shadow:inset 0 0 0 8px #ffe3d2,0 6px 0 #8f2416}
+.pad.rim{background:radial-gradient(circle at 50% 35%,#8fd0ff,var(--ka) 70%);box-shadow:inset 0 0 0 8px #d8f0ff,0 6px 0 #1d5a8f}
+.pad.down{transform:translateY(5px) scale(.97);filter:brightness(1.3)}
+#keyHint{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:.75em;opacity:.6;pointer-events:none}
+.overlay{position:absolute;inset:0;background:rgba(10,4,30,.7);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:10}
+.overlay.on{display:flex}.overlay.clear{background:transparent;pointer-events:none}
+.overlay .panel{text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;max-width:340px}
+#countNum{font-size:6em;color:var(--gold);text-shadow:0 6px 0 #000a}
+/* けっか */
+.res{text-align:center}
+.reSong{font-weight:800;font-size:1.15em}.reClear{font-size:2em;font-weight:900;margin:6px 0;color:var(--gold)}
+#reTable{margin:6px auto;border-collapse:collapse;min-width:260px}#reTable td{padding:3px 12px;text-align:right}#reTable td:first-child{text-align:left;opacity:.85}
+.reNew{color:#7affb0;font-weight:800;min-height:1.5em}
+@media (max-height:520px){.mascot{width:56px;height:56px}#hud{min-height:48px}#laneWrap{height:clamp(90px,34vh,150px)}.scr{padding-top:48px}.logo .l1{font-size:2em}.logo .l2{font-size:2.4em}.mascot.big{width:90px;height:90px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
