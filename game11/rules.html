@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ルール・ルーレット｜ルールが毎回かわるミニゲーム</title>
+<meta name="theme-color" content="#0d0a2a">
+<meta name="description" content="24種のミニゲーム×12種のルール変化。ルーレットで決まった「ルール」でハイスコアをねらうローグライク。日本語・英語・中国語・韓国語に対応。">
+<script src="../protect.js"></script>
+<link rel="stylesheet" href="./css/lab.css">
+<style>
+#s-play{padding:0;gap:0;justify-content:flex-start;overflow:hidden}
+#top{width:100%;padding:calc(8px + env(safe-area-inset-top)) 56px 4px 100px;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px;flex-wrap:wrap}
+#top .pill{background:#14164acc;border:1px solid #5a63d8;border-radius:999px;padding:3px 11px;font-weight:800;font-size:13px;white-space:nowrap}
+#lives{letter-spacing:1px}
+#ban{width:100%;padding:2px 12px;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;min-height:30px}
+#ban .chip{background:#1c1f66;border:1px solid #6b73f0;border-radius:999px;padding:3px 12px;font-size:13px;font-weight:800}
+#ban .chip.mod{background:#5a1f66;border-color:#ff8ac7}
+#how{width:100%;text-align:center;font-size:13px;color:#d6dcff;padding:0 14px 4px;min-height:20px}
+#stageWrap{position:relative;flex:1;width:100%;min-height:0;display:flex;align-items:center;justify-content:center}
+#cv{display:block;border-radius:12px;box-shadow:0 0 0 2px #4c54c8,0 0 24px rgba(100,110,255,.35);touch-action:none;background:#111}
+#tbar{position:absolute;left:50%;transform:translateX(-50%);bottom:4px;width:min(92%,380px);height:8px;border-radius:6px;background:#1c1f66;overflow:hidden}
+#tbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#59e6d0,#ffe36a,#ff5d7a);transform-origin:left}
+#flash{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:clamp(38px,12vw,72px);font-weight:900;text-shadow:0 0 22px #000;pointer-events:none;z-index:6}
+#flash.on{display:flex}
+#intro{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(8,5,32,.9);z-index:7;padding:16px;text-align:center}
+#intro.on{display:flex}
+.reel{display:flex;align-items:center;gap:12px;min-width:min(86vw,360px);justify-content:center;background:#1c1f66;border:2px solid #8a8fff;border-radius:18px;padding:12px 18px;font-size:22px;font-weight:900}
+.reel .em{font-size:44px}
+.reel.mod{background:#4a1a60;border-color:#ff8ac7}
+#introHow{max-width:min(90vw,420px);font-size:14px;color:#d6dcff;line-height:1.6}
+#perks{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+#perks button{text-align:left;padding:10px 14px;font-size:15px}
+#perks small{display:block;color:#c4cdff;font-weight:400;font-size:12px}
+#cgrid{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}
+#cgrid .cardbtn{padding:8px 4px;cursor:default}
+#cgrid .e{font-size:30px}
+#mgrid{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;width:min(96vw,640px)}
+#mgrid span{background:#4a1a60;border:1px solid #ff8ac7;border-radius:999px;padding:3px 10px;font-size:12px}
+#mgrid span.lock{opacity:.35}
+</style>
+<script src="../shared/are-offline.js" defer></script>
+</head>
+<body>
+<button id="exitBtn" type="button" aria-label="back">← もどる</button>
+<button id="sndBtn" type="button" aria-label="sound">🔊</button>
+<main id="app">
+  <section id="s-title" class="scr on">
+    <div class="logo">ルール・<br>ルーレット</div>
+    <p class="sub" id="tSub"></p>
+    <div class="menu">
+      <button id="bRun" type="button" class="big"></button>
+      <button id="bDaily" type="button" class="teal"></button>
+      <button id="bColl" type="button"></button>
+      <button id="bHow" type="button"></button>
+    </div>
+    <p class="hint" id="tBest"></p>
+  </section>
+
+  <section id="s-how" class="scr">
+    <h2 id="hT"></h2>
+    <div class="panel" id="hBody"></div>
+    <div class="row"><button id="bHowBack" type="button"></button></div>
+  </section>
+
+  <section id="s-coll" class="scr">
+    <h2 id="cT"></h2>
+    <p class="sub" id="cCount"></p>
+    <div id="cgrid" class="grid"></div>
+    <div id="mgrid"></div>
+    <div class="row"><button id="bCollBack" type="button"></button></div>
+  </section>
+
+  <section id="s-play" class="scr">
+    <div id="top"><span class="pill" id="lives"></span><span class="pill" id="scoreP"></span><span class="pill" id="roundP"></span></div>
+    <div id="ban"></div>
+    <div id="how"></div>
+    <div id="stageWrap"><canvas id="cv" width="400" height="560"></canvas><div id="tbar"><i id="tfill"></i></div><div id="flash"></div>
+      <div id="intro"><div class="reel" id="rG"></div><div class="reel mod" id="rM"></div><p id="introHow"></p></div></div>
+  </section>
+</main>
+<button id="lgBtn" type="button" style="position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:40;padding:5px 11px;font-size:12px;border-radius:999px">日本語</button>
+<div id="toast" class="toast"></div>
+<div class="modal" id="mPerk"><div class="box"><h2 id="pkT"></h2><p class="sub" id="pkB"></p><div id="perks"></div></div></div>
+<div class="modal" id="mOver"><div class="box"><h2 id="ovT"></h2><div class="stars" id="ovRank"></div><p class="sub" id="ovB"></p>
+  <div class="row" style="margin-top:10px"><button id="ovRetry" type="button" class="big"></button><button id="ovTitle" type="button"></button></div></div></div>
+<script src="../shared/gk.js"></script>
+<script src="./js/rr-core.js"></script>
+<script src="./js/rr-games-a.js"></script>
+<script src="./js/rr-games-b.js"></script>
+<script src="./js/rr-ui.js"></script>
+</body>
+</html>
