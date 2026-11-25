@@ -61,7 +61,7 @@ function winMsg(who, text, opts){
 
 // ---------------------------------------------------------------- 描画の入口
 function render(){
-    const m = G.mode, ui = $("ui"); document.body.dataset.mode = m;
+    const m = G.mode, ui = $("ui"); document.body.dataset.mode = m; document.body.dataset.info = (m === "map" && G.info) ? "1" : "";   // マップで メッセージ（しょうり など）を 出している間は 十字ボタンを かくして 文字を 読みやすく
     let h = "";
     if(m === "title") h = viewTitle();
     else if(m === "slots") h = viewSlots();

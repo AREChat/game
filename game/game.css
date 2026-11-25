@@ -172,3 +172,4 @@ body[data-mode=map] #top,body[data-mode=battle] #top{bottom:auto;top:8.2cqw;righ
 .tq-cele i{position:absolute;left:0;top:0;font-style:normal;font-size:min(5vh,4vw);color:#fff3b0;text-shadow:0 0 .4em #ffb400;opacity:0;animation:tqci 1.2s ease-out forwards}
 @keyframes tqcb{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.25)}30%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%) scale(1)}}
 @keyframes tqci{0%{opacity:0;transform:translate(0,0) scale(.4)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.1) rotate(200deg)}}
+body[data-info="1"] #dp{display:none}
