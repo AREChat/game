@@ -4184,7 +4184,7 @@ function tqResetAllCheats(){
         "#qolSave{position:absolute;right:1.6cqw;bottom:1.4cqw;z-index:9;font-size:2.4cqw;background:rgba(10,18,60,.82);border:.25cqw solid #8fb4ff;border-radius:1cqw;padding:.3cqw 1.2cqw;opacity:0;transition:opacity .25s;pointer-events:none;color:#fff}" +
         "#qolSave.on{opacity:1}" +
         "#qolMini{position:absolute;right:1cqw;top:15cqw;z-index:4;border:.25cqw solid #8fb4ff;background:rgba(5,10,40,.7);image-rendering:pixelated;max-width:18cqw;pointer-events:none}" +
-        "#qolBtns{position:absolute;right:1cqw;top:11cqw;z-index:6;display:flex;gap:.5cqw}" +
+        "#qolBtns{position:absolute;right:1cqw;top:11.7cqw;z-index:6;display:flex;gap:.5cqw}" +
         "#qolBtns button{font-size:1.9cqw;padding:.2cqw 1cqw;border-radius:.8cqw;border:.25cqw solid #8fb4ff;background:rgba(10,18,60,.85);color:#fff}" +
         "#qolLog{position:absolute;inset:3cqw 8cqw;z-index:12;background:rgba(6,12,50,.96);border:.35cqw solid #8fb4ff;border-radius:1.4cqw;padding:1.6cqw 2cqw;overflow:auto;color:#fff;font-size:2.1cqw;line-height:1.55}" +
         "#qolLog h2{margin:0 0 .8cqw;font-size:2.6cqw;color:#ffd86b}#qolLog .r{margin:.5cqw 0;padding-bottom:.4cqw;border-bottom:1px dashed rgba(255,255,255,.2)}#qolLog .w{color:#9fd0ff;font-size:1.8cqw}" +
