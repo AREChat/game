@@ -4,7 +4,7 @@
 // ・html は ネット優先（つながるときは 常に最新）／js・css などは 控え先・裏で更新。
 // ・ARE QUEST 本体（game/）は game/sw.js が 先に担当する。GET 以外・ほかのサイトには さわらない。
 importScripts("precache-manifest.js", "sw-core.js");
-const CACHE = "game-v82-20261125";
+const CACHE = "game-v83-20261125";
 const core = self.areCore({shell: CACHE, root: "./", precache: true, fetch: false});
 const STATIC_RE = /\.(?:js|css|png|webp|jpe?g|gif|svg|ico|json|webmanifest|txt|woff2?|ttf|mp3|mp4|wasm)$/i;
 
@@ -26,11 +26,19 @@ function putCopy(request, response){
     }
     return Promise.resolve();
 }
-async function networkFirst(request){
+// soft=true（画面の html）：控えがあるのに ネットが1.5秒たっても返らないとき（電波が弱い・モバイル回線）は、先に控えを出す。
+// ネットの取得は そのまま続けて、控えを新しくする（次に開いたときに最新になる）。
+async function networkFirst(request, soft){
     try{
-        const response = await fetch(request, {cache: "no-cache"});
-        putCopy(request, response);
-        return response;
+        const p = fetch(request, {cache: "no-cache"}).then((response) => { putCopy(request, response); return response; });
+        if(soft){
+            const cachedNow = await caches.match(request);
+            if(cachedNow){
+                p.catch(() => {});
+                return await Promise.race([p, new Promise((res) => setTimeout(() => res(cachedNow), 1500))]);
+            }
+        }
+        return await p;
     }catch(error){
         const cached = await caches.match(request);
         if(cached) return cached;
@@ -59,6 +67,6 @@ self.addEventListener("fetch", (event) => {
     if(url.pathname.indexOf("/desktop/") !== -1) return;
     const path = url.pathname;
     const isPage = request.mode === "navigate" || /\.html$/i.test(path) || /\/$/.test(path);
-    if(isPage || /\/version\.json$/i.test(path) || !STATIC_RE.test(path)){ event.respondWith(networkFirst(request)); return; }
+    if(isPage || /\/version\.json$/i.test(path) || !STATIC_RE.test(path)){ event.respondWith(networkFirst(request, isPage && !/\/version\.json$/i.test(path))); return; }
     event.respondWith(cacheFirst(event, request, !url.searchParams.has("v")));
 });
