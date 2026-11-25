@@ -24,8 +24,8 @@ const CSS = `
 .xbtn.on{background:rgba(255,122,184,.9);transform:scale(.96)}
 body.x-rhythm #stick,body.x-rhythm #bAct,body.x-rhythm #bRun,body.x-rhythm #bMenu{display:none!important}
 body.x-loop #stick,body.x-loop #bAct,body.x-loop #bRun,body.x-loop #bMenu{display:none!important}
-body.x-maze #bRun,body.x-maze #bMenu,body.x-jump #bRun,body.x-jump #bMenu,body.x-kart #bRun,body.x-kart #bMenu{display:none!important}
-#vehicle.veh-rhythm,#vehicle.veh-maze,#vehicle.veh-jump,#vehicle.veh-kart,#vehicle.veh-loop{opacity:0!important;border:0!important;background:none!important}
+body.x-maze #bRun,body.x-maze #bMenu,body.x-cheese #bRun,body.x-cheese #bMenu,body.x-queue #bRun,body.x-queue #bMenu,body.x-jump #bRun,body.x-jump #bMenu,body.x-kart #bRun,body.x-kart #bMenu{display:none!important}
+#vehicle.veh-cheese,#vehicle.veh-queue,#vehicle.veh-rhythm,#vehicle.veh-maze,#vehicle.veh-jump,#vehicle.veh-kart,#vehicle.veh-loop{opacity:0!important;border:0!important;background:none!important}
 #vehicle.veh-loop{opacity:1!important;height:100%!important;background:linear-gradient(to top,rgba(20,16,50,.92) 0,rgba(20,16,50,.92) 7vh,rgba(20,16,50,0) 15vh),linear-gradient(to right,rgba(20,16,50,.7) 0,rgba(20,16,50,0) 7vw) !important}
 `;
 let cssDone = false;
