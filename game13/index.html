@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>20歳の冒険｜1年・52週のライフ・アドベンチャー</title>
+<meta name="theme-color" content="#10123a">
+<meta name="description" content="20歳の1年間を、週ごとに自由に過ごす大人向けライフ・アドベンチャー。仕事・恋・夢・お金…145のできごと、27のエンディング。日本語・英語・中国語・韓国語に対応。20歳以上向け。">
+<script src="../protect.js"></script><script src="../shared/are-padmap.js"></script>
+<script src="../shared/agegate.js"></script>
+<link rel="stylesheet" href="./css/ad.css">
+<script src="../shared/are-offline.js" defer></script>
+</head>
+<body data-season="winter">
+<canvas id="fx" aria-hidden="true"></canvas>
+<button id="exitBtn" type="button" aria-label="back">← もどる</button>
+<button id="padBtn" type="button" aria-label="controls" data-gki-settings>🎮</button>
+<button id="sndBtn" type="button" aria-label="sound">🔊</button>
+<button id="lgBtn" type="button" aria-label="language">日本語</button>
+<main id="app">
+  <!-- タイトル -->
+  <section id="s-title" class="scr on">
+    <div class="badge20">20+</div>
+    <div class="logo"><span class="l1">20<small>歳</small></span><span class="l2">の冒険</span></div>
+    <p class="sub" id="tSub"></p>
+    <div class="menu">
+      <button id="bNew" type="button" class="big" data-pad-first></button>
+      <button id="bCont" type="button" class="cont"></button>
+      <button id="bDaily" type="button"></button>
+      <div class="row2"><button id="bColl" type="button"></button><button id="bHow" type="button"></button></div>
+    </div>
+    <p class="hint" id="tNote"></p>
+  </section>
+
+  <!-- あそびかた -->
+  <section id="s-how" class="scr">
+    <h2 id="hT"></h2>
+    <div class="panel" id="hBody"></div>
+    <button id="bHowBack" type="button" class="big"></button>
+  </section>
+
+  <!-- 出身えらび -->
+  <section id="s-setup" class="scr">
+    <h2 id="suT"></h2>
+    <label class="namebox"><span id="suName"></span><input id="nameIn" type="text" maxlength="8" autocomplete="off" data-pad-text="1"></label>
+    <div id="bgList" class="bglist"></div>
+    <div class="row"><button id="bSuBack" type="button"></button><button id="bGo" type="button" class="big"></button></div>
+  </section>
+
+  <!-- ゲーム -->
+  <section id="s-game" class="scr">
+    <header id="hud">
+      <div class="top">
+        <div id="cal"></div>
+        <div id="money"></div>
+      </div>
+      <div id="wbar"><i id="wfill"></i><span id="wtxt"></span></div>
+      <div class="gauges">
+        <div class="g hp"><b>❤️</b><div class="bar"><i id="hpFill"></i></div><em id="hpTxt"></em></div>
+        <div class="g mp"><b>✨</b><div class="bar"><i id="mpFill"></i></div><em id="mpTxt"></em></div>
+      </div>
+    </header>
+    <div id="tabs">
+      <div class="tab on" id="tab-home">
+        <div id="slots"></div>
+        <button id="bNext" type="button" class="big"></button>
+        <div id="tip"></div>
+      </div>
+      <div class="tab" id="tab-bank"></div>
+      <div class="tab" id="tab-contacts"></div>
+      <div class="tab" id="tab-diary"></div>
+      <div class="tab" id="tab-ach"></div>
+    </div>
+    <nav id="nav">
+      <button type="button" data-tab="home" class="on"><span>🏠</span><small id="nvHome"></small></button>
+      <button type="button" data-tab="bank"><span>💴</span><small id="nvBank"></small></button>
+      <button type="button" data-tab="contacts"><span>💬</span><small id="nvCon"></small></button>
+      <button type="button" data-tab="diary"><span>📓</span><small id="nvDia"></small></button>
+      <button type="button" data-tab="ach"><span>🏆</span><small id="nvAch"></small></button>
+      <button type="button" id="bMenu"><span>☰</span><small id="nvMenu"></small></button>
+    </nav>
+  </section>
+
+  <!-- エンディング -->
+  <section id="s-end" class="scr">
+    <div id="endEm" class="endem"></div>
+    <div id="endKind" class="endkind"></div>
+    <h2 id="endT"></h2>
+    <p id="endB" class="endbody"></p>
+    <div class="scorebox"><div id="endRank" class="rank"></div><div><div id="endScore"></div><small id="endBest"></small></div></div>
+    <div id="endStats" class="chips"></div>
+    <div id="endAch" class="ach"></div>
+    <div class="row"><button id="bAgain" type="button" class="big"></button><button id="bEndColl" type="button"></button><button id="bEndTitle" type="button"></button></div>
+  </section>
+
+  <!-- ずかん -->
+  <section id="s-coll" class="scr">
+    <h2 id="cT"></h2>
+    <div class="row" id="cTabs"><button type="button" data-c="end" class="on"></button><button type="button" data-c="ach"></button></div>
+    <p class="hint" id="cCount"></p>
+    <div id="cGrid" class="cgrid"></div>
+    <button id="bCollBack" type="button"></button>
+  </section>
+</main>
+
+<!-- モーダル -->
+<div class="modal" id="mSheet" data-closable="1"><div class="box sheet" id="sheetBox"></div></div>
+<div class="modal" id="mEvent"><div class="box evbox" id="evBox"></div></div>
+<div class="modal" id="mWeek" data-closable="1"><div class="box" id="weekBox"></div></div>
+<div class="modal" id="mMenu" data-closable="1"><div class="box" id="menuBox"></div></div>
+<div class="modal" id="mInfo" data-closable="1"><div class="box" id="infoBox"></div></div>
+<div id="toast" class="toast"></div>
+
+<script src="../shared/are-pad.js"></script>
+<script src="../shared/gk-input.js"></script>
+<script src="../shared/gk.js"></script>
+<script src="./js/ad-core.js"></script>
+<script src="./js/ad-data.js"></script>
+<script src="./js/ad-ev1.js"></script>
+<script src="./js/ad-ev2.js"></script>
+<script src="./js/ad-ev3.js"></script>
+<script src="./js/ad-ev4.js"></script>
+<script src="./js/ad-ev5.js"></script>
+<script src="./js/ad-end.js"></script>
+<script src="./js/ad-ui.js"></script>
+</body>
+</html>

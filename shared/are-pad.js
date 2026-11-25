@@ -14,7 +14,16 @@
         var m = document.elementFromPoint(Math.min(innerWidth - 1, Math.max(0, r.left + r.width / 2)), Math.min(innerHeight - 1, Math.max(0, r.top + r.height / 2))); return !!m && (m === e || e.contains(m) || m.contains(e)); }
     function first(L){ for(var i = 0; i < L.length; i++) if(L[i].matches && L[i].matches("[data-pad-first], button.big")) return L[i]; return L[0]; }   // さいしょに えらぶのは「あそぶ」などの 大きい ボタン（なければ いちばん うえ）
     function list(){ return Array.prototype.filter.call(document.querySelectorAll(SEL), vis); }
-    function setCur(e){ if(cur) cur.classList.remove("are-pad-focus"); cur = e; if(e){ e.classList.add("are-pad-focus"); try{ e.scrollIntoView({block: "nearest", inline: "nearest"}); }catch(_e){} } }
+    var trail = [];   // これまで えらんでいた ボタン（モーダルを とじたとき もとの ボタンへ もどるため）
+    function setCur(e){ if(cur && cur !== e){ trail.push(cur); if(trail.length > 12) trail.shift(); cur.classList.remove("are-pad-focus"); } cur = e; if(e){ e.classList.add("are-pad-focus"); try{ e.scrollIntoView({block: "nearest", inline: "nearest"}); }catch(_e){} } }
+    /* えらんでいた ボタンが 見えなくなったとき：画面が かわった／モーダルが 上に かぶった → 前にいた 見えるボタン、なければ 大きい ボタン。スクロールで 外に でただけ → その方向の ちかい ボタン */
+    function recover(L, dx, dy){
+        var r = cur && cur.getBoundingClientRect ? cur.getBoundingClientRect() : null;
+        var inView = !!r && r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
+        if(!r || !r.width || inView){ for(var i = trail.length - 1; i >= 0; i--) if(L.indexOf(trail[i]) >= 0) return trail[i]; return first(L); }
+        if(!dx && !dy) return first(L);
+        return pick(L, dx, dy) || (dy < 0 ? L[L.length - 1] : L[0]);
+    }
     /* 画面の外に つづく ばあいの スクロール（いま えらんでいる ボタンの まわりの スクロール場所 → なければ ページぜんたい） */
     function scroller(dy){
         for(var n = cur && cur.parentElement; n && n !== document.body && n !== document.documentElement; n = n.parentElement){
@@ -48,9 +57,7 @@
             return;
         }
         if(!cur || !document.contains(cur)){ setCur(first(L)); return; }
-        if(L.indexOf(cur) < 0){   // えらんでいた ボタンが 画面の外に でた → その方向の いちばん ちかい ボタンへ
-            setCur(pick(L, dx, dy) || (dy < 0 ? L[L.length - 1] : L[0])); return;
-        }
+        if(L.indexOf(cur) < 0){ setCur(recover(L, dx, dy)); return; }
         var best = pick(L, dx, dy);
         if(best){ setCur(best); return; }
         if(dy && scrollMove(dy)){   // この先は 画面の外 → スクロールして、見えてきた ボタンを えらぶ
@@ -78,7 +85,7 @@
         if(edge("a", !!(b[1] && b[1].pressed) || !!(b[0] && b[0].pressed && false))){
             var L2 = list(), pick1 = false;
             // えらんだ ボタンが 画面の外（スクロールで はなれた など）のときは、おさずに「えらびなおす」だけ（まちがっておさない）
-            if(!cur || L2.indexOf(cur) < 0){ pick1 = true; if(L2.length) setCur(first(L2)); else if(cur && document.contains(cur)) setCur(cur); else setCur(null); }
+            if(!cur || L2.indexOf(cur) < 0){ pick1 = true; if(L2.length) setCur(cur ? recover(L2, 0, 0) : first(L2)); else if(cur && document.contains(cur)) setCur(cur); else setCur(null); }
             if(cur && !pick1){ try{ cur.click(); }catch(_e){} }
         }
         var sy = ax[3] || 0; if(Math.abs(sy) > .5){ var sc2 = scroller(sy > 0 ? 1 : -1); if(sc2) scrollBy(sc2, sy * 16); }   // 右スティック：スクロール
@@ -88,6 +95,7 @@
         if(edge("b", !!(b[0] && b[0].pressed))) key("Escape");
         if(edge("plus", !!(b[9] && b[9].pressed))) key("Escape");
     }
+    window.AREPadFocus = function(el){ try{ if(el && el !== cur) setCur(el); }catch(_e){} };   // ゲーム側から「ここを えらんだ状態に」（モーダルが ひらいた とき など）
     addEventListener("gamepadconnected", function(){ var L = list(); if(!cur && L.length) setCur(first(L)); });
     requestAnimationFrame(poll);
 })();
