@@ -100,7 +100,7 @@ body[data-mode=talk] #dp,body[data-mode=choice] #dp,body[data-mode=battle] #pad,
 body:not([data-mode=map]):not([data-mode=talk]):not([data-mode=script]) #pad{display:none!important}
 #top{position:absolute;right:1cqw;bottom:1cqw;display:flex;gap:.6cqw;z-index:6}
 #top button{font:inherit;font-size:1.5cqw;color:#fff;background:rgba(10,26,107,.6);border:.2cqw solid #fff8;border-radius:.8cqw;padding:.2cqw .9cqw}
-body[data-mode=map] #top,body[data-mode=battle] #top{bottom:auto;top:6.2cqw;right:1cqw;display:flex}
+body[data-mode=map] #top,body[data-mode=battle] #top{bottom:auto;top:8.2cqw;right:1cqw;display:flex}   /* 2行になる右上の表示（所持金・場所）に ボタンが重ならないよう、6.2→8.2（下の 🗺📜 は 11→11.7） */
 #toast{position:absolute;left:50%;top:7cqw;transform:translateX(-50%);max-width:70cqw;padding:.8cqw 2cqw;font-size:2cqw;display:none;z-index:9;text-align:center;white-space:pre-wrap}
 #toast.on{display:block}
 #toast.low{top:auto;bottom:.6cqw;max-width:92cqw;font-size:1.5cqw;padding:.4cqw 1.6cqw;opacity:.9;pointer-events:none}
