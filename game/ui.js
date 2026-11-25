@@ -357,6 +357,14 @@ function handleKey(k, e){
     if(m === "talk"){ if(k === "ok"){ if(!finishTyping()) rpgNext(); } else if(k === "menu") ACT.autoTalk(); return; }
     if(m === "script" || m === "end" && false) return;
     if(m === "battle" && G.auto){ if(k === "cancel" || k === "ok") ACT.bauto(); return; }
+    if(m === "battle" && (k === "up" || k === "down") && !G.dlg && document.getElementById("bc")){   // たたかいメニューは 2列：上下で 1行 うごく
+        const l = navList(); if(l.length > 2){
+            let i = l.findIndex((e) => e.classList.contains("on")); if(i < 0) i = 0;
+            let j = k === "down" ? i + 2 : i - 2;
+            if(j >= l.length) j = i % 2; else if(j < 0){ j = l.length - 1; if(j % 2 !== i % 2 && j - 1 >= 0) j = j - 1; }
+            l.forEach((e) => e.classList.remove("on")); l[j].classList.add("on"); l[j].scrollIntoView({block:"nearest"}); return;
+        }
+    }
     if(k === "up" || k === "left") navMove(-1); else if(k === "down" || k === "right") navMove(1); else if(k === "ok") navOk(); else if(k === "cancel" || k === "menu") goBack();
 }
 document.addEventListener("keydown", (e) => {
