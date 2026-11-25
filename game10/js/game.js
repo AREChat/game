@@ -15,7 +15,7 @@
 
     // ---------- 画面 ----------
     var scr = {title: $("s-title"), how: $("s-how"), sel: $("s-sel"), play: $("s-play")};
-    function show(k){ Object.keys(scr).forEach(function(n){ scr[n].classList.toggle("on", n === k); }); where = k; document.body.classList.toggle("g10play", k === "play"); if(k === "play") setTimeout(resize, 30); }
+    function show(k){ Object.keys(scr).forEach(function(n){ scr[n].classList.toggle("on", n === k); }); where = k; document.body.classList.toggle("g10play", k === "play"); if(window.GKI) GKI.mode(k === "play" ? "keys" : "menu"); if(k === "play") setTimeout(resize, 30); }
     var where = "title";
     function paintLevels(){
         $("levels").innerHTML = LEVELS.map(function(lv, i){
@@ -112,14 +112,22 @@
     }
 
     // ---------- 入力 ----------
-    var KEYS = {ArrowUp: "U", KeyW: "U", ArrowDown: "D", KeyS: "D", ArrowLeft: "L", KeyA: "L", ArrowRight: "R", KeyD: "R"};
-    window.addEventListener("keydown", function(e){
-        if(where !== "play" || !S) return; var d = KEYS[e.code];
-        if(d){ e.preventDefault(); doStep(d); }
-        else if(e.code === "Space" || e.code === "Period"){ e.preventDefault(); doStep(null); }
-        else if(e.code === "Enter" || e.code === "KeyZ"){ e.preventDefault(); if(!$("clear").hidden) return; newLoop(); }
-        else if(e.code === "KeyR") retryLoop(); else if(e.code === "KeyH") hint();
-    });
+    // キーボード・プロコンは 共通部品 GKI（そうさ設定で かえられる）。十字／スティック＝うごく（おしっぱなしで れんぞく）、A＝⏪ぶんしん、B＝まつ、Y＝このループを やりなおす、X＝ヒント、＋＝ステージえらび
+    var DIRS = {up: "U", down: "D", left: "L", right: "R"}, rp = {};
+    function stopRep(a){ if(rp[a]){ clearTimeout(rp[a].t); clearInterval(rp[a].i); rp[a] = null; } }
+    if(window.GKI){
+        GKI.defaults({a: ["Enter", "z"], b: [" ", "."], x: ["h"], y: ["r"], plus: ["Escape", "p"]});
+        GKI.legend([{k: "dpad", t: {ja: "うごく（おしっぱなしで れんぞく）", en: "Move (hold to repeat)", zh: "移动（按住连续）", ko: "이동 (누르면 연속)"}},
+            {k: "a", t: {ja: "⏪ ぶんしんを つくって やりなおす", en: "⏪ Make a clone and loop again", zh: "⏪ 生成分身并重来", ko: "⏪ 분신을 만들고 다시"}}, {k: "b", t: {ja: "その場で 1歩 まつ", en: "Wait one step", zh: "原地等一步", ko: "제자리에서 한 걸음 기다리기"}},
+            {k: "y", t: {ja: "このループを やりなおす", en: "Retry this loop", zh: "重来本次循环", ko: "이번 루프 다시"}}, {k: "x", t: {ja: "ヒント", en: "Hint", zh: "提示", ko: "힌트"}}, {k: "plus", t: {ja: "ステージえらびへ", en: "Stage list", zh: "关卡列表", ko: "스테이지 목록"}}]);
+        GKI.on(function(a, down){
+            var d = DIRS[a];
+            if(d){ stopRep(a); if(down && where === "play" && S){ doStep(d); rp[a] = {t: setTimeout(function(){ rp[a].i = setInterval(function(){ if(!GKI.held(a)){ stopRep(a); return; } if(where === "play" && S && $("clear").hidden) doStep(d); }, 130); }, 320)}; } return; }
+            if(!down || where !== "play" || !S || !$("clear").hidden) return;
+            if(a === "b") doStep(null); else if(a === "a") newLoop(); else if(a === "y") retryLoop(); else if(a === "x") hint(); else if(a === "plus"){ paintLevels(); show("sel"); }
+        });
+        GKI.onBack(function(){ if(where !== "title") $("exitBtn").click(); });
+    }
     var rep = null;
     $("dpad").addEventListener("pointerdown", function(e){
         var b = e.target.closest("[data-d]"); if(!b) return; e.preventDefault(); var d = b.dataset.d; doStep(d); clearInterval(rep); var n = 0;

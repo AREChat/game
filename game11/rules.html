@@ -6,11 +6,11 @@
 <title>ルール・ルーレット｜ルールが毎回かわるミニゲーム</title>
 <meta name="theme-color" content="#0d0a2a">
 <meta name="description" content="24種のミニゲーム×12種のルール変化。ルーレットで決まった「ルール」でハイスコアをねらうローグライク。日本語・英語・中国語・韓国語に対応。">
-<script src="../protect.js"></script>
+<script src="../protect.js"></script><script src="../shared/are-padmap.js"></script>
 <link rel="stylesheet" href="./css/lab.css">
 <style>
 #s-play{padding:0;gap:0;justify-content:flex-start;overflow:hidden}
-#top{width:100%;padding:calc(8px + env(safe-area-inset-top)) 56px 4px 100px;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px;flex-wrap:wrap}
+#top{width:100%;padding:calc(8px + env(safe-area-inset-top)) 100px 4px 100px;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px;flex-wrap:wrap}
 #top .pill{background:#14164acc;border:1px solid #5a63d8;border-radius:999px;padding:3px 11px;font-weight:800;font-size:13px;white-space:nowrap}
 #lives{letter-spacing:1px}
 #ban{width:100%;padding:2px 12px;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;min-height:30px}
@@ -44,6 +44,7 @@
 <body>
 <button id="exitBtn" type="button" aria-label="back">← もどる</button>
 <button id="sndBtn" type="button" aria-label="sound">🔊</button>
+<button id="padBtn" type="button" aria-label="controls" data-gki-settings>🎮</button>
 <main id="app">
   <section id="s-title" class="scr on">
     <div class="logo">ルール・<br>ルーレット</div>
@@ -84,6 +85,8 @@
 <div class="modal" id="mPerk"><div class="box"><h2 id="pkT"></h2><p class="sub" id="pkB"></p><div id="perks"></div></div></div>
 <div class="modal" id="mOver"><div class="box"><h2 id="ovT"></h2><div class="stars" id="ovRank"></div><p class="sub" id="ovB"></p>
   <div class="row" style="margin-top:10px"><button id="ovRetry" type="button" class="big"></button><button id="ovTitle" type="button"></button></div></div></div>
+<script src="../shared/are-pad.js"></script>
+<script src="../shared/gk-input.js"></script>
 <script src="../shared/gk.js"></script>
 <script src="./js/rr-core.js"></script>
 <script src="./js/rr-games-a.js"></script>

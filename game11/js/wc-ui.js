@@ -47,6 +47,7 @@
         S.scr = id; GK.sfx("tap");
         if(id === "play"){ fit(); }
         $("exitBtn").hidden = id === "play" && false;
+        if(window.GKI) GKI.mode(id === "play" ? "pointer" : "menu", cv);
     }
     function toast(msg, ms){ var e = $("toast"); e.textContent = msg; e.classList.add("on"); clearTimeout(toast._t); toast._t = setTimeout(function(){ e.classList.remove("on"); }, ms || 1800); }
 
@@ -207,15 +208,32 @@
         if(S.hintLv >= 2 && st.sol && st.sol[0]){ var w0 = String(st.sol[0].w).split(/\s+/).pop(); var r = D.make(w0); txt += "\n" + t("hint2", {w: (r.noun ? r.noun.emoji + " " : "") + (r.noun ? (r.noun[GK.lang()] || r.noun.ja)[0] : w0)}); }
         box.style.whiteSpace = "pre-line"; box.textContent = txt; box.classList.add("on"); clearTimeout(box._t); box._t = setTimeout(function(){ box.classList.remove("on"); }, 7000);
     });
-    document.addEventListener("keydown", function(e){
+    // キーボード・プロコンは 共通部品 GKI。スティック／十字＝カーソル、A＝ひろう・おく・ボタンを おす（ことば入力ぶぶんを おすと もじ盤が ひらく）
+    // L／R＝まわす、X＝スタート／とめる、Y＝さいしょから、B＝キャンセル（もっていなければ 1つ もどす）、ZL＝1つもどす、ZR＝ヒント、−＝ことばを うつ、＋＝もどる
+    if(window.GKI){
+        GKI.defaults({a: ["Enter", "/"], b: ["Escape", "Backspace"], x: [" ", "x"], y: ["r", "y"], plus: ["p"]});
+        var zc = {}; D.NOUNS.concat(D.MODS).forEach(function(x){ (x.zh || []).forEach(function(w){ Array.from(w).forEach(function(c){ zc[c] = (zc[c] || 0) + 1; }); }); });
+        GKI.textpadOpts({chars: Object.keys(zc).sort(function(p, q){ return zc[q] - zc[p]; }).join("")});
+        GKI.legend([{k: "dpad", t: {ja: "カーソルを うごかす", en: "Move the cursor", zh: "移动光标", ko: "커서 이동"}},
+            {k: "a", t: {ja: "ひろう・おく・ボタンを おす（ことばの わくで もじ盤）", en: "Pick up / place / press (text box opens the letter pad)", zh: "拾取/放置/按钮（文字框会打开输入盘）", ko: "집기/놓기/버튼 (입력창은 글자판)"}},
+            {k: "l", t: {ja: "ひだりに まわす", en: "Rotate left", zh: "向左旋转", ko: "왼쪽 회전"}}, {k: "r", t: {ja: "みぎに まわす", en: "Rotate right", zh: "向右旋转", ko: "오른쪽 회전"}},
+            {k: "x", t: {ja: "スタート／とめる", en: "Start / stop", zh: "开始/停止", ko: "시작/정지"}}, {k: "y", t: {ja: "さいしょから", en: "Reset", zh: "重来", ko: "처음부터"}},
+            {k: "b", t: {ja: "キャンセル／1つ もどす", en: "Cancel / undo one", zh: "取消/撤销一个", ko: "취소/하나 되돌리기"}}, {k: "zr", t: {ja: "ヒント", en: "Hint", zh: "提示", ko: "힌트"}},
+            {k: "minus", t: {ja: "ことばを うつ（もじ盤）", en: "Type a word (letter pad)", zh: "输入文字（输入盘）", ko: "단어 입력 (글자판)"}}, {k: "plus", t: {ja: "もどる", en: "Back", zh: "返回", ko: "뒤로"}}]);
+        GKI.on(function(a, down){
+            if(!down || S.scr !== "play") return;
+            if(a === "l") rot(-45); else if(a === "r") rot(45);
+            else if(a === "y") $("bReset").click(); else if(a === "x") $("bGo").click();
+            else if(a === "b" || a === "zl") $("bUndo").click(); else if(a === "zr") $("bHint").click();
+            else if(a === "a") $("wi").focus(); else if(a === "minus") GKI.textpad($("wi"));
+            else if(a === "plus") $("exitBtn").click();
+        });
+        GKI.onBack(function(){ if(S.scr !== "title") $("exitBtn").click(); });
+        $("wi").setAttribute("data-pad-text", "1");
+    }
+    document.addEventListener("keydown", function(e){   // ことば入力中の Esc：入力をやめる
         if(S.scr !== "play") return;
-        var inp = document.activeElement === $("wi");
         if(e.key === "Escape"){ S.held = null; $("wi").blur(); }
-        else if(!inp && (e.key === "q" || e.key === "Q")) rot(-45);
-        else if(!inp && (e.key === "e" || e.key === "E")) rot(45);
-        else if(!inp && (e.key === "r" || e.key === "R")){ $("bReset").click(); }
-        else if(!inp && e.key === " "){ e.preventDefault(); $("bGo").click(); }
-        else if(!inp && (e.key === "Enter" || e.key === "/")){ e.preventDefault(); $("wi").focus(); }
     });
 
     // ---------- メニュー ----------

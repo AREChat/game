@@ -6,11 +6,11 @@
 <title>ことばクラフト｜打った言葉が「もの」になる物理パズル</title>
 <meta name="theme-color" content="#0d0a2a">
 <meta name="description" content="「はし」「ばくだん」「おおきい いし」…打った言葉がそのまま物になる、世界初のことばパズル。日本語・英語・中国語・韓国語に対応。">
-<script src="../protect.js"></script>
+<script src="../protect.js"></script><script src="../shared/are-padmap.js"></script>
 <link rel="stylesheet" href="./css/lab.css">
 <style>
 #s-play{padding:0;gap:0;justify-content:flex-start;overflow:hidden}
-#bar{width:100%;padding:calc(8px + env(safe-area-inset-top)) 56px 4px 100px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px;min-height:44px}
+#bar{width:100%;padding:calc(8px + env(safe-area-inset-top)) 100px 4px 100px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px;min-height:44px}
 #bar #nm{font-weight:900;font-size:15px;text-align:left;flex:1 1 140px;min-width:0}
 #bar .pill{background:#14164acc;border:1px solid #5a63d8;border-radius:999px;padding:3px 11px;font-weight:800;font-size:13px;white-space:nowrap}
 #bar .pill.low{background:#a02a3a;border-color:#ff8090}
@@ -40,6 +40,7 @@
 <body>
 <button id="exitBtn" type="button" aria-label="back">← もどる</button>
 <button id="sndBtn" type="button" aria-label="sound">🔊</button>
+<button id="padBtn" type="button" aria-label="controls" data-gki-settings>🎮</button>
 <main id="app">
   <section id="s-title" class="scr on">
     <div class="logo">ことば<br>クラフト</div>
@@ -96,6 +97,8 @@
   <div class="row" style="margin-top:10px"><button id="clNext" type="button" class="big"></button><button id="clRetry" type="button"></button><button id="clSel" type="button"></button></div></div></div>
 <div id="ver">v1</div>
 <script src="./vendor/matter.min.js"></script>
+<script src="../shared/are-pad.js"></script>
+<script src="../shared/gk-input.js"></script>
 <script src="../shared/gk.js"></script>
 <script src="./js/wc-banned.js"></script>
 <script src="./js/wc-dict.js"></script>
