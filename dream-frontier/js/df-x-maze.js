@@ -137,7 +137,7 @@ function ensure(R){
     const cv = el("canvas", "xmap", "", "width:150px;height:150px;right:10px;top:104px"); cv.width = 300; cv.height = 300; r.appendChild(cv); R.map = cv; R.mctx = cv.getContext("2d");
 }
 function draw(R){
-    const c = R.mctx, W = 300, T = THEME[R.v], s = W / (N * C + 4), px = (x) => (x - ox(R.v) + 2) * s, pz = (z) => W - (z - oz() + 2) * s;
+    const c = R.mctx, W = 300, T = THEME[R.v], s = W / (N * C + 4), px = (x) => W - (x - ox(R.v) + 2) * s, pz = (z) => W - (z - oz() + 2) * s;
     c.clearRect(0, 0, W, W);
     c.strokeStyle = T.t; c.lineWidth = 3; c.lineCap = "round";
     for(let i = 0; i <= N; i++) for(let j = 0; j < N; j++){

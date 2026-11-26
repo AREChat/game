@@ -193,7 +193,7 @@ function updateHud(R){
     h.big.textContent = R.cd > 0 ? String(Math.ceil(R.cd)) : (R.tm < .8 ? "GO!" : ""); h.big.style.opacity = R.cd > 0 || R.tm < .8 ? 1 : 0;
     h.pos.innerHTML = "<div class='sc'>" + R.rank + "<small> / 4 い</small></div><small>" + clamp(me.lapN + 1, 1, LAPS) + " しゅうめ / " + LAPS + "</small>";
     h.spd.innerHTML = "<div class='sc'>" + Math.round(Math.max(0, me.v) * .7) + "<small> m/びょう</small></div>"; h.gauge.firstChild.firstChild.style.width = Math.round(R.gauge * 100) + "%";
-    if(!R.mctx) return; const c = R.mctx, W = 190, H = 190, s = R.ms, px = (x) => 8 + (x - T.minX) * s, pz = (z) => H - 8 - (z - T.minZ) * s;
+    if(!R.mctx) return; const c = R.mctx, W = 190, H = 190, s = R.ms, px = (x) => W - 8 - (x - T.minX) * s, pz = (z) => H - 8 - (z - T.minZ) * s;
     c.clearRect(0, 0, W, H); c.lineWidth = 7; c.strokeStyle = "rgba(255,255,255,.55)"; c.lineJoin = "round"; c.beginPath(); for(let i = 0; i <= T.n; i += 3){ const p = T.pts[i % T.n]; if(i === 0) c.moveTo(px(p.x), pz(p.z)); else c.lineTo(px(p.x), pz(p.z)); } c.closePath(); c.stroke();
     for(const k of R.ks){ c.fillStyle = KCOL[k.ci].b; c.beginPath(); c.arc(px(k.x), pz(k.z), k.ci === 0 ? 6 : 4.5, 0, TAU); c.fill(); if(k.ci === 0){ c.strokeStyle = "#fff"; c.lineWidth = 2; c.stroke(); } }
 }
