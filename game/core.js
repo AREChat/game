@@ -27,9 +27,14 @@ function rpgFmt(t){
 // ---------------------------------------------------------------- 声（ブラウザの読み上げ・BGMなし）
 // 男の声／女の声を えらぶ（端末に入っている日本語の声から名前で さがす）
 const TQ_MALE_VOICE = /ichiro|otoya|takumi|hattori|keita|kenji|ryo|male|男|いちろう|おとや/i, TQ_FEMALE_VOICE = /kyoko|haruka|ayumi|nanami|sayaka|mizuki|o-?ren|female|女|google|きょうこ|はるか/i;
+// 声の一覧は、ブラウザが あとから 読みこむことがある（さいしょの 1回目は 空）。読みこみ完了を まって ためておく
+let TQ_VOICES = [], tqNoJaToldAt = 0;
+function tqVoices(){ try{ const l = window.speechSynthesis.getVoices() || []; if(l.length) TQ_VOICES = l; }catch(_e){} return TQ_VOICES; }
+function tqIsJa(x){ return /^(ja|jpn)/i.test(String(x.lang || "").replace("_", "-")) || /日本語|japanese|日本/i.test(String(x.name || "")); }
+try{ if(window.speechSynthesis){ tqVoices(); if(window.speechSynthesis.addEventListener) window.speechSynthesis.addEventListener("voiceschanged", tqVoices); else window.speechSynthesis.onvoiceschanged = tqVoices; } }catch(_e){}
 function tqPickVoice(g){
     try{
-        const list = (window.speechSynthesis.getVoices() || []).filter((x) => /^ja/i.test(x.lang)); if(!list.length) return null;
+        const list = tqVoices().filter(tqIsJa); if(!list.length) return null;
         const male = list.find((x) => TQ_MALE_VOICE.test(x.name) && !/female/i.test(x.name)), fem = list.find((x) => TQ_FEMALE_VOICE.test(x.name) || !TQ_MALE_VOICE.test(x.name));
         if(g === "m") return male ? {voice: male, exact: true} : {voice: list[0], exact: false};
         return fem ? {voice: fem, exact: true} : {voice: list[0], exact: false};
@@ -48,13 +53,14 @@ function tqSpeak(text, who){
         if(!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance !== "function") return;
         const ss = window.speechSynthesis; ss.cancel();
         let src = String(text); try{ if(G.S && G.S.yomi && G.S.name) src = src.split(G.S.name).join(G.S.yomi); }catch(_e){}
-        const clean = src.replace(/\(ARE\)/g, "アレ").replace(/ARE/g, "アレ").replace(/[「」『』（）()…♪★☆💰▼]/g, "、").replace(/\s+/g, "");
+        const clean = src.replace(/\(ARE\)/g, "アレ").replace(/ARE/g, "アレ").replace(/\bHP\b/g, "エイチピー").replace(/\bMP\b/g, "エムピー").replace(/\bEXP\b/gi, "けいけんち").replace(/\bLv\.?/gi, "レベル").replace(/\bBGM\b/g, "ビージーエム").replace(/\bG\b/g, "ゴールド").replace(/[「」『』（）()…♪★☆💰▼]/g, "、").replace(/\s+/g, "");
         if(!clean.replace(/、/g, "").trim()) return;
         const key = who === "me" ? "me:" + (G.S ? G.S.sex : "m") : (who || "");
         const v = RPG_VOICES[key] || RPG_VOICES[""] || [1, 1];
         const u = new SpeechSynthesisUtterance(clean); u.lang = "ja-JP"; u.pitch = v[0]; u.rate = v[1];
         const g = v[0] <= 1.02 ? "m" : (v[0] >= 1.2 ? "f" : ""); const pk = g ? tqPickVoice(g) : null;
-        const jp = pk ? pk.voice : (ss.getVoices() || []).find((x) => /^ja/i.test(x.lang)); if(jp) u.voice = jp;
+        const jp = pk ? pk.voice : tqVoices().find(tqIsJa); if(jp) u.voice = jp;
+        else if(tqVoices().length && Date.now() - tqNoJaToldAt > 600000){ tqNoJaToldAt = Date.now(); try{ toast("この たんまつには 日本語の こえが ないみたい。 英語の こえで よむので 英語っぽく きこえるよ（たんまつの せっていで 日本語の こえを いれてね）"); }catch(_e){} }
         if(pk && !pk.exact) u.pitch = g === "m" ? Math.min(u.pitch, 1) * .6 : Math.max(u.pitch, 1.25);   // 男女の声が選べない端末は、高さで ちがいを出す
         ss.speak(u);
     }catch(_e){}

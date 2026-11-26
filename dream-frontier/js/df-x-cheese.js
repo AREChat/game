@@ -143,6 +143,11 @@ export const cheese = {
             }
             // ガクと ミミ：まえで おしゃべり（ライバルだけど なかよし）
             for(const [w, off, side] of [["gaku", 3.6, 1], ["mimi", 5.0, -1]]){ const p = qp(Math.min(s + off, QP.total - 3 - (side > 0 ? 0 : 1.2)), 0), sp = spk(w); D.push(SPR({m: w === "gaku" ? "ch_boy" : "ch_girl", x: p.x, y: .43 + (sp ? Math.abs(Math.sin(T * 9)) * .1 : 0) + cheer * Math.abs(Math.sin(T * 12)) * .4, z: p.z, yaw: p.yaw + Math.PI + (sp ? .5 * side : 0) + (w === "mimi" ? .4 : -.4), sx: .85, sy: .85, sz: .85}, w === "gaku" ? "ch_boy" : "ch_girl", .5)); }
+            // ごうかな かざり：まわる 金の チーズ・ゆれる ふうせん・チカチカ ひかる シャンデリア・ふわふわ キラキラ
+            for(const z of [HALL.z0 - 6.4, HALL.zb + 6.2]) D.push({m: "ch_gcheese", x: SX + 24.2, y: 1.28, z: SZ + z, yaw: T * 1.3, sx: 1.4, sy: 1.4, sz: 1.4});
+            for(let i = 0; i < 8; i++){ const sd = i % 2 ? -1 : 1, bob = Math.sin(T * 1.4 + i * 1.7); D.push(SPR({m: "ch_bal", x: SX + sd * 25.2, y: 6.3 + bob * .35, z: SZ + HALL.z0 - 4.5 + (i >> 1) * 9.3 + (i % 2) * 2, yaw: T * .6 + i, sx: 1.6, sy: 1.6, sz: 1.6}, "ch_bal" + (i % 3), "c")); }
+            for(let q = 0; q < 3; q++) for(let a = 0; a < 8; a++){ const an = a / 8 * TAU; D.push({s: "glow", x: SX + Math.cos(an) * 2.1, y: 6.8, z: SZ + HALL.z0 + 2 + q * 9 + Math.sin(an) * 2.1, w: 1.3, h: 1.3, c: [1, .92, .6], a: .3 + .25 * Math.sin(T * 3.2 + a * 1.3 + q)}); }
+            for(let i = 0; i < 20; i++){ const ph = (T * .11 + i * .137) % 1; D.push({s: "glow", x: SX - 25 + (i * 37) % 50, y: .8 + ph * 7.2, z: SZ + HALL.z0 - 6 + (i * 53) % 34, w: .45, h: .45, c: [1, .9, .55], a: Math.sin(ph * Math.PI) * .85}); }
             // のこり じかんの ひょうじ
             { const m = Math.max(0, Math.ceil(R.w0 * (1 - t / QT))), d1 = (m / 10) | 0, d0 = m % 10, zc = SZ + HALL.zb + 7.1; if(d1 > 0) D.push({m: "ch_d" + d1, x: SX - 1.3, y: 3.6, z: zc, yaw: Math.PI, sx: 1.8, sy: 1.8, sz: 1}); D.push({m: "ch_d" + d0, x: SX + (d1 > 0 ? 1.0 : 0), y: 3.6, z: zc, yaw: Math.PI, sx: 1.8, sy: 1.8, sz: 1});
                 D.push({s: "glow", x: SX, y: 4.7, z: zc - .3, w: 7, h: 3.4, c: [1, .85, .3], a: .25}); }

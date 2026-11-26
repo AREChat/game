@@ -105,6 +105,8 @@ export function buildModels(K){
     { const P = M("ch_chunk"); box(P, 0, 0, 0, .6, .5, .6, "#ffd23a", .4); sph(P, .15, .25, .2, .1, "#c98a1a", .4, 5); }
     { const P = M("ch_merry"); cyl(P, 0, 0, 0, 3.4, 3.8, .7, "#ffd23a", 18); cyl(P, 0, .7, 0, 2.6, 2.8, 2.6, "#ffec7a", 18); cyl(P, 0, 3.3, 0, 0, 2.7, 1.8, "#ff7a8a", 18);
         for(let i = 0; i < 8; i++){ const a = i / 8 * TAU; sph(P, Math.cos(a) * 2.7, 1.8, Math.sin(a) * 2.7, .45, "#c98a1a", .5, 6); } sph(P, 0, 5.4, 0, .3, "#ffe94a", 1, 6); }
+    { const P = M("ch_gcheese"); cyl(P, 0, 0, 0, .95, .95, .75, "#ffd23a", 16); cyl(P, 0, .75, 0, .95, .95, .08, "#fff0a0", 16); cyl(P, 0, -.05, 0, .98, .98, .06, "#c98a1a", 16);
+        for(let i = 0; i < 6; i++){ const a = i / 6 * TAU; sph(P, Math.cos(a) * .95, .3 + (i % 2) * .15, Math.sin(a) * .95, .2, "#c98a1a", .6, 5); } sph(P, .3, .8, .2, .2, "#d89a22", .3, 5); sph(P, -.35, .8, -.25, .15, "#d89a22", .3, 5); }
     { const P = M("ch_cup"); cyl(P, 0, 0, 0, 1.0, 1.3, .35, "#ff9acb", 12); cyl(P, 0, .3, 0, 1.3, 1.1, .9, "#9ad8ff", 12); box(P, 1.2, .8, 0, .15, .6, .4, "#ffffff"); }
 }
 
@@ -129,7 +131,7 @@ export function buildStage(K, P){
         for(const sx of [-1, 1]){ b(S, sx * (W / 2 - .2), 0, z0 - 7.2, 1.4, 9, 2.4, "#a8742a"); }
         // 入口（にし）と 出口：かべに あな
         // ぶらさがる チーズ ランプ と こっか
-        for(let i = 0; i < 9; i++) for(let j = 0; j < 3; j++){ const x = -22 + i * 5.5, z = z0 + 2 + j * 9; y_(S, x, 7.2, z, .04, .04, 1.8, "#3a2a1a", 4); y_(S, x, 6.3, z, .9, .9, .5, "#ffd23a", 10); o_(GL, x, 6.2, z, .9, "#ffe27a", .5, 6); }
+        for(let i = 0; i < 9; i++) for(let j = 0; j < 3; j++){ if(i === 4) continue; const x = -22 + i * 5.5, z = z0 + 2 + j * 9; y_(S, x, 7.2, z, .04, .04, 1.8, "#3a2a1a", 4); y_(S, x, 6.3, z, .9, .9, .5, "#ffd23a", 10); o_(GL, x, 6.2, z, .9, "#ffe27a", .5, 6); }
         // れつの さく（ポストと ロープ）
         for(let j = 0; j <= HALL.n; j++){ const z = z0 - HALL.lane / 2 + j * HALL.lane; if(j === 0 || j === HALL.n){ if(j === 0) continue; }
             const open = j > 0 && j < HALL.n ? ((j - 1) % 2 === 0 ? 1 : -1) : 0, x0 = open > 0 ? -24 : -17, x1 = open > 0 ? 17 : 24;
@@ -145,7 +147,43 @@ export function buildStage(K, P){
         // のりば（ステーション）
         b(S, -34, -.02, HALL.zb, 10, .5, 6, "#6a6a7a"); b(S, -34, .5, HALL.zb, 10, .06, 6, "#ffd24a"); for(let i = 0; i < 8; i++) b(GL, -38 + i * 1.1, .55, HALL.zb + 2.6, .6, .05, .2, "#ffe27a");
         // 時計の パネル（のこり じかん）
-        b(S, 0, 4.6, HALL.zb + 7.6, 9, 3.4, .4, "#26262e"); b(S, 0, 4.7, HALL.zb + 7.35, 8.4, 3.0, .1, "#14141c"); }
+        b(S, 0, 4.6, HALL.zb + 7.6, 9, 3.4, .4, "#26262e"); b(S, 0, 4.7, HALL.zb + 7.35, 8.4, 3.0, .1, "#14141c");
+        // ===== ごうかな かざり（ゆか・はしら・シャンデリア・まど・ぞう・はなかざり）=====
+        { const GOLD = "#ffd24a", DGOLD = "#c98a1a", ZA = z0 - 8, ZB = zN + 8;
+            // ゆか：チーズいろの チェッカー と 赤い じゅうたん（レーンごと）
+            for(let ix = 0; ix < 14; ix++) for(let iz = 0; iz < 10; iz++) if((ix + iz) % 2) fl(-26 + ix * 4, ZA + 2 + iz * 4, 4, 4, "#f1d27a", .015);
+            for(let k = 0; k < HALL.n; k++){ const z = z0 + k * HALL.lane; fl(0, z, 50, HALL.lane - 1.0, "#a82434", .03); fl(0, z - (HALL.lane - 1.0) / 2 + .1, 50, .2, GOLD, .04); fl(0, z + (HALL.lane - 1.0) / 2 - .1, 50, .2, GOLD, .04); fl(0, z, 50, .12, "#ff8a8a", .04); }
+            // はしら（金の かざり）と 巾木
+            for(const sx of [-1, 1]){ b(S, sx * 27.8, 0, cz, .25, .35, D, "#6a3a1a");
+                for(const pz of [z0 - 3.2, z0 + 6.5, z0 + 13.5, z0 + 20.5, z0 + 27.5]){ const x = sx * 26.9;
+                    b(S, x, 0, pz, 1.5, .5, 1.5, "#7a4a1a"); b(S, x, .5, pz, 1.2, .12, 1.2, GOLD); y_(S, x, .6, pz, .5, .58, 7.4, "#f6e4b4", 12); y_(S, x, 1.2, pz, .6, .6, .14, GOLD, 12); y_(S, x, 6.6, pz, .6, .6, .14, GOLD, 12); b(S, x, 7.9, pz, 1.4, .5, 1.4, GOLD); b(S, x, 8.4, pz, 1.7, .4, 1.7, DGOLD); }
+                // ステンドグラスの まど
+                for(let i = 0; i < 4; i++){ const z = z0 + 3 + i * 7, x = sx * 27.9, gc = ["#8ad0ff", "#ffb0e0", "#a8ffd0", "#ffe27a"][i];
+                    b(S, x, 4.85, z, .3, 3.4, 4.2, GOLD); b(GL, sx * 27.72, 5.0, z, .08, 3.0, 3.8, gc); b(S, sx * 27.62, 5.0, z, .1, 3.0, .14, GOLD); b(S, sx * 27.62, 6.4, z, .1, .14, 3.8, GOLD); b(S, sx * 27.62, 5.7, z, .1, .12, 3.8, GOLD); }
+                // はなかざり：はち植え
+                for(const pz of [z0 + 10, z0 + 17, z0 + 24]){ const x = sx * 25.9; y_(S, x, 0, pz, .5, .38, .75, "#c8582a", 10); y_(S, x, .7, pz, .52, .52, .1, DGOLD, 10); o_(S, x, 1.5, pz, .8, "#3fa84a", 1, 7); o_(S, x + .35, 1.15, pz + .3, .5, "#52c05a", 1, 6); o_(S, x - .3, 1.9, pz - .2, .45, "#2f9040", 1, 6);
+                    for(let f = 0; f < 4; f++) o_(S, x + Math.cos(f * 1.7) * .7, 1.7 + (f % 2) * .3, pz + Math.sin(f * 1.7) * .7, .13, ["#ff8aa8", "#fff27a", "#ffffff", "#ffa05a"][f], 1, 5); } }
+            // てんじょう：金の はり と まんなかの メダル
+            for(const z of [z0 - 4.5, z0 + 4.5, z0 + 13.5, z0 + 22.5]){ b(S, 0, 8.5, z, W, .5, .7, DGOLD); b(S, 0, 8.45, z, W, .1, .8, GOLD); }
+            for(const x of [-14, 0, 14]){ b(S, x, 8.55, cz, .7, .45, D, DGOLD); }
+            for(const z of [z0 + 2, z0 + 11, z0 + 20]) o_(GL, 0, 8.85, z, 3.2, "#ffe9a0", .08, 12);
+            // ぶらさがる シャンデリア（まんなか3つ）
+            for(const z of [z0 + 2, z0 + 11, z0 + 20]){ y_(S, 0, 7.4, z, .07, .07, 1.7, "#6a4a1a", 4); y_(S, 0, 6.8, z, .55, .45, .8, GOLD, 10); o_(S, 0, 6.65, z, .6, "#ffe27a", 1, 8); o_(GL, 0, 6.65, z, 1.7, "#fff0b0", .8, 8);
+                for(let a = 0; a < 8; a++){ const an = a / 8 * TAU, ax = Math.cos(an) * 2.1, az = Math.sin(an) * 2.1;
+                    b(S, ax / 2, 6.55, z + az / 2, 2.1, .09, .09, GOLD, -an); y_(S, ax, 6.35, z + az, .28, .14, .3, GOLD, 8); o_(GL, ax, 6.8, z + az, .42, "#fff0b0", 1, 6); o_(S, ax, 6.75, z + az, .17, "#fffbe0", 1.3, 6); o_(S, ax, 5.95, z + az, .14, "#d8f2ff", 1.9, 5);
+                    const bn = an + .39, bx = Math.cos(bn) * 3.0, bz = Math.sin(bn) * 3.0; o_(S, bx, 6.1, z + bz, .12, "#e8f8ff", 1.8, 5); }
+                o_(S, 0, 5.8, z, .26, "#bfe8ff", 2.1, 6); }
+            // かざりばた（ガーランド）
+            for(const z of [z0 + 6.5, z0 + 15.5, z0 + 24.5]){ b(S, 0, 8.2, z, W - 2, .05, .05, "#3a2a1a"); for(let x = -26, n = 0; x <= 26; x += 1.3, n++) b(S, x, 7.55 - (n % 2) * .08, z, .55, .65, .05, ["#e83a4a", "#ffd23a", "#37a2ee", "#5ad66a", "#ff8ac0"][n % 5]); }
+            // かざりの ぞう（四すみ）：金の ねずみ と ねこ、まわる 金の チーズ
+            for(const [x, z, kind] of [[-24.2, z0 - 6.4, "mouse"], [-24.2, zN + 6.2, "cat"], [24.2, z0 - 6.4, "spin"], [24.2, zN + 6.2, "spin"]]){
+                b(S, x, 0, z, 2.4, 1.1, 2.4, "#7a4a1a"); b(S, x, 1.1, z, 2.7, .18, 2.7, GOLD); b(S, x, .35, z, 2.55, .12, 2.55, DGOLD);
+                if(kind === "mouse"){ o_(S, x, 2.0, z, .75, GOLD, 1.1, 8); o_(S, x, 3.1, z + .1, .5, GOLD, 1, 8); o_(S, x - .38, 3.55, z, .26, DGOLD, 1, 6); o_(S, x + .38, 3.55, z, .26, DGOLD, 1, 6); o_(S, x, 3.05, z + .55, .1, "#8a5a1a", 1, 5); b(S, x + .9, 1.4, z - .3, .8, .1, .1, GOLD); b(S, x, 2.35, z + .75, .5, .35, .5, "#fff2a0"); }
+                else if(kind === "cat"){ o_(S, x, 2.0, z, .8, GOLD, 1.1, 8); o_(S, x, 3.15, z + .1, .55, GOLD, 1, 8); b(S, x - .3, 3.55, z, .26, .5, .2, DGOLD); b(S, x + .3, 3.55, z, .26, .5, .2, DGOLD); y_(S, x + .85, 1.3, z - .4, .12, .14, 1.6, GOLD, 6); o_(S, x, 3.1, z + .6, .1, "#8a5a1a", 1, 5); } }
+            // かんばん：「たいけつ！ チーズ レース」ふうの 金の ふち（いりぐち ぎわ）
+            b(S, 0, 6.3, z0 - 7.6, 22, 2.0, .3, "#5a2a14"); b(S, 0, 6.3, z0 - 7.45, 22.6, 2.4, .1, GOLD); b(GL, 0, 6.5, z0 - 7.4, 20, 1.5, .06, "#ffe9a0");
+            for(let i = 0; i < 5; i++) o_(S, -8 + i * 4, 6.5, z0 - 7.3, .55, DGOLD, .7, 6); }
+    }
     // === ライドの 8つの へや ===
     SCN.forEach((sc, k) => {
         const cx = sc.cx, zb = HALL.zb, W = 100, D = 72, outdoor = (k === 3 || k === 6 || k === 7), pal = [["#d8b070", "#8a5a2a"], ["#ffd23a", "#c98a1a"], ["#ffe9a8", "#ff7a8a"], ["#5a4a7a", "#2a1a3a"], ["#9aa0b0", "#5a6070"], ["#6a4a3a", "#3a2a1a"], ["#ffc84a", "#c8782a"], ["#ffe27a", "#ff5a8a"]][k];

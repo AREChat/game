@@ -30,7 +30,7 @@ export function createExtra(h){
         const ss = window.speechSynthesis; ss.cancel();
         const u = new SpeechSynthesisUtterance(clean); u.lang = "ja-JP";
         const fem = /ミカ|女|ちゃん|さん$/.test(who || "") && !/くん/.test(who || "");
-        const list = (ss.getVoices() || []).filter((x) => /^ja/i.test(x.lang));
+        const list = (ss.getVoices() || []).filter((x) => /^(ja|jpn)/i.test(String(x.lang || "").replace("_", "-")) || /日本語|japanese/i.test(String(x.name || "")));
         const v = fem ? (list.find((x) => FEMALE.test(x.name) || !MALE.test(x.name))) : list.find((x) => MALE.test(x.name) && !/female/i.test(x.name));
         if(v) u.voice = v; else u.pitch = fem ? 1.3 : .7;
         ss.speak(u);
