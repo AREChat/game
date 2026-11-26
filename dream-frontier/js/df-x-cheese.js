@@ -224,10 +224,11 @@ function throwCheese(g, R, t, need){
     const a = [cam.eye[0] + fx * .7, cam.eye[1] - .35, cam.eye[2] + fz * .7];
     if(!best && need) return false;
     if(!best){ R.shots.push({t0: t, d: .5, a, b: [cam.eye[0] + fx * 14, cam.eye[1] - 1.2 - fp * 6, cam.eye[2] + fz * 14]}); g.sfx("shot"); return true; }
-    const {tg, p} = best, d = clamp(Math.hypot(p.x - a[0], p.z - a[2]) / 30, .22, .6); R.shots.push({t0: t, d, a, b: [p.x, p.y, p.z]}); g.sfx("shot"); return true;
+    const {tg, p} = best, d = clamp(Math.hypot(p.x - a[0], p.z - a[2]) / 30, .22, .6); R.shots.push({t0: t, d, a, b: [p.x, p.y, p.z]}); g.sfx("shot");
     tg.hit = t + d; tg.cool = t + d + 3; R.score += 100; R.hits++; R.fx.push({t: t + d, x: p.x, y: p.y, z: p.z, id: tg.id, c: tg.kind === "bomb" ? [1, .6, .3] : tg.kind === "bal" ? [1, .5, .8] : [1, .9, .4]});
     setTimeout(() => { try{ g.sfx(tg.kind === "bomb" ? "drop" : "hit"); }catch(_e){} }, d * 1000);
     if(R.hits % 4 === 0 && (!R.cap || g.t > R.cap.until)) say(g, R, ["h1", "h2", "h3", "h4"][(R.hits / 4 | 0) % 4]);
+    return true;
 }
 
 // ---------- 各シーンの しかけ（ねこ・ねずみ・おじゃま）----------
