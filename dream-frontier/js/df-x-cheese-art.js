@@ -1,6 +1,7 @@
 // ===== チーズいせきの ドタバタ・ジープ：見た目の 部品（モデル・ステージ・公園の ならび場）=====
 //  ぜんぶ プリミティブ（箱・円柱・球）の くみあわせ。絵（webp）が なくても 動く。キャラクターは すべて オリジナル。
 import {TAU} from "./df-xlib.js";
+import {propReady} from "./df-props.js";
 
 export const SX = -2600, SZ = 0;                 // ステージの ばしょ
 export const HALL = {z0: -200, lane: 4.4, n: 6, hx: 20, zb: -178};   // キュー会場（ならぶ へや）
@@ -34,7 +35,7 @@ export const stationPt = () => [-32, HALL.zb, 0];
 // ---- 7セグの すうじ ----
 const SEG = {0: "abcdef", 1: "bc", 2: "abdeg", 3: "abcdg", 4: "bcfg", 5: "acdfg", 6: "acdefg", 7: "abc", 8: "abcdefg", 9: "abcdfg"};
 export function digitPrims(box, P, n, ox, oy, oz, sc, col, yaw){
-    const t = .14 * sc, w = .62 * sc, h = .62 * sc, put = (x, y, ww, hh) => box(P, ox + x, oy + y, oz, ww, hh, t, col, yaw || 0);
+    const t = .14 * sc, w = .62 * sc, h = .62 * sc, put = (x, y, ww, hh) => box(P, ox + x, oy + y - hh / 2, oz, ww, hh, t, col, yaw || 0);   // box の y は 下はし
     const S = {a: [0, h * 2, w, t], d: [0, 0, w, t], g: [0, h, w, t], f: [-w / 2, h * 1.5, t, h], b: [w / 2, h * 1.5, t, h], e: [-w / 2, h * .5, t, h], c: [w / 2, h * .5, t, h]};
     for(const k of SEG[n]) put(...S[k]);
 }
@@ -203,6 +204,9 @@ export function buildStage(K, P){
 }
 
 // ---- 公園の ならび場（入口）：いせきの ゲート、さく、かんばん、のりば ----
+// 絵の ゲートと かんばんの おき場所（img/prop/cheese_gate.webp・cheese_sign.webp）。かんばんの パネルの 中心が (0.5, 地面から 0.633 の たかさ)
+export const GATE = {x: -95, z: 62.8, h: 11.5, w: 9.8, yaw: Math.PI / 2};
+export const SIGN = {x: -70.2, z: 52.8, h: 5.2, w: 4.05, yaw: 2.56, py: .633 * 5.2};
 export function buildPark(K, B){
     const {box, cyl, sph} = K.h, S = K.h.layer("solid").prims, GL = K.h.layer("glow").prims;
     const lane = OUTQ;
@@ -211,12 +215,13 @@ export function buildPark(K, B){
             for(let t = 0; t <= len; t += 3){ const x = a[0] + (c[0] - a[0]) * t / len + nx, z = a[1] + (c[1] - a[1]) * t / len + nz; cyl(S, x, 0, z, .1, .12, .9, "#d8d8e8", 6); sph(S, x, 1.0, z, .15, "#ffd24a", 1, 6); }
             box(S, (a[0] + c[0]) / 2 + nx, .72, (a[1] + c[1]) / 2 + nz, .06, .06, len, "#e83a4a", yaw); } }
     // いせきの ゲート（にしがわ）：いしの はしら ＋ チーズの かお
-    const gx = -95, gz = 62.8, yaw = Math.PI / 2;
-    for(const sz of [-1, 1]){ box(S, gx, 0, gz + sz * 3.2, 2.4, 8, 2.4, "#a89060"); box(S, gx, 8, gz + sz * 3.2, 3.2, .8, 3.2, "#8a7a50"); sph(GL, gx + 1.3, 9.0, gz + sz * 3.2, .5, "#ffb040", 1, 6); }
-    box(S, gx, 8.2, gz, 2.6, 2.6, 9.6, "#8a7a50"); cyl(S, gx + 1.4, 9.8, gz, 2.6, 2.6, 1.6, "#ffd23a", 14); sph(GL, gx + 1.6, 10.4, gz, 1.8, "#ffe27a", .35, 8);
-    for(const sz of [-1, 1]){ sph(GL, gx + 1.3, 6.2, gz + sz * 3.2, .35, "#ff5a3a", 1, 5); }
+    const gx = -95, gz = 62.8, yaw = Math.PI / 2, gateImg = propReady("prop/cheese_gate"), signImg = propReady("prop/cheese_sign");
+    if(!gateImg) for(const sz of [-1, 1]){ box(S, gx, 0, gz + sz * 3.2, 2.4, 8, 2.4, "#a89060"); box(S, gx, 8, gz + sz * 3.2, 3.2, .8, 3.2, "#8a7a50"); sph(GL, gx + 1.3, 9.0, gz + sz * 3.2, .5, "#ffb040", 1, 6); }
+    if(!gateImg){ box(S, gx, 8.2, gz, 2.6, 2.6, 9.6, "#8a7a50"); cyl(S, gx + 1.4, 9.8, gz, 2.6, 2.6, 1.6, "#ffd23a", 14); sph(GL, gx + 1.6, 10.4, gz, 1.8, "#ffe27a", .35, 8);
+        for(const sz of [-1, 1]){ sph(GL, gx + 1.3, 6.2, gz + sz * 3.2, .35, "#ff5a3a", 1, 5); } }
     for(const [x, z] of [[-94, 56], [-94, 69]]) { cyl(S, x, 0, z, 1.2, 1.6, 5, "#9a8a60", 7); sph(GL, x, 5.4, z, .5, "#ffb040", 1, 6); }
     // かんばん：のりばの まえ（7セグで「25」）
+    if(signImg) return;
     const bx = B.x + 1.8, bz = B.z - 3.2;
     box(S, bx - 1.9, 0, bz, .35, 4.2, .35, "#6a4a2a"); box(S, bx + 1.9, 0, bz, .35, 4.2, .35, "#6a4a2a"); box(S, bx, 2.6, bz, 4.6, 2.6, .3, "#26262e"); box(S, bx, 2.7, bz - .05, 4.2, 2.2, .1, "#14141c");
     box(S, bx, 4.1, bz, 4.6, .4, .4, "#ffd23a"); cyl(S, bx, 4.4, bz, 0, .7, .7, "#ffd23a", 4);

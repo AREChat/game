@@ -4,6 +4,7 @@ import {SKY_PTS, MINE_PTS, BOAT_PTS, SPLASH_PTS, GHOST_PTS, SAFARI_PTS, FAIRY_PT
 import {makePath, yawOf, pitchOf} from "./df-path.js";
 import {buildStages} from "./df-stages.js";
 import {propReady, propAspect} from "./df-props.js";
+import {GATE, SIGN} from "./df-x-cheese-art.js";
 
 let sd = 99; const rnd = () => { sd = (sd * 1664525 + 1013904223) >>> 0; return sd / 4294967296; };
 const box = (P, x, y, z, w, h, d, c, ry, rx, rz) => P.push({t: "b", x, y, z, w, h, d, c, ry: ry || 0, rx: rx || 0, rz: rz || 0});
@@ -237,6 +238,8 @@ export function buildWorld(){
     // 大きな やかたの 正面の 絵（向きは 入口の 方で 固定・りょうめんに 絵）。入口の すきまは 通れるまま
     if(hasB("manor_front")) PR.push({img: "bld/manor_front", x: 79, y: 0, z: 12.9, h: 15.9, w: 40, yaw: Math.PI, two: true});   // ミステリー・マナー（入口は 北がわ）
     if(hasB("fairy_front")) PR.push({img: "bld/fairy_front", x: -55, y: 0, z: -4.7, h: 17.4, w: 24, yaw: 0, two: true});   // ひかりの もりの おとぎ館
+    if(has("cheese_gate")) PR.push({img: "prop/cheese_gate", x: GATE.x, y: 0, z: GATE.z, h: GATE.h, w: GATE.w, yaw: GATE.yaw, two: true});   // チーズいせきの もん（絵）
+    if(has("cheese_sign")) PR.push({img: "prop/cheese_sign", x: SIGN.x, y: 0, z: SIGN.z, h: SIGN.h, w: SIGN.w, yaw: SIGN.yaw, two: true});   // チーズいせきの まち時間かんばん（すうじは ゲーム中に かさねる）
     if(hasB("dome_front")) PR.push({img: "bld/dome_front", x: 62, y: 0, z: -49.4, h: 12, w: 22, yaw: 0, two: true});   // コスモ・ドーム
     if(has("lamp_garden")) for(const sx of [-1, 1]) for(const z of [36, 43, 50]){ const x = sx * 5.4; prop("lamp_garden", x, z, 1.7); sph(GLOW, x, 1.2, z, .4, "#ffe9a0"); }   // ゲートへ のびる 道の 低い 庭園灯
     if(has("trashcan")) for(const [x, z] of [[-21, 1.5], [21, 1.5], [-3.5, 20], [3.5, 20]]){ prop("trashcan", x, z, 1.4); shadow(x, z, .7); sol(x, z, .5); }

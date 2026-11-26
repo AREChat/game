@@ -76,7 +76,7 @@ export async function create(canvas, opts){
         const used = {}; let si = 0, ps = 0; for(const pm of B.pSprites) pm.body.visible = pm.shadow.visible = false;
         for(const d of dyn){
             if(d.p && spriteReady(d.p)){   // 1枚絵の人（画像が そろっていれば）。上下は まっすぐ、左右だけ カメラの方を向く
-                const pv = pickView(cam.eye, d.x, d.z, d.yaw), im = spriteImage(d.p, pv.view), H = (SPRITE_H[d.p] || 2.2) * im.img.naturalHeight / 256, W = H * im.img.naturalWidth / im.img.naturalHeight;
+                const pv = pickView(cam.eye, d.x, d.z, d.yaw), im = spriteImage(d.p, pv.view), H = (SPRITE_H[d.p] || 2.2) * (d.ss || 1) * im.img.naturalHeight / 256, W = H * im.img.naturalWidth / im.img.naturalHeight;
                 const key = d.p + "_" + pv.view; let mt = B.pMats[key]; if(!mt){ const tx = new T.Texture(im.img); tx.colorSpace = T.SRGBColorSpace; tx.needsUpdate = true; mt = B.pMats[key] = new T.MeshBasicMaterial({map: tx, transparent: true, alphaTest: .05, side: T.DoubleSide}); }
                 let pm = B.pSprites[ps]; if(!pm){ pm = {body: new T.Mesh(B.pGeo, mt), shadow: new T.Mesh(B.sGeo, B.sMat)}; pm.body.frustumCulled = false; pm.body.renderOrder = 3; pm.shadow.rotation.x = -Math.PI / 2; root.add(pm.body); root.add(pm.shadow); B.pSprites.push(pm); } ps++;
                 pm.body.material = mt; pm.body.visible = pm.shadow.visible = true; pm.body.position.set(d.x, (d.y || 0) + H / 2, d.z); pm.body.rotation.set(0, pv.face, 0); pm.body.scale.set(W, H, 1); pm.shadow.position.set(d.x, (d.y || 0) + .03, d.z); pm.shadow.scale.set(H * .22, H * .22, 1);
