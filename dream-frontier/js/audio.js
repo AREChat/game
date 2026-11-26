@@ -72,6 +72,12 @@ function getTrack(name){
     }catch(_e){ failedTracks[name] = true; return null; }
 }
 
+// いま鳴らしてよい曲（next と、うすれていく previous）いがいは、ぜんぶ止める。
+// 切りかえの 途中で また 別の曲に かわると、うすれている 途中の 前の曲が 止まらずに 小さく 鳴りつづけ、
+// 洞窟の曲と チーズいせきの List123 が 重なっていた（このアトラクションは List123 だけを 流す）
+function silenceOthers(keepA, keepB){
+    for(const name of Object.keys(tracks)){ const a = tracks[name]; if(a !== keepA && a !== keepB && !a.paused){ try{ a.pause(); }catch(_e){} a.volume = 0; } }
+}
 async function syncBgm(){
     if(!on || document.hidden){ fadeToken++; pendingAudio = null; if(activeAudio) activeAudio.pause(); stopSynthBgm(); score.stop(); return; }
     if(!unlocked) return;
@@ -79,18 +85,20 @@ async function syncBgm(){
     score.stop();
     const requestKey = key, next = getTrack(requestKey);
     if(!next){ startSynthBgm(); return; }
-    if(next === activeAudio && !next.paused){ next.volume = bgmVol; stopSynthBgm(); return; }
+    if(next === activeAudio && !next.paused){ silenceOthers(next, null); next.volume = bgmVol; stopSynthBgm(); return; }
     if(next === pendingAudio) return;
-    const token = ++fadeToken, previous = activeAudio, previousVolume = previous ? previous.volume : 0;
+    const token = ++fadeToken, previous = activeAudio, previousVolume = previous ? previous.volume : 0, prevKey = activeKey;
+    silenceOthers(next, previous);                                  // 前の前の曲が のこっていたら、ここで 止める
+    const fadeMs = (RESTART[requestKey] || RESTART[prevKey]) ? 300 : 800;      // チーズいせきの 曲と ほかの曲は、ほとんど 重ねない
     pendingAudio = next; next.volume = 0; if(RESTART[requestKey]){ try{ next.currentTime = 0; }catch(_e){} }
     try{ await next.play(); }
     catch(error){ if(pendingAudio === next) pendingAudio = null; if(error && error.name === "NotAllowedError") return; failedTracks[requestKey] = true; startSynthBgm(); return; }
-    if(token !== fadeToken){ next.pause(); if(pendingAudio === next) pendingAudio = null; return; }
+    if(token !== fadeToken){ next.pause(); next.volume = 0; if(pendingAudio === next) pendingAudio = null; return; }
     pendingAudio = null; activeAudio = next; activeKey = key; stopSynthBgm();
     const startedAt = performance.now();
     const fade = (now) => {
         if(token !== fadeToken) return;
-        const progress = Math.max(0, Math.min(1, (now - startedAt) / 800));   // 時刻が開始より わずかに前でも マイナスにしない（音量が範囲外になり エラーで 無音になるのを防ぐ）
+        const progress = Math.max(0, Math.min(1, (now - startedAt) / fadeMs));   // 時刻が開始より わずかに前でも マイナスにしない（音量が範囲外になり エラーで 無音になるのを防ぐ）
         next.volume = bgmVol * progress;
         if(previous && previous !== next) previous.volume = previousVolume * (1 - progress);
         if(progress < 1) requestAnimationFrame(fade);

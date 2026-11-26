@@ -80,16 +80,18 @@ function tpos(tg, t, R){
 export const cheese = {
     build(K){ ensure(); buildModels(K); buildStage(K, RP.P); buildPark(K, BOARD); },
     init(g, R, a){
-        ensure(); R.sb = RP.sb; R.targets = makeTargets(); R.shots = []; R.fx = []; R.score = 0; R.hits = 0; R.cap = null; R.ev = events(); R.evi = 0; R.cheerT = -99; R.boarded = false; R.fin = 0; R.win = false; R.V = null; R.thr = 0; R.autoT = 0; R.skipReq = false; R.fast = false; R.w0 = started() ? Math.max(5, waitMinutes("cheese")) : 25;
-        R.A.music = "cheeseq"; R.A.env = "cheeseq"; g.lookYaw = 0; g.lookPitch = 0;
+        ensure(); R.sb = RP.sb; R.targets = makeTargets(); R.shots = []; R.fx = []; R.score = 0; R.hits = 0; R.cap = null; R.ev = events(); R.evi = 0; R.cheerT = -99; R.boarded = false; R.fin = 0; R.win = false; R.V = null; R.thr = 0; R.autoT = 0; R.skipReq = false; R.fast = false; R.w0 = started() ? Math.max(0, waitMinutes("cheese")) : 25;
+        const noQ = R.w0 <= 0;      // まち時間 0ふん ＝ だれも ならんでいない：キューラインは とばして、すぐ ジープに のれる
+        R.A.music = noQ ? "cheeseride" : "cheeseq"; R.A.env = noQ ? "cheese" : "cheeseq"; g.lookYaw = 0; g.lookPitch = 0;
         const r = root(); clearRoot(); bodyOn("cheese", true);
         R.h = {top: el("div", "xh", "", "left:10px;top:8px;font-size:clamp(12px,2.6vw,17px)"), cap: el("div", "xh", "", "left:50%;transform:translateX(-50%);bottom:19%;width:min(92vw,720px);text-align:center;font-size:clamp(15px,3.4vw,24px);line-height:1.4"),
             cross: el("div", "xh", "＋", "left:50%;top:50%;transform:translate(-50%,-50%);font-size:30px;opacity:.75"), hint: el("div", "xh", "", "left:10px;bottom:9%;font-size:clamp(11px,2.4vw,14px)"), skip: el("div", "xbtn", "⏩ ファストパス", "right:12px;bottom:25%;width:auto;padding:6px 14px;font-size:clamp(13px,2.8vw,17px);height:auto")};
         R.h.skip.addEventListener("click", () => { R.skipReq = true; }); R.h.skip.addEventListener("touchstart", (e) => { R.skipReq = true; e.preventDefault(); }, {passive: false});
         for(const k of ["top", "cap", "cross", "hint", "skip"]) r.appendChild(R.h[k]);
         R.h.cross.style.display = "none";
-        g.ui.toast("🧀 チーズいせき  いまの まち時間 約" + R.w0 + "ふん（ここでは 6ふんに ぎゅっと ちぢめているよ）", 4200);
-        if(R.auto){ R.t = QT - .5; R.fast = true; }
+        if(noQ){ R.t = QT; g.ui.toast("🟢 チーズいせき  いま まち時間 0ふん！ すぐ のれるよ", 3200); }
+        else g.ui.toast("🧀 チーズいせき  いまの まち時間 約" + R.w0 + "ふん（ここでは 6ふんに ぎゅっと ちぢめているよ）", 4200);
+        if(R.auto && !noQ){ R.t = QT - .5; R.fast = true; }
     },
     update(g, R, dt, inp){
         const t = R.t, T = g.t;
@@ -180,11 +182,12 @@ export const cheese = {
     // ---- 公園を あるいて いる ときの ならび場（ひとが ならんでいる ふんいき）----
     walkDyn(g, D){
         const T = g.t, dx = g.x - BOARD.x, dz = g.z - BOARD.z, dist = Math.hypot(dx, dz); if(dist > 140) return;
-        if(dist < 15){ if(!cheese._near){ cheese._near = true; g.ui.toast("🧀 チーズいせきの ドタバタ大ぼうけん  いまの まち時間 約" + Math.max(5, waitMinutes("cheese")) + "ふん", 3600); } } else if(dist > 24) cheese._near = false;
+        if(dist < 15){ if(!cheese._near){ cheese._near = true; { const w = started() ? waitMinutes("cheese") : 25; g.ui.toast(w <= 0 ? "🧀 チーズいせきの ドタバタ大ぼうけん  いま まち時間 0ふん！ すぐ のれるよ" : "🧀 チーズいせきの ドタバタ大ぼうけん  いまの まち時間 約" + w + "ふん", 3600); } } } else if(dist > 24) cheese._near = false;
         const segs = []; let L = 0; for(let i = 0; i < OUTQ.length - 1; i++){ const a = OUTQ[i], b = OUTQ[i + 1], l = Math.hypot(b[0] - a[0], b[1] - a[1]); segs.push([a, b, l, L]); L += l; }
         const at = (s) => { for(const [a, b, l, s0] of segs) if(s <= s0 + l){ const u = (s - s0) / l; return {x: lerp(a[0], b[0], u), z: lerp(a[1], b[1], u), yaw: Math.atan2(b[0] - a[0], b[1] - a[1])}; } return null; };
         const wq = started() ? waitMinutes("cheese") : 25, step = 1.55 + (1 - Math.min(1, wq / 70)) * 2.6, per = 16, sh = (Math.floor(T / per) + ease(clamp((T % per - 11) / 3, 0, 1))) * step % step;
-        for(let i = 0, s = -sh; s < L; i++, s += step){ if(s < 0) continue; const p = at(s); if(!p) continue; const m = "guest" + (i % 6), wave = (i % 9 === 4), lat = ((i * 5) % 3 - 1) * .35, nx = Math.cos(p.yaw) * lat, nz = -Math.sin(p.yaw) * lat;
+        for(let i = 0, s = -sh; s < L && wq > 0; i++, s += step){ if(s < 0) continue;      // まち時間 0ふん：ならんでいる人は いない
+            const p = at(s); if(!p) continue; const m = "guest" + (i % 6), wave = (i % 9 === 4), lat = ((i * 5) % 3 - 1) * .35, nx = Math.cos(p.yaw) * lat, nz = -Math.sin(p.yaw) * lat;
             D.push({m, p: m, x: p.x + nx, y: Math.abs(Math.sin(T * 2.2 + i)) * (wave ? .12 : .02), z: p.z + nz, yaw: p.yaw + (i % 5 === 0 ? .8 : 0)}); }
         // いせきの ゲートの うえの ねこと、あなから のぞく ねずみ
         if(!propReady("prop/cheese_gate")) D.push(SPR({m: "ch_cat", x: -95, y: 11.6, z: 62.8, yaw: Math.PI / 2 + Math.sin(T * 1.2) * .5, sx: .75, sy: .75 + Math.sin(T * 3) * .02, sz: .75}, "ch_cat", 0));
