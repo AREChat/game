@@ -8,13 +8,17 @@ import {makePath} from "./df-path.js";
 import {Snd} from "./audio.js";
 import {LINES} from "./df-x-cheese-lines.js";
 import {waitMinutes, started, record} from "./df-wait.js";
-import {SX, SZ, HALL, OUTQ, SCN, queuePts, stationPt, buildModels, buildStage, buildPark} from "./df-x-cheese-art.js";
+import {spriteReady, spriteImage, SPRITE_H} from "./df-sprites.js";
+import {SX, SZ, HALL, OUTQ, SCN, SIGN, queuePts, stationPt, buildModels, buildStage, buildPark} from "./df-x-cheese-art.js";
+import {propReady} from "./df-props.js";
 
 export const QT = 360, BT = 7, RT = 317, TOT = QT + RT;   // キュー・のりこみ・ライドの ながさ（びょう）。BGM の ながさに あわせている
 export const BOARD = {x: -72, z: 56};
 const VOICE = new URL("../voice/", import.meta.url).href;
 const WHO = {gaku: "ガク", mimi: "ミミ", gf: "ガイドの おねえさん", gm: "ガイドの おにいさん", cat: "モフゾー", mouse: "チュッピ"};
 const WCOL = {gaku: "#6ab8ff", mimi: "#ff8ac0", gf: "#ffe27a", gm: "#9affc0", cat: "#ffb060", mouse: "#d8c0ff"};
+// 絵が そろって いれば 1枚絵、まだなら 手作りモデル（e：モデル用の 描画データ、off：モデルの 足もとの ずれ。"c" は 中心が 原点のもの）
+const SPR = (e, name, off) => { if(!spriteReady(name)) return e; const ss = e.sy || 1; let y = e.y; if(off === "c"){ const im = spriteImage(name, "f").img; y -= SPRITE_H[name] * ss * im.naturalHeight / 256 / 2; } else y -= off * ss; return {m: e.m, p: name, x: e.x, y, z: e.z, yaw: e.yaw, ss}; };
 const NMAX = 1;
 let RP = null, QP = null;   // ライドの みち、キューの みち
 
@@ -102,8 +106,8 @@ export const cheese = {
             R.A.music = "cheeseride"; R.A.env = "cheese"; R.V = rideState(R, t);
             // ---- チーズを なげる ----
             R.autoT -= dt;
-            let go = !!inp.act; if(R.auto && R.autoT <= 0){ go = true; R.autoT = 1.1; }
-            if(go && !R.fin && t > QT + BT && t - R.thr > .25){ R.thr = t; throwCheese(g, R, t); }
+            let go = !!inp.act, need = false; if(R.auto && R.autoT <= 0){ go = true; need = true; }   // オートは「ねらえる まとが ある ときだけ」なげる（むだな チーズを とばさない）
+            if(go && !R.fin && t > QT + BT && t - R.thr > .25){ if(throwCheese(g, R, t, need)){ R.thr = t; if(need) R.autoT = 1.7; } else if(need) R.autoT = .35; }
             R.shots = R.shots.filter((s) => t - s.t0 < s.d + .05);
             R.fx = R.fx.filter((f) => t - f.t < 1.2);
             if(t >= TOT && !R.fin){ R.fin = 1; R.win = true; R.finT = t; R.thr = t; g.sv.best_cheese = Math.max(g.sv.best_cheese || 0, R.score); let m = "🎉 ゴール！ スコア " + R.score + "てん"; if(R.score >= 2000){ g.sv.coins += 30; m += "  すごい！ +30コイン"; } g.ui.toast(m, 5200); g.sfx("gold"); }
@@ -125,7 +129,7 @@ export const cheese = {
         const T = g.t, t = R.t; ensure();
         const jeepAt = (V, yj) => { D.push({m: "ch_jeep", x: V.x, y: V.y + .05 + Math.sin(T * 12) * .015 * V.v, z: V.z, yaw: yj}); };
         const seat = (m, V, yj, side, spk) => { const fx = Math.sin(yj), fz = Math.cos(yj), rx = -Math.cos(yj), rz = Math.sin(yj), lx = side * .64, lz = .95, bob = spk ? Math.abs(Math.sin(T * 9)) * .08 : Math.sin(T * 3 + side) * .015;
-            D.push({m, x: V.x + fx * lz + rx * -lx, y: V.y + .6 + bob, z: V.z + fz * lz + rz * -lx, yaw: yj + (spk ? -side * .7 : Math.sin(T * 1.3 + side) * .15), sx: .75, sy: .75, sz: .75}); };
+            { const e = {m, x: V.x + fx * lz + rx * -lx, y: V.y + .6 + bob, z: V.z + fz * lz + rz * -lx, yaw: yj + (spk ? -side * .7 : Math.sin(T * 1.3 + side) * .15), sx: .75, sy: .75, sz: .75}, sn = m + "S"; D.push(spriteReady(sn) ? {m, p: sn, x: e.x, y: V.y + .78 + bob, z: e.z, yaw: e.yaw, ss: .75} : e); } };
         const spk = (w) => R.cap && T < R.cap.until && R.cap.who === w;
         if(t < QT){
             // ---- キュー会場：ならんでいる ひとたち ----
@@ -138,13 +142,13 @@ export const cheese = {
                 D.push({m, p: m, x: p.x, y: bob + jump, z: p.z, yaw: p.yaw + (i % 4 === 0 ? .9 : 0)});
             }
             // ガクと ミミ：まえで おしゃべり（ライバルだけど なかよし）
-            for(const [w, off, side] of [["gaku", 3.6, 1], ["mimi", 5.0, -1]]){ const p = qp(Math.min(s + off, QP.total - 3 - (side > 0 ? 0 : 1.2)), 0), sp = spk(w); D.push({m: w === "gaku" ? "ch_boy" : "ch_girl", x: p.x, y: .43 + (sp ? Math.abs(Math.sin(T * 9)) * .1 : 0) + cheer * Math.abs(Math.sin(T * 12)) * .4, z: p.z, yaw: p.yaw + Math.PI + (sp ? .5 * side : 0) + (w === "mimi" ? .4 : -.4), sx: .85, sy: .85, sz: .85}); }
+            for(const [w, off, side] of [["gaku", 3.6, 1], ["mimi", 5.0, -1]]){ const p = qp(Math.min(s + off, QP.total - 3 - (side > 0 ? 0 : 1.2)), 0), sp = spk(w); D.push(SPR({m: w === "gaku" ? "ch_boy" : "ch_girl", x: p.x, y: .43 + (sp ? Math.abs(Math.sin(T * 9)) * .1 : 0) + cheer * Math.abs(Math.sin(T * 12)) * .4, z: p.z, yaw: p.yaw + Math.PI + (sp ? .5 * side : 0) + (w === "mimi" ? .4 : -.4), sx: .85, sy: .85, sz: .85}, w === "gaku" ? "ch_boy" : "ch_girl", .5)); }
             // のこり じかんの ひょうじ
             { const m = Math.max(0, Math.ceil(R.w0 * (1 - t / QT))), d1 = (m / 10) | 0, d0 = m % 10, zc = SZ + HALL.zb + 7.1; if(d1 > 0) D.push({m: "ch_d" + d1, x: SX - 1.3, y: 3.6, z: zc, yaw: Math.PI, sx: 1.8, sy: 1.8, sz: 1}); D.push({m: "ch_d" + d0, x: SX + (d1 > 0 ? 1.0 : 0), y: 3.6, z: zc, yaw: Math.PI, sx: 1.8, sy: 1.8, sz: 1});
                 D.push({s: "glow", x: SX, y: 4.7, z: zc - .3, w: 7, h: 3.4, c: [1, .85, .3], a: .25}); }
             // ねこと ねずみの おいかけっこ（かべぎわを はしる）
             for(const [a, b, rev] of [[240, 256, 1], [284, 298, -1]]) if(t > a && t < b){ const u = (t - a) / (b - a), x = SX + (rev > 0 ? 25 - 50 * u : -25 + 50 * u), z = SZ + HALL.zb + 6.2, gal = Math.abs(Math.sin(T * 14)) * .25, face = rev > 0 ? -Math.PI / 2 : Math.PI / 2;
-                D.push({m: "ch_mouse", x, y: gal, z, yaw: face, sx: 1.1, sy: 1.1, sz: 1.1}); const cu = clamp(u - .09 * rev, 0, 1), cx = SX + (rev > 0 ? 25 - 50 * cu : -25 + 50 * cu); D.push({m: "ch_cat", x: cx, y: gal, z, yaw: face, sx: .5, sy: .5, sz: .5});
+                D.push(SPR({m: "ch_mouse", x, y: gal, z, yaw: face, sx: 1.1, sy: 1.1, sz: 1.1}, "ch_mouse", 0)); const cu = clamp(u - .09 * rev, 0, 1), cx = SX + (rev > 0 ? 25 - 50 * cu : -25 + 50 * cu); D.push(SPR({m: "ch_cat", x: cx, y: gal, z, yaw: face, sx: .5, sy: .5, sz: .5}, "ch_cat", 0));
                 for(let q = 0; q < 3; q++) D.push({s: "glow", x: cx - face * .4 * (q + 1) * -1, y: .5, z, w: 1.4, h: .7, c: [1, 1, 1], a: .3 - q * .08}); }
             // ステーションの ジープ
             const st = pp(0, 0, 0), yj = st.yaw; jeepAt({x: st.x, y: st.y, z: st.z, v: 0}, yj);
@@ -157,13 +161,13 @@ export const cheese = {
         gags(g, R, D, V, T);
         // まと
         for(const tg of R.targets){ const p = tpos(tg, t, R); if(!p.vis) continue; const dx = p.x - V.x, dz = p.z - V.z; if(dx * dx + dz * dz > 1600) continue; const hit = tg.hit && t >= tg.hit, hu = hit ? clamp((t - tg.hit) / .9, 0, 1) : 0;
-            if(tg.kind === "paw"){ D.push({m: "ch_paw", x: p.x, y: p.y, z: p.z, yaw: p.yaw, sx: 1.3, sy: 1.3, sz: 1.3}); }
-            else if(tg.kind === "bal") D.push({m: "ch_bal", x: p.x, y: p.y - 2 * hu, z: p.z, yaw: T, sx: 1.3 * (1 - hu), sy: 1.3 * (1 - hu), sz: 1.3 * (1 - hu)});
-            else if(tg.kind === "bomb") D.push({m: "ch_bomb", x: p.x, y: p.y, z: p.z, yaw: p.yaw, sx: hit ? 1 + hu * 2 : 1.4, sy: hit ? 1 + hu * 2 : 1.4, sz: hit ? 1 + hu * 2 : 1.4}), D.push({s: "glow", x: p.x, y: p.y + 1.4, z: p.z, w: .9 + Math.sin(T * 25) * .2, h: .9, c: [1, .6, .2], a: .9});
-            else if(tg.kind === "duck") D.push({m: "ch_duck", x: p.x, y: p.y - hu * .6, z: p.z, yaw: p.yaw + hu * 6, sx: 1.5, sy: 1.5 * (1 - hu * .9), sz: 1.5});
+            if(tg.kind === "paw"){ D.push(SPR({m: "ch_paw", x: p.x, y: p.y, z: p.z, yaw: p.yaw, sx: 1.3, sy: 1.3, sz: 1.3}, "ch_paw", "c")); }
+            else if(tg.kind === "bal") D.push(SPR({m: "ch_bal", x: p.x, y: p.y - 2 * hu, z: p.z, yaw: T, sx: 1.3 * (1 - hu), sy: 1.3 * (1 - hu), sz: 1.3 * (1 - hu)}, "ch_bal" + (R.targets.indexOf(tg) % 3), "c"));
+            else if(tg.kind === "bomb") D.push(SPR({m: "ch_bomb", x: p.x, y: p.y, z: p.z, yaw: p.yaw, sx: hit ? 1 + hu * 2 : 1.4, sy: hit ? 1 + hu * 2 : 1.4, sz: hit ? 1 + hu * 2 : 1.4}, "ch_bomb", 0)), D.push({s: "glow", x: p.x, y: p.y + 1.4, z: p.z, w: .9 + Math.sin(T * 25) * .2, h: .9, c: [1, .6, .2], a: .9});
+            else if(tg.kind === "duck") D.push(SPR({m: "ch_duck", x: p.x, y: p.y - hu * .6, z: p.z, yaw: p.yaw + hu * 6, sx: 1.5, sy: 1.5 * (1 - hu * .9), sz: 1.5}, "ch_duck", 0));
             else if(tg.kind === "crate") D.push({m: "ch_crate", x: p.x, y: p.y + hu * 2, z: p.z, yaw: hu * 6, sx: 1.3 * (1 - hu), sy: 1.3 * (1 - hu), sz: 1.3 * (1 - hu)});
         }
-        for(const s of R.shots){ const u = (t - s.t0) / s.d; if(u < 0 || u > 1) continue; D.push({m: "ch_cheese", x: lerp(s.a[0], s.b[0], u), y: lerp(s.a[1], s.b[1], u) + Math.sin(u * Math.PI) * 1.2, z: lerp(s.a[2], s.b[2], u), yaw: T * 12, rx: T * 14, sx: .9, sy: .9, sz: .9}); }
+        for(const s of R.shots){ const u = (t - s.t0) / s.d; if(u < 0 || u > 1) continue; D.push({m: "ch_cheese", x: lerp(s.a[0], s.b[0], u), y: lerp(s.a[1], s.b[1], u) + Math.sin(u * Math.PI) * 1.2, z: lerp(s.a[2], s.b[2], u), yaw: T * 5, rx: T * 6, sx: .5, sy: .5, sz: .5}); }
         for(const f of R.fx){ const u = (t - f.t) / .9; if(u < 0 || u > 1) continue; for(let q = 0; q < 8; q++){ const a = q / 8 * TAU + f.id; D.push({s: "star", x: f.x + Math.cos(a) * u * 2.2, y: f.y + Math.sin(a * 2) * .6 + u * 1.2, z: f.z + Math.sin(a) * u * 2.2, w: .7 * (1 - u), h: .7 * (1 - u), c: f.c, a: 1 - u}); } }
     },
     hud(R){ return R.t < QT ? "キューライン　あと 約 " + Math.max(0, Math.ceil(R.w0 * (1 - R.t / QT))) + " ふん" : "スコア " + R.score; },
@@ -178,8 +182,13 @@ export const cheese = {
         for(let i = 0, s = -sh; s < L; i++, s += step){ if(s < 0) continue; const p = at(s); if(!p) continue; const m = "guest" + (i % 6), wave = (i % 9 === 4), lat = ((i * 5) % 3 - 1) * .35, nx = Math.cos(p.yaw) * lat, nz = -Math.sin(p.yaw) * lat;
             D.push({m, p: m, x: p.x + nx, y: Math.abs(Math.sin(T * 2.2 + i)) * (wave ? .12 : .02), z: p.z + nz, yaw: p.yaw + (i % 5 === 0 ? .8 : 0)}); }
         // いせきの ゲートの うえの ねこと、あなから のぞく ねずみ
-        D.push({m: "ch_cat", x: -95, y: 11.6, z: 62.8, yaw: Math.PI / 2 + Math.sin(T * 1.2) * .5, sx: .75, sy: .75 + Math.sin(T * 3) * .02, sz: .75});
-        { const u = (Math.sin(T * 1.1) + 1) / 2; D.push({m: "ch_mouse", x: -93.5, y: 0, z: 66.2 - u * 1.2, yaw: -Math.PI / 4, sx: 1.2, sy: 1.2, sz: 1.2}); }
+        if(!propReady("prop/cheese_gate")) D.push(SPR({m: "ch_cat", x: -95, y: 11.6, z: 62.8, yaw: Math.PI / 2 + Math.sin(T * 1.2) * .5, sx: .75, sy: .75 + Math.sin(T * 3) * .02, sz: .75}, "ch_cat", 0));
+        if(propReady("prop/cheese_sign")){   // かんばんの パネルに 「いまの まち時間」を すうじで かさねる
+            const w = started() ? Math.min(199, Math.max(0, waitMinutes("cheese"))) : 25, ds = String(w).split(""), sc = ds.length > 2 ? .55 : .8, adv = .62 * sc * 1.45, nx = Math.sin(SIGN.yaw), nz = Math.cos(SIGN.yaw), rx = Math.cos(SIGN.yaw), rz = -Math.sin(SIGN.yaw), by = SIGN.py - (1.38 * sc) / 2;
+            ds.forEach((c, i) => { const o = (i - (ds.length - 1) / 2) * adv; D.push({m: "ch_d" + c, x: SIGN.x + rx * o + nx * .16, y: by, z: SIGN.z + rz * o + nz * .16, yaw: SIGN.yaw, sx: sc, sy: sc, sz: 1}); });
+            D.push({s: "glow", x: SIGN.x + nx * .3, y: SIGN.py + .4, z: SIGN.z + nz * .3, w: 2.8, h: 1.6, c: [1, .85, .3], a: .22});
+        }
+        { const u = (Math.sin(T * 1.1) + 1) / 2; D.push(SPR({m: "ch_mouse", x: -93.5, y: 0, z: 66.2 - u * 1.2, yaw: -Math.PI / 4, sx: 1.2, sy: 1.2, sz: 1.2}, "ch_mouse", 0)); }
     }
 };
 
@@ -196,7 +205,7 @@ function rideState(R, t){
     switch(k){
         case 0: psi = .12 * sn(tau * TAU * 3) * (1 - tau * .3); shake = u > 4 && u < 28; roll = .04 * sn(u * 3); fov = 70 + 8 * clamp(sn(tau * Math.PI), 0, 1); break;
         case 1: psi = .5 * sn(tau * Math.PI * 5); break;
-        case 2: psi = 10 * Math.PI * E(tau); roll = .06 * sn(u * 1.3); fov = 74; break;
+        case 2: psi = 2 * Math.PI * E(tau); roll = .06 * sn(u * 1.3); fov = 74; break;
         case 3: psi = .22 * sn(tau * Math.PI * 4) + 2 * Math.PI * E((tau - .66) / .2); { const uh = SCN[3].d * .5, uf = uh + 1.3; if(u > uf) yOff = -Math.min(9, 7 * (u - uf) * (u - uf)); if(tau > .72) yOff = -9 * (1 - E((tau - .72) / .2)); shake = u > uf && u < uf + 1.4; } break;
         case 4: psi = .6 * sn(tau * Math.PI * 6); break;
         case 5: psi = .15 * sn(tau * TAU * 4) + 2 * Math.PI * E((tau - .35) / .25) + 2 * Math.PI * E((tau - .7) / .2); roll = .22 * sn(tau * TAU * 3); fov = 76 + 14 * clamp(-pitch * 3, 0, 1); shake = true; break;
@@ -207,29 +216,31 @@ function rideState(R, t){
 }
 
 // ---------- チーズを なげる ----------
-function throwCheese(g, R, t){
+function throwCheese(g, R, t, need){
     const V = R.V, cam = cheese.camera(g, R), fy = cam.yaw, fp = cam.pitch, fx = Math.sin(fy), fz = Math.cos(fy);
     let best = null, bd = .42;
     for(const tg of R.targets){ const p = tpos(tg, t, R); if(!p.vis || !p.ok) continue; const dx = p.x - cam.eye[0], dz = p.z - cam.eye[2], dist = Math.hypot(dx, dz); if(dist > 30 || dist < 2) continue;
         const ang = Math.abs(wrapPi(Math.atan2(dx, dz) - fy)), pit = Math.abs(Math.atan2(p.y - cam.eye[1], dist) - (-fp)); if(ang < bd && pit < .6){ bd = ang; best = {tg, p}; } }
     const a = [cam.eye[0] + fx * .7, cam.eye[1] - .35, cam.eye[2] + fz * .7];
-    if(!best){ R.shots.push({t0: t, d: .5, a, b: [cam.eye[0] + fx * 14, cam.eye[1] - 1.2 - fp * 6, cam.eye[2] + fz * 14]}); g.sfx("shot"); return; }
+    if(!best && need) return false;
+    if(!best){ R.shots.push({t0: t, d: .5, a, b: [cam.eye[0] + fx * 14, cam.eye[1] - 1.2 - fp * 6, cam.eye[2] + fz * 14]}); g.sfx("shot"); return true; }
     const {tg, p} = best, d = clamp(Math.hypot(p.x - a[0], p.z - a[2]) / 30, .22, .6); R.shots.push({t0: t, d, a, b: [p.x, p.y, p.z]}); g.sfx("shot");
     tg.hit = t + d; tg.cool = t + d + 3; R.score += 100; R.hits++; R.fx.push({t: t + d, x: p.x, y: p.y, z: p.z, id: tg.id, c: tg.kind === "bomb" ? [1, .6, .3] : tg.kind === "bal" ? [1, .5, .8] : [1, .9, .4]});
     setTimeout(() => { try{ g.sfx(tg.kind === "bomb" ? "drop" : "hit"); }catch(_e){} }, d * 1000);
     if(R.hits % 4 === 0 && (!R.cap || g.t > R.cap.until)) say(g, R, ["h1", "h2", "h3", "h4"][(R.hits / 4 | 0) % 4]);
+    return true;
 }
 
 // ---------- 各シーンの しかけ（ねこ・ねずみ・おじゃま）----------
-const Cat = (D, x, y, z, yaw, sc, soot, sq) => D.push({m: soot ? "ch_cat_soot" : "ch_cat", x, y, z, yaw, sx: sc * (sq ? sq[0] : 1), sy: sc * (sq ? sq[1] : 1), sz: sc * (sq ? sq[0] : 1)});
-const Mouse = (D, x, y, z, yaw, sc) => D.push({m: "ch_mouse", x, y, z, yaw, sx: sc, sy: sc, sz: sc});
+const Cat = (D, x, y, z, yaw, sc, soot, sq) => D.push(SPR({m: soot ? "ch_cat_soot" : "ch_cat", x, y, z, yaw, sx: sc * (sq ? sq[0] : 1), sy: sc * (sq ? sq[1] : 1), sz: sc * (sq ? sq[0] : 1)}, soot ? "ch_cat_soot" : "ch_cat", 0));
+const Mouse = (D, x, y, z, yaw, sc) => D.push(SPR({m: "ch_mouse", x, y, z, yaw, sx: sc, sy: sc, sz: sc}, "ch_mouse", 0));
 const stars = (D, x, y, z, T, n, r, sz) => { for(let i = 0; i < n; i++){ const a = T * 3 + i / n * TAU; D.push({s: "star", x: x + Math.cos(a) * r, y: y + Math.sin(a * 2) * .15, z: z + Math.sin(a) * r, w: sz || .5, h: sz || .5, c: [1, .9, .4], a: 1}); } };
 function gags(g, R, D, V, T){
     const k = V.k, u = V.u, sb = RP.sb[k], sl = RP.sb[k + 1] - RP.sb[k], sv = V.s, tau = V.tau; if(k < 0) return;
     if(k === 0){   // ころがる おおきな チーズに おいかけられる！
         // うしろから ころがってきて、ジープの よこを ぬけて、まえの ゲートに ぶつかって ばらばら！
         const crashS = sb + sl - 7, gap = lerp(46, -16, ease(u / 22)), sw = sv - gap, e = Math.max(0, (sw - crashS) / 3.3);
-        if(e <= 0){ const lat = 4.4 * Math.exp(-Math.pow(gap / 8, 2)), w = pp(Math.max(0, sw), lat, 2.3); D.push({m: "ch_wheel", x: w.x, y: w.y, z: w.z, yaw: w.yaw, rx: sw / 2.3});
+        if(e <= 0){ const lat = 4.4 * Math.exp(-Math.pow(gap / 8, 2)), w = pp(Math.max(0, sw), lat, 2.3); D.push(SPR({m: "ch_wheel", x: w.x, y: w.y, z: w.z, yaw: w.yaw, rx: sw / 2.3}, "ch_wheel", "c"));
             Cat(D, w.x, w.y + 4.7 + Math.abs(Math.sin(T * 14)) * .15, w.z, w.yaw, .55, false);   // わっかの うえで あしを ばたばた
             if(u > 14 && u < 26){ const q = pp(sv + 11, 3.6, 0); Mouse(D, q.x, Math.abs(Math.sin(T * 13)) * .25, q.z, q.yaw, 1.1); }
         } else { const w = pp(crashS, 0, 1.8); if(e < 4){ D.push({s: "glow", x: w.x, y: w.y + 1, z: w.z, w: 4 + e * 10, h: 4 + e * 10, c: [1, .8, .3], a: Math.max(0, .9 - e / 1.6)}); for(let i = 0; i < 8; i++){ const a = i / 8 * TAU; D.push({m: "ch_chunk", x: w.x + Math.cos(a) * e * 4, y: w.y + 1 + e * 4 - e * e * 4, z: w.z + Math.sin(a) * e * 4, yaw: a + T * 4, rx: T * 6, sx: 1.4, sy: 1.4, sz: 1.4}); } }
@@ -237,7 +248,7 @@ function gags(g, R, D, V, T){
     } else if(k === 1){   // ねこの おおきな かおが あなから！
         for(let i = 0; i < 4; i++){ const side = i % 2 ? -1 : 1, f = .08 + i * .22, p = pp(sb + f * sl, side * lerp(6.6, 5.2, (Math.sin(T * 1.7 + i * 2) + 1) / 2), 1.2); Mouse(D, p.x, p.y, p.z, p.yaw + side * 1.4, 1.0); }
         if(u > 24){ const p = pp(sb + sl - 4, 0, 3.6), e = ease((u - 24) / 3); Cat(D, p.x, p.y - 2 * (1 - e), p.z, p.yaw + Math.PI, 1.9, false); }
-        if(u > 18 && u < 24){ const p = pp(sv + 7, Math.sin(T * 3) * 2.2, 1.9), e = ease(Math.min(1, (u - 18) / 1.2)) * (1 - ease((u - 22.5) / 1.2)); D.push({m: "ch_paw", x: p.x, y: p.y, z: p.z, yaw: p.yaw + Math.PI, sx: 2.2 * e, sy: 2.2 * e, sz: 2.2 * e}); }
+        if(u > 18 && u < 24){ const p = pp(sv + 7, Math.sin(T * 3) * 2.2, 1.9), e = ease(Math.min(1, (u - 18) / 1.2)) * (1 - ease((u - 22.5) / 1.2)); D.push(SPR({m: "ch_paw", x: p.x, y: p.y, z: p.z, yaw: p.yaw + Math.PI, sx: 2.2 * e, sy: 2.2 * e, sz: 2.2 * e}, "ch_paw", "c")); }
     } else if(k === 2){   // ぐるぐる！ まんなかの おおきな ケーキで ねこが めを まわす
         const c = [SX + SCN[2].cx, SZ + HALL.zb + 14]; D.push({m: "ch_merry", x: c[0], y: 0, z: c[1], yaw: T * .9});
         Cat(D, c[0], 5.4, c[1], T * 2.4, .55, false); stars(D, c[0], 7.4, c[1], T, 5, .8);
@@ -257,7 +268,7 @@ function gags(g, R, D, V, T){
             if(uu > 0) Cat(D, p.x, p.y, p.z, p.yaw + Math.PI, .65, false, sq); if(uu > 1.2 && uu < 1.5){ D.push({m: "ch_pan", x: p.x, y: 2.2, z: p.z, yaw: p.yaw, sx: 1.6, sy: 1.6, sz: 1.6}); } if(uu > 3.2 && uu < 4.6) stars(D, p.x, 2.0, p.z, T, 5, .8); }
         { const p = pp(sb + .3 * sl, 5, .6); Mouse(D, p.x, p.y + Math.abs(Math.sin(T * 6)) * .1, p.z, p.yaw - 1.2, 1.2); }
     } else if(k === 5){   // トロッコ きゅうこうか：ダイナマイトが どっかーん（ぼうさんの はなび）
-        if(u < 25){ const p = pp(sv + 10, 0, .3 + Math.abs(Math.sin(T * 9)) * .1); Cat(D, p.x, p.y, p.z, p.yaw + Math.PI * .7, .5, false); D.push({m: "ch_bomb", x: p.x, y: p.y + 1.2, z: p.z, yaw: T, sx: 1.2, sy: 1.2, sz: 1.2}); D.push({s: "glow", x: p.x, y: p.y + 2.2, z: p.z, w: 1 + Math.sin(T * 30) * .3, h: 1, c: [1, .6, .2], a: .9}); }
+        if(u < 25){ const p = pp(sv + 10, 0, .3 + Math.abs(Math.sin(T * 9)) * .1); Cat(D, p.x, p.y, p.z, p.yaw + Math.PI * .7, .5, false); D.push(SPR({m: "ch_bomb", x: p.x, y: p.y + 1.2, z: p.z, yaw: T, sx: 1.2, sy: 1.2, sz: 1.2}, "ch_bomb", 0)); D.push({s: "glow", x: p.x, y: p.y + 2.2, z: p.z, w: 1 + Math.sin(T * 30) * .3, h: 1, c: [1, .6, .2], a: .9}); }
         else { const e = u - 25, p = pp(sb + sl * .82, 0, 0); if(e < 1.6){ D.push({s: "glow", x: p.x, y: p.y + 2, z: p.z, w: 3 + e * 14, h: 3 + e * 14, c: [1, .7, .3], a: 1 - e / 1.6}); for(let i = 0; i < 24; i++){ const a = i / 24 * TAU; D.push({s: "star", x: p.x + Math.cos(a) * e * 7, y: p.y + 2 + Math.sin(a * 3) * e * 3, z: p.z + Math.sin(a) * e * 7, w: .8 * (1 - e / 1.6), h: .8 * (1 - e / 1.6), c: [[1, .5, .8], [.4, .8, 1], [1, .9, .3]][i % 3], a: 1}); } }
             Cat(D, p.x + e * 2, p.y + 1 + Math.max(0, 4 * e - 2.6 * e * e), p.z, p.yaw + e * 3, .5, true); }
     } else if(k === 6){   // チーズフォンデュの かわ：ねこが うずまきに！
@@ -266,7 +277,7 @@ function gags(g, R, D, V, T){
         { const p = pp(sb + .3 * sl, 9, 1); Mouse(D, p.x, p.y, p.z, p.yaw - 1.4, 1.2); }
     } else {   // フィナーレ：みんなで チーズの おまつり
         const base = [SX + SCN[7].cx - 44, SZ + HALL.zb];
-        Cat(D, base[0] + 5, Math.abs(Math.sin(T * 5)) * .4, base[1] + 3, -Math.PI * .7, .8, false); Mouse(D, base[0] + 5, .6 + Math.abs(Math.sin(T * 5 + 1)) * .4, base[1] - 3, -Math.PI * .3, 1.6); D.push({m: "ch_wheel", x: base[0] + 5, y: 1.6, z: base[1], yaw: 0, rx: T, sx: .45, sy: .45, sz: .45});
+        Cat(D, base[0] + 5, Math.abs(Math.sin(T * 5)) * .4, base[1] + 3, -Math.PI * .7, .8, false); Mouse(D, base[0] + 5, .6 + Math.abs(Math.sin(T * 5 + 1)) * .4, base[1] - 3, -Math.PI * .3, 1.6); D.push(SPR({m: "ch_wheel", x: base[0] + 5, y: 1.6, z: base[1], yaw: 0, rx: T, sx: .45, sy: .45, sz: .45}, "ch_wheel", "c"));
         for(let i = 0; i < 40; i++){ const a = (i * 53) % 100 / 100 * TAU, r = 3 + (i * 7) % 11; D.push({s: "star", x: V.x + Math.cos(a) * r, y: 11 - ((T * 1.4 + i * .73) % 11), z: V.z + Math.sin(a) * r - 4, w: .45, h: .45, c: [[1, .5, .8], [.4, .8, 1], [1, .9, .3], [.6, 1, .6]][i % 4], a: .9}); }
         for(let i = 0; i < 4; i++){ const e = (T * .5 + i * .27) % 1, a = i * 1.7, p = pp(sb + (.25 + i * .18) * sl, (i % 2 ? -1 : 1) * 10, 9 + Math.sin(a) * 2); for(let q = 0; q < 10; q++){ const b = q / 10 * TAU; D.push({s: "star", x: p.x + Math.cos(b) * e * 5, y: p.y + Math.sin(b) * e * 5, z: p.z, w: .8 * (1 - e), h: .8 * (1 - e), c: [[1, .6, .3], [.5, .8, 1], [1, .5, .8]][i % 3], a: 1 - e}); } }
         for(const sz of [-1, 1]) for(let i = 0; i < 6; i++){ const p = pp(sb + (.12 + i * .12) * sl, sz * 15 + sz * 0, 1.6 + (i % 2) * 1); const m = "guest" + ((i + (sz > 0 ? 3 : 0)) % 6); D.push({m, p: m, x: p.x, y: p.y + Math.abs(Math.sin(T * 5 + i * 1.3)) * .5, z: p.z, yaw: p.yaw + sz * Math.PI / 2}); }

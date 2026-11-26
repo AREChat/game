@@ -46,7 +46,7 @@ export async function create(canvas, opts){
         }
         for(const d of dyn){
             if(d.p && spriteReady(d.p)){   // 1枚絵の人（画像が そろっていれば）
-                const pv = pickView(eye, d.x, d.z, d.yaw), im = spriteImage(d.p, pv.view), H = (SPRITE_H[d.p] || 2.2) * im.img.naturalHeight / 256, W = H * im.img.naturalWidth / im.img.naturalHeight;
+                const pv = pickView(eye, d.x, d.z, d.yaw), im = spriteImage(d.p, pv.view), H = (SPRITE_H[d.p] || 2.2) * (d.ss || 1) * im.img.naturalHeight / 256, W = H * im.img.naturalWidth / im.img.naturalHeight;
                 const key = d.p + "_" + pv.view; const t = pTex[key] || (pTex[key] = R.tex(im.img));
                 R.draw(spr, {m: M4.mul(M4.T(d.x, d.y || 0, d.z), M4.mul(M4.RY(pv.face), M4.S(W, H, 1))), tex: t, mode: 2, blend: true, cut: .05});
                 continue;

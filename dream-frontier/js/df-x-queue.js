@@ -1,6 +1,7 @@
 // ===== ぜんアトラクション共通の キューライン（まち時間）=====
 //  2026年11月26日から 導入。のりばに ちかづいて「のる」を おすと、まず キューラインに ならぶ（まち時間が みじかければ すぐ のれる）。
 //  E：みんなで かんせい！／ファストパス：とばして すぐ のる。ならんでいる ひとの かずは、まち時間に あわせて ふえたり へったり する。
+import {propReady} from "./df-props.js";
 import {TAU, clamp, lerp, ease, root, clearRoot, el, bodyOn} from "./df-xlib.js";
 import {makePath} from "./df-path.js";
 import {waitMinutes, hasQueue, started, queueSeconds, mood, record} from "./df-wait.js";
@@ -78,7 +79,7 @@ export const queue = {
             const w = waitMinutes(a.id), n = Math.min(14, Math.round(w / 6)), h0 = Math.hypot(bx, bz) < 22 ? [0, 1] : [bx / Math.hypot(bx, bz), bz / Math.hypot(bx, bz)], yaw = Math.atan2(-h0[0], -h0[1]);
             if(a.id !== "cheese") for(let i = 0; i < n; i++){ const back = 2.8 + i * 1.25, lat = (i % 2 ? .6 : -.6) + Math.sin(i * 1.7) * .3, rx = -Math.cos(Math.atan2(h0[0], h0[1])), rz = Math.sin(Math.atan2(h0[0], h0[1])), m = "guest" + ((i + a.id.length) % 6);
                 D.push({m, p: m, x: bx + h0[0] * back + rx * lat, y: Math.abs(Math.sin(T * 2 + i)) * .02, z: bz + h0[1] * back + rz * lat, yaw}); }
-            if(dist < 30){ const yw = Math.atan2(dx, dz), rx = -Math.cos(yw), rz = Math.sin(yw), d1 = (w / 10) | 0, d0 = w % 10, col = mood(w)[1], y = 5.4 + Math.sin(T * 2 + bz) * .15, sc = 1.5;
+            if(dist < 30 && !(a.id === "cheese" && propReady("prop/cheese_sign"))){ const yw = Math.atan2(dx, dz), rx = -Math.cos(yw), rz = Math.sin(yw), d1 = (w / 10) | 0, d0 = w % 10, col = mood(w)[1], y = 5.4 + Math.sin(T * 2 + bz) * .15, sc = 1.5;
                 if(w > 0){ if(d1 > 0) D.push({m: "ch_d" + d1, x: bx + rx * -.55 * sc, y, z: bz + rz * -.55 * sc, yaw: yw + Math.PI, sx: sc, sy: sc, sz: 1}); D.push({m: "ch_d" + d0, x: bx + rx * (d1 > 0 ? .55 : 0) * sc, y, z: bz + rz * (d1 > 0 ? .55 : 0) * sc, yaw: yw + Math.PI, sx: sc, sy: sc, sz: 1}); }
                 else D.push({m: "ch_d0", x: bx, y, z: bz, yaw: yw + Math.PI, sx: sc, sy: sc, sz: 1});
                 const c3 = col === "#6fe08a" ? [.4, 1, .55] : col === "#ffe27a" ? [1, .9, .4] : col === "#ffa050" ? [1, .65, .3] : [1, .4, .4]; D.push({s: "glow", x: bx, y: y + .8, z: bz, w: 3.4, h: 2.4, c: c3, a: .35}); }

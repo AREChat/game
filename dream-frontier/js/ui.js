@@ -37,7 +37,7 @@ export class UI{
         this.el.modal.querySelectorAll("[data-tp]").forEach((b) => b.onclick = () => { const id = b.dataset.tp; this.close(); go(id); });
     }
     showStamps(g){
-        const rows = ATTRACTIONS.map((a) => "<li class='" + (g.sv.stamps[a.id] ? "got" : "") + "'><b>" + (g.sv.stamps[a.id] ? "🏅" : "⬜") + " " + a.n + "</b><small>" + AREA_NAMES[a.area] + " ／ " + a.desc + "</small></li>").join("");
+        const rows = ATTRACTIONS.map((a) => "<li class='" + (g.sv.stamps[a.id] ? "got" : "") + "'><b>" + (a.id === "cheese" ? "<img src='img/prop/cheese_stamp.webp' alt='' style='height:1.5em;vertical-align:middle;" + (g.sv.stamps[a.id] ? "" : "filter:grayscale(1) opacity(.45)") + "'>" : (g.sv.stamps[a.id] ? "🏅" : "⬜")) + " " + a.n + "</b><small>" + AREA_NAMES[a.area] + " ／ " + a.desc + "</small>" + (a.id === "cheese" ? "<img src='img/bld/cheese_card.webp' alt='' style='width:100%;max-width:320px;border-radius:10px;margin-top:4px'>" : "") + "</li>").join("");
         this.open("<h2>スタンプちょう　" + g.count() + " / " + STAMPS.length + "</h2><ul class='stamps'>" + rows + "</ul><p class='hint'>ぜんぶ そろえると「全制覇しょうめいしょ」が もらえるよ。</p>");
     }
     // まち時間ひょう：いまの まち時間・きょうの うごき・導入（2026-11-26）いらいの へいきん・あなたの きろく
