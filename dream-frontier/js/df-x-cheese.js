@@ -110,13 +110,13 @@ export const cheese = {
             if(go && !R.fin && t > QT + BT && t - R.thr > .25){ if(throwCheese(g, R, t, need)){ R.thr = t; if(need) R.autoT = 1.7; } else if(need) R.autoT = .35; }
             R.shots = R.shots.filter((s) => t - s.t0 < s.d + .05);
             R.fx = R.fx.filter((f) => t - f.t < 1.2);
-            if(t >= TOT && !R.fin){ R.fin = 1; R.win = true; R.finT = t; R.thr = t; g.sv.best_cheese = Math.max(g.sv.best_cheese || 0, R.score); let m = "🎉 ゴール！ スコア " + R.score + "てん"; if(R.score >= 2000){ g.sv.coins += 30; m += "  すごい！ +30コイン"; } g.ui.toast(m, 5200); g.sfx("gold"); }
+            if(t >= TOT && !R.fin){ R.fin = 1; R.win = true; R.finT = t; R.thr = t; g.sv.coins += 30; g.ui.toast("🎉 ゴール！ おつかれさま！ +30コイン", 5200); g.sfx("gold"); }
             if(R.fin && t - R.finT > 3.2) g.endRide(true, true);
         }
         // ---- がめん ----
         const h = R.h, set = (e, v) => { if(e._v !== v){ e._v = v; e.innerHTML = v; } };
         if(t < QT){ const m = Math.max(0, Math.ceil(R.w0 * (1 - t / QT))); set(h.top, "<span class='xpill'>🧀 キューライン　あと 約 <b>" + m + "</b> ふん</span>"); set(h.hint, "<span class='xpill'>E：みんなで かんせい！　ドラッグ：みまわす</span>"); h.skip.style.display = ""; h.cross.style.display = "none"; }
-        else { const k = R.V.k; set(h.top, "<span class='xpill'>🧀 スコア <b>" + R.score + "</b>　" + (R.V.k >= 0 ? (k + 1) + "/8 " + SCN[k].n : "しゅっぱつ！") + "</span>"); set(h.hint, "<span class='xpill'>E：チーズを なげる　ドラッグ：みまわす</span>"); h.skip.style.display = "none"; h.cross.style.display = ""; }
+        else { const k = R.V.k; set(h.top, "<span class='xpill'>🧀 " + (R.V.k >= 0 ? (k + 1) + "/8 " + SCN[k].n : "しゅっぱつ！") + "</span>"); set(h.hint, "<span class='xpill'>E：チーズを なげる　ドラッグ：みまわす</span>"); h.skip.style.display = "none"; h.cross.style.display = ""; }
         if(R.cap && T < R.cap.until) set(h.cap, "<span style='display:inline-block;padding:6px 14px;border-radius:14px;background:rgba(20,14,40,.72);border:2px solid " + WCOL[R.cap.who] + "'><b style='color:" + WCOL[R.cap.who] + "'>" + WHO[R.cap.who] + "</b>　" + R.cap.text + "</span>"); else set(h.cap, "");
     },
     camera(g, R){
@@ -170,7 +170,7 @@ export const cheese = {
         for(const s of R.shots){ const u = (t - s.t0) / s.d; if(u < 0 || u > 1) continue; D.push({m: "ch_cheese", x: lerp(s.a[0], s.b[0], u), y: lerp(s.a[1], s.b[1], u) + Math.sin(u * Math.PI) * 1.2, z: lerp(s.a[2], s.b[2], u), yaw: T * 5, rx: T * 6, sx: .5, sy: .5, sz: .5}); }
         for(const f of R.fx){ const u = (t - f.t) / .9; if(u < 0 || u > 1) continue; for(let q = 0; q < 8; q++){ const a = q / 8 * TAU + f.id; D.push({s: "star", x: f.x + Math.cos(a) * u * 2.2, y: f.y + Math.sin(a * 2) * .6 + u * 1.2, z: f.z + Math.sin(a) * u * 2.2, w: .7 * (1 - u), h: .7 * (1 - u), c: f.c, a: 1 - u}); } }
     },
-    hud(R){ return R.t < QT ? "キューライン　あと 約 " + Math.max(0, Math.ceil(R.w0 * (1 - R.t / QT))) + " ふん" : "スコア " + R.score; },
+    hud(R){ return R.t < QT ? "キューライン　あと 約 " + Math.max(0, Math.ceil(R.w0 * (1 - R.t / QT))) + " ふん" : ""; },
     end(g, R, ok){ clearRoot(); bodyOn("cheese", false); if(R.voices) for(const a of R.voices){ try{ a.pause(); }catch(_e){} } },
     // ---- 公園を あるいて いる ときの ならび場（ひとが ならんでいる ふんいき）----
     walkDyn(g, D){
