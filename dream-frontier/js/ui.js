@@ -1,6 +1,6 @@
 // ===== 画面（HUD・会話・メニュー）。DOM だけ。エンジンには ふれない =====
 import {ATTRACTIONS, STAMPS, AREA_NAMES} from "./df-data.js";
-import {waitMinutes, hasQueue, dayCurve, history, mood, fmtDate, started, daysSince, OPEN_H, LAUNCH} from "./df-wait.js";
+import {waitMinutes, hasQueue, dayCurve, history, mood, fmtDate, jokeNote, started, daysSince, OPEN_H, LAUNCH} from "./df-wait.js";
 const $ = (id) => document.getElementById(id);
 export class UI{
     constructor(){
@@ -47,16 +47,16 @@ export class UI{
         if(sort === "name") rows.sort((x, y) => ATTRACTIONS.indexOf(x.a) - ATTRACTIONS.indexOf(y.a)); else if(sort === "me") rows.sort((x, y) => ((y.my && y.my.n) || 0) - ((x.my && x.my.n) || 0)); else rows.sort((x, y) => x.w - y.w);
         const avg = (arr) => arr.length ? Math.round(arr.reduce((t, v) => t + v, 0) / arr.length) : 0, nowAvg = avg(rows.map((r) => r.w)), allAvg = avg(rows.map((r) => r.h.avg)), days = daysSince(now) + 1;
         let mn = 0, ms = 0; for(const k in sv){ mn += sv[k].n; ms += sv[k].sum; }
-        const bar = (c) => { const ch = "▁▂▃▄▅▆▇█", cur = Math.min(c.length - 1, Math.max(0, now.getHours() - OPEN_H)); return c.map((v, i) => "<span style='" + (i === cur ? "color:#fff;text-decoration:underline" : "") + "'>" + ch[Math.min(7, Math.floor(v / 80 * 8))] + "</span>").join(""); };
+        const bar = (c) => { const ch = "▁▂▃▄▅▆▇█", cur = Math.min(c.length - 1, Math.max(0, now.getHours() - OPEN_H)); return c.map((v, i) => "<span style='" + (i === cur ? "color:#fff;text-decoration:underline" : "") + "'>" + ch[Math.min(7, Math.floor(v / 32 * 8))] + "</span>").join(""); };
         const best = rows.filter((r) => r.w >= 0).slice(0, 3).map((r) => r.a.n.replace(/・/g, "")).join("・");
-        const tr = rows.map((r) => { const [m, col] = mood(r.w), my = r.my; return "<tr><td style='text-align:left'><b>" + r.a.n + "</b></td><td style='color:" + col + ";font-weight:900'>" + (r.w > 0 ? r.w + "ふん" : "0") + "<br><small>" + m + "</small></td><td style='letter-spacing:1px;color:#ffd27a'>" + bar(r.c) + "</td><td>" + Math.round(r.h.avg) + "ふん<br><small>さいだい " + r.h.max + "</small></td><td>" + (my ? my.n + "かい<br><small>へいきん " + Math.round(my.sum / my.n) + "ふん／さいご " + my.last + "</small>" : "<small>まだ</small>") + "</td></tr>"; }).join("");
+        const tr = rows.map((r) => { const [m, col] = mood(r.w), my = r.my; return "<tr><td style='text-align:left'><b>" + r.a.n + "</b></td><td style='color:" + col + ";font-weight:900'>" + (r.w > 0 ? r.w + "ふん" : "0") + "<br><small>" + m + (jokeNote(r.w) ? "<br>" + jokeNote(r.w) : "") + "</small></td><td style='letter-spacing:1px;color:#ffd27a'>" + bar(r.c) + "</td><td>" + Math.round(r.h.avg) + "ふん<br><small>さいだい " + r.h.max + "</small></td><td>" + (my ? my.n + "かい<br><small>へいきん " + Math.round(my.sum / my.n) + "ふん／さいご " + my.last + "</small>" : "<small>まだ</small>") + "</td></tr>"; }).join("");
         const btn = (k, t) => "<button data-s='" + k + "' style='margin:2px;padding:4px 10px" + (sort === k ? ";outline:2px solid #ffd27a" : "") + "'>" + t + "</button>";
         this.open("<h2>⏱ まち時間ひょう</h2><p class='hint'>" + fmtDate(now) + (ok ? "" : "<br>（2026年11月26日から はじまります。いまは まち時間は ありません）") + "</p>"
             + "<p style='margin:4px 0'><b>いま 公園ぜんたいの へいきん：" + nowAvg + "ふん</b>　／　導入（2026-11-26）いらい " + days + "日ぶんの へいきん：<b>" + allAvg + "ふん</b></p>"
             + "<p style='margin:4px 0'>いま いちばん すいている：" + best + "　／　あなたの きろく：ならんだ " + mn + "かい、へいきん " + (mn ? Math.round(ms / mn) : 0) + "ふん</p>"
             + "<div>" + btn("wait", "まち時間の みじかい じゅん") + btn("name", "アトラクション じゅん") + btn("me", "あなたの きろく じゅん") + "</div>"
-            + "<div style='max-height:46vh;overflow:auto'><table style='width:100%;border-collapse:collapse;font-size:clamp(11px,2.3vw,14px);text-align:center'><thead><tr><th style='text-align:left'>アトラクション</th><th>いま</th><th>きょうの うごき<br><small>" + OPEN_H + "じ→20じ</small></th><th>導入いらい<br><small>へいきん</small></th><th>あなたの きろく</th></tr></thead><tbody>" + tr + "</tbody></table></div>"
-            + "<p class='hint'>まち時間は 時計（じかん・曜日）と その日の ようすで かわります。土日・おひる前後は こみやすく、平日の 朝と 夕方は すいています。キューラインでは「ファストパス」で とばせます。</p>");
+            + "<div style='max-height:46vh;overflow:auto'><table style='width:100%;border-collapse:collapse;font-size:clamp(11px,2.3vw,14px);text-align:center'><thead><tr><th style='text-align:left'>アトラクション</th><th>いま</th><th>きょうの うごき<br><small>" + OPEN_H + "じ→23じ</small></th><th>導入いらい<br><small>へいきん</small></th><th>あなたの きろく</th></tr></thead><tbody>" + tr + "</tbody></table></div>"
+            + "<p class='hint'>アトラクションは 24時間 やっています。まち時間は 時計（じかん・曜日）で かわります：平日の 夜21じ〜朝9じは 0ふん、昼間（9〜18じ）は にんきの アトラクション 25ふん前後・ほか 10ふん前後、夕方（18〜21じ）は どれも 5〜10ふん。土日の 8〜20じは どれも 20ふんで、それ いがいは 0ふんです。キューラインでは「ファストパス」で とばせます。</p>");
         this.el.modal.querySelectorAll("[data-s]").forEach((b) => b.onclick = () => this.showWaits(g, b.dataset.s));
     }
     cert(g){

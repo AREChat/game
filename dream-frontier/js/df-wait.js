@@ -3,7 +3,7 @@
 //  まち時間は「アトラクションの にんき × じかんたい × 曜日 × その日の ばらつき × 20分ごとの ゆれ」で、パソコン／スマホの 時計から けいさんする。
 //  ぜんぶ 計算で きまるので、むかしの 日の まち時間も おなじ けっかが でる（「導入いらいの へいきん」に つかう）。うそ・じっさいの お店の データは つかっていません。
 export const LAUNCH = new Date(2026, 10, 26, 0, 0, 0);
-export const OPEN_H = 9, CLOSE_H = 21;
+export const OPEN_H = 0, CLOSE_H = 24;   // 24じかん えいぎょう
 const NOQ = {parade: 1, puzzle: 1};   // パレード・やかたの なぞは キューなし
 const POP = {worldjet: .95, aurora: .9, sweets: .85, loop: .95, cheese: .95, drop: .85, sky: .8, mine: .75, splash: .7, kart: .75, jump: .6, maze: .55, rhythm: .6, ghost: .8, safari: .65, shoot: .6, boat: .45, carousel: .5, wheel: .6, balloon: .5, swing: .55, fairy: .4, ship: .5, spinner: .5, cosmo: .7};
 const hash = (s) => { let h = 2166136261; for(let i = 0; i < s.length; i++){ h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0; } return h; };
@@ -15,14 +15,35 @@ export const hasQueue = (id) => !NOQ[id];
 const ymd = (d) => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
 export const daysSince = (d) => Math.floor((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - LAUNCH) / 86400000);
 export const started = (d) => (d || new Date()) >= LAUNCH;
-// いまの まち時間（ふん。5ふんきざみ。0 は「すぐ のれる」）
+// いまの まち時間（ふん。0 は「すぐ のれる」）
+//  きまり：
+//   へいじつ（月〜金） 21じ〜9じ＝0ふん／9じ〜18じ＝にんきの アトラクション 25ふん前後・ふつうの アトラクション 10ふん前後／18じ〜21じ＝どれも 5〜10ふん
+//   土日 8じ〜20じ＝どれも 20ふん／それ いがいの じかん＝0ふん
+//  へいじつは、アトラクションごとに「5パターン」ずつ（20分ごとに どれかに かわる）。あそびごころで、
+//   13ふん（ふきつな かず）・25ふん（2・5＝にこっ）・29ふん（2・9＝にく）が 入っている アトラクションも ある。
+export const POPULAR_AT = .75;   // にんきど が これ いじょうなら「にんきの アトラクション」
+const popOf = (id) => POP[id] !== undefined ? POP[id] : .35 + .5 * r01("pop" + id);
+export const isPopular = (id) => popOf(id) >= POPULAR_AT;
+const BASE = {pop: [20, 23, 25, 27, 30], nor: [6, 8, 10, 12, 14], eve: [5, 6, 8, 9, 10]};
+const PATS = {};
+// そのアトラクションの 5パターン：{day:[5つ], eve:[5つ], joke:null|13|25|29}
+export function patterns(id){
+    if(PATS[id]) return PATS[id];
+    const pop = isPopular(id), j = hash("joke" + id) % 10, joke = pop ? (j < 3 ? 25 : j < 6 ? 29 : null) : (j < 4 ? 13 : j === 4 ? 25 : null);
+    const jp = joke ? hash("jpos" + id) % 5 : -1, used = new Set(joke ? [joke] : []), day = [];
+    BASE[pop ? "pop" : "nor"].forEach((v, i) => { if(i === jp){ day.push(joke); return; } v += Math.floor(r01("v" + id + i) * 3) - 1; while(used.has(v)) v++; used.add(v); day.push(v); });   // アトラクションごとに ちょっとずつ ちがう 5つ
+    return PATS[id] = {day, eve: BASE.eve.slice(), joke};
+}
 export function waitMinutes(id, d){
     d = d || new Date(); if(NOQ[id] || d < LAUNCH) return 0;
-    const h = d.getHours() + d.getMinutes() / 60, ds = daysSince(d), novelty = ds < 3 ? 1.25 - ds * .08 : 1, dayR = .8 + .4 * r01("day" + ymd(d) + id), slot = Math.floor(h * 3), slotR = .86 + .28 * r01("slot" + ymd(d) + slot + id);
-    const pop = POP[id] !== undefined ? POP[id] : .35 + .5 * r01("pop" + id);
-    const raw = 55 * pop * curve(h) * DOW[d.getDay()] * dayR * slotR * novelty;
-    return raw < 4 ? 0 : Math.min(120, Math.round(raw / 5) * 5);
+    const h = d.getHours() + d.getMinutes() / 60, wd = d.getDay();
+    if(wd === 0 || wd === 6) return h >= 8 && h < 20 ? 20 : 0;
+    if(h < 9 || h >= 21) return 0;
+    const P = patterns(id), k = Math.floor(r01("w" + ymd(d) + Math.floor(h * 3) + id) * 5);   // 20分ごとに 5パターンの どれかに かわる
+    return h >= 18 ? P.eve[k] : P.day[k];
 }
+// あそびごころの ひとこと（13・25・29 のとき）
+export const jokeNote = (m) => m === 13 ? "13ふん…ふきつな かず！？" : m === 25 ? "25ふん＝に・こっ♪" : m === 29 ? "29ふん＝に・く！ おなか すくね" : "";
 const at = (d, h) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(h), (h % 1) * 60 + 30 * (h % 1 ? 0 : 0));
 // きょうの 1じかんごとの まち時間（OPEN_H〜CLOSE_H-1）
 export const dayCurve = (id, d) => { d = d || new Date(); const o = []; for(let h = OPEN_H; h < CLOSE_H; h++) o.push(waitMinutes(id, new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, 30))); return o; };
