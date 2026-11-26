@@ -79,16 +79,25 @@ export class Game{
     setAuto(on){
         const A = this.auto; on = !!on; if(A.on === on) return;
         A.on = on; A.tgt = null; A.wait = 1.0; A.t = 0; A.side = 0; A.stuck = 0; if(!on && this.ride && this.ride.xm) this.ride.auto = false;
+        if(!on && A.certPending){ A.certPending = false; setTimeout(() => { this.ui.cert(this); this.emit("complete", {count: this.count()}); }, 1200); }   // とちゅうで とめたら、その場で しょうめいしょ
         this.ui.toast(on ? "▶ オートプレイ：じどうで アトラクションに のるよ。 うごかすと とまるよ（コインは いらないよ）" : "■ オートプレイを とめたよ", 3600);
         this.emit("auto", {on});
     }
     autoPick(){
         const A = this.auto, ok = ATTRACTIONS.filter((a) => a.board && a.kind !== "quest" && a.kind !== "show");
+        if(A.certPending) return {id: "__fountain", n: "ふんすい", fountain: true, board: {x: 0, z: 5.0, r: 1}};   // 全制覇：ふんすいで しょうめいしょ
         const un = ok.filter((a) => !this.sv.stamps[a.id]);
         if(un.length){   // まだ スタンプが ない ところを、ちかい じゅんに
             let best = null, bd = 1e9; for(const a of un){ const d = Math.hypot(a.board.x - this.x, a.board.z - this.z); if(d < bd){ bd = d; best = a; } } return best;
         }
         const pool = ok.filter((a) => !(A.last && A.last.id === a.id)); return pool[Math.floor(Math.random() * pool.length)] || ok[0] || null;
+    }
+    // 全制覇のあと：ふんすいの まえで しょうめいしょを もらって、しばらくして また じどうで のりはじめる
+    autoCert(){
+        const A = this.auto; A.certPending = false; A.tgt = null; A.last = null; A.wait = 9999; const hold = A.t;
+        this.yaw = Math.atan2(-this.x, -this.z); this.ui.toast("🎉 ぜんぶ 制覇！ ふんすいの まえで しょうめいしょを もらったよ", 3200); this.sfx("stamp");
+        this.ui.cert(this); this.emit("complete", {count: this.count()});
+        setTimeout(() => { if(this.ui.modal) this.ui.close(); A.wait = 1.5; if(A.on) this.ui.toast("▶ オートプレイを つづけるよ", 2400); }, 7000);
     }
     // 射撃の じどうエイム（シューティング・アトラクション用）。うてる むきに なったら true
     autoShoot(dt, R){
@@ -120,7 +129,8 @@ export class Game{
             this.ui.toast("🚶 つぎは「" + A.tgt.n + "」へ いくよ", 2600); return still;
         }
         const a = A.tgt, b = a.board, dx = b.x - this.x, dz = b.z - this.z, d = Math.hypot(dx, dz);
-        if(d < Math.max(1.4, b.r * .55)){ A.tgt = null; A.last = a; this.board(a); if(this.mode !== "ride") A.wait = 1.5; return still; }   // 入口に ついたら のる
+        if(a.fountain && Math.hypot(this.x, this.z) < 5.1){ this.autoCert(); return still; }
+        if(!a.fountain && d < Math.max(1.4, b.r * .55)){ A.tgt = null; A.last = a; this.board(a); if(this.mode !== "ride") A.wait = 1.5; return still; }   // 入口に ついたら のる
         A.walkT += dt; A.lastChk += dt;
         if(A.lastChk > .6){   // あるいても すすめない（かべ・たてもの）ときは、よこに よける。それでも だめなら ちかみち（瞬間移動）
             const moved = Math.hypot(this.x - A.lastPos[0], this.z - A.lastPos[1]); A.lastChk = 0; A.lastPos = [this.x, this.z];
@@ -129,6 +139,7 @@ export class Game{
         }
         if(A.side){ A.sideT -= dt; if(A.sideT <= 0) A.side = 0; }
         if(A.stuck >= 6 || A.walkT > 90){
+            if(a.fountain){ this.x = b.x; this.z = b.z; this.ui.fade(); this.ui.toast("🌀 ちかみちで ふんすいの まえへ", 1800); A.wait = .8; A.stuck = 0; A.walkT = 0; return still; }
             A.tgt = null; A.last = a; this.x = b.x; this.z = b.z; this.ui.fade(); this.ui.toast("🌀 ちかみちで 「" + a.n + "」の いりぐちへ", 1800); A.wait = .8; return still;
         }
         const want = Math.atan2(dx, dz) + A.side; let diff = want - this.yaw; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
@@ -180,7 +191,9 @@ export class Game{
         if(this.sv.stamps[id]) return false; this.sv.stamps[id] = true; const a = byId(id); const c = this.count(); const coin = (a && a.coin) || 20; this.sv.coins += coin;
         this.ui.toast("🏅 スタンプ ゲット！「" + (a ? a.n : id) + "」  (" + c + "/" + STAMPS.length + ")  +" + coin + "コイン"); this.sfx("stamp"); this.emit("stamp", {id, count: c, coins: this.sv.coins});
         try{ if(window.DfStats) window.DfStats.record({id, area: a ? a.area : "", coin, count: c}); }catch(_e){}
-        if(c >= STAMPS.length && !this.sv.done){ this.sv.done = true; setTimeout(() => { this.ui.cert(this); this.emit("complete", {count: c}); }, 1200); }
+        if(c >= STAMPS.length && !this.sv.done){ this.sv.done = true;
+            if(this.auto.on) this.auto.certPending = true;   // オートプレイ中は、ふんすいまで あるいていって もらう
+            else setTimeout(() => { this.ui.cert(this); this.emit("complete", {count: c}); }, 1200); }
         this.save(); return true;
     }
 

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>ポコポコ太鼓｜リズムでたたく お祭りゲーム</title>
 <meta name="theme-color" content="#2a1450">
-<meta name="description" content="流れてくる赤と青の音符を、リズムに合わせてたたくお祭りゲーム。5曲・4つのむずかしさ。キーボード・タッチ・ゲームパッドで遊べます。絵も音もぜんぶオリジナルです。">
+<meta name="description" content="流れてくる赤と青の音符を、リズムに合わせてたたくお祭りゲーム。11曲・4つのむずかしさ・風船と連打。せっていで 自分好みに カスタマイズ。キーボード・タッチ・ゲームパッドで あそべます。">
 <script src="../protect.js"></script><script src="../shared/are-padmap.js"></script>
 <link rel="stylesheet" href="./css/pk.css">
 <script src="../shared/are-offline.js" defer></script>
@@ -23,7 +23,7 @@
     <p class="sub" id="tSub"></p>
     <div class="menu">
       <button id="bPlay" type="button" class="big" data-pad-first></button>
-      <button id="bHow" type="button"></button>
+      <div class="row"><button id="bHow" type="button"></button><button id="bSetT" type="button"></button></div>
     </div>
     <p class="hint" id="tNote"></p>
   </section>
@@ -37,23 +37,38 @@
 
   <!-- 曲えらび -->
   <section id="s-select" class="scr">
-    <div class="topbar"><h2 id="seT"></h2><label class="auto"><input id="autoBox" type="checkbox"> <span id="seAuto"></span></label></div>
-    <div id="songList" class="songs" role="listbox"></div>
+    <div class="selTop">
+      <h2 id="seT"></h2>
+      <div id="genreTabs" class="tabs" role="tablist"></div>
+      <div class="selOpts">
+        <label class="chip"><input id="autoBox" type="checkbox"> <span id="seAuto"></span></label>
+        <label class="chip"><input id="pracBox" type="checkbox"> <span id="sePrac"></span></label>
+        <button id="bSetS" type="button" class="chip"></button>
+      </div>
+    </div>
+    <div class="selBody">
+      <div id="songList" class="songs" role="listbox"></div>
+      <div id="detail" class="detail">
+        <div class="dGenre" id="dGenre"></div>
+        <h3 id="dName"></h3>
+        <div class="dMeta" id="dMeta"></div>
+        <div id="dDiffs" class="dDiffs"></div>
+        <div id="dBest" class="dBest"></div>
+        <div id="dPrac" class="dPrac"></div>
+        <button id="bGo" type="button" class="big" data-pad-first></button>
+      </div>
+    </div>
     <div class="row"><button id="bSeBack" type="button"></button></div>
   </section>
 
   <!-- あそぶ -->
   <section id="s-play" class="scr">
     <div id="stage">
-      <div id="hud">
-        <div class="hl"><div class="mascot" id="mascotP" aria-hidden="true"></div></div>
-        <div class="hm">
-          <div class="gaugeRow"><span id="gLbl"></span><div class="gauge"><i id="gFill"></i><b class="mark"></b></div></div>
-          <div class="songName" id="pName"></div>
-        </div>
-        <div class="hr"><div id="pScore" class="score">0</div><button id="bPause" type="button" aria-label="pause">⏸</button></div>
-      </div>
-      <div id="laneWrap"><canvas id="lane"></canvas><div id="combo" aria-live="off"></div><div id="judge"></div></div>
+      <canvas id="bg"></canvas>
+      <div id="mascotP" class="mascot"></div>
+      <div id="songBanner"></div>
+      <div id="laneWrap"><canvas id="lane"></canvas></div>
+      <div id="scoreBox"><div id="pScore" class="score">0</div><div id="pSub" class="sub2"></div></div>
       <div id="drumArea" aria-label="drum">
         <div class="pad rim l" data-k="k"><span>ka</span></div>
         <div class="pad face l" data-k="d"><span>don</span></div>
@@ -61,24 +76,48 @@
         <div class="pad rim r" data-k="k"><span>ka</span></div>
       </div>
       <div id="keyHint"></div>
+      <button id="bPause" type="button" aria-label="pause">⏸</button>
     </div>
-    <div id="pauseBox" class="overlay"><div class="panel"><h2 id="paT"></h2><button id="bResume" type="button" class="big"></button><button id="bRetry" type="button"></button><button id="bQuit" type="button"></button></div></div>
+    <div id="pauseBox" class="overlay"><div class="panel"><h2 id="paT"></h2><button id="bResume" type="button" class="big"></button><button id="bRetry" type="button"></button><button id="bSetP" type="button"></button><button id="bQuit" type="button"></button></div></div>
     <div id="countBox" class="overlay clear"><b id="countNum"></b></div>
   </section>
 
   <!-- けっか -->
   <section id="s-result" class="scr">
     <h2 id="reT"></h2>
-    <div class="panel res">
-      <div id="reSong" class="reSong"></div>
-      <div id="reClear" class="reClear"></div>
-      <table id="reTable"></table>
-      <div id="reNew" class="reNew"></div>
+    <div class="resWrap">
+      <div class="panel res">
+        <div id="reSong" class="reSong"></div>
+        <div id="reRank" class="reRank"></div>
+        <div id="reClear" class="reClear"></div>
+        <table id="reTable"></table>
+        <div id="reNew" class="reNew"></div>
+      </div>
+      <div class="panel res2">
+        <div class="gLabel" id="gLab1"></div><canvas id="gGraph" width="520" height="130"></canvas>
+        <div class="gLabel" id="gLab2"></div><canvas id="gHist" width="520" height="110"></canvas>
+        <div id="reErr" class="reErr"></div>
+      </div>
     </div>
     <div class="row"><button id="bReAgain" type="button" class="big"></button><button id="bReList" type="button"></button></div>
   </section>
+
+  <!-- せってい -->
+  <div id="setBox" class="overlay"><div class="panel setPanel">
+    <div class="setHead"><h2 id="stT"></h2><button id="bSetClose" type="button"></button></div>
+    <div id="setTabs" class="tabs"></div>
+    <div id="setBody" class="setBody"></div>
+    <div class="setFoot" id="setFoot"></div>
+  </div></div>
+
+  <!-- ずれを はかる -->
+  <div id="calBox" class="overlay"><div class="panel">
+    <h2 id="caT"></h2><p id="caP"></p><div id="caDot" class="caDot"></div><div id="caRes" class="caRes"></div>
+    <div class="row"><button id="bCaApply" type="button" class="big"></button><button id="bCaClose" type="button"></button></div>
+  </div></div>
 </main>
 <script src="./js/pk-songs.js"></script>
+<script src="./js/pk-set.js"></script>
 <script src="./js/pk.js"></script>
 </body>
 </html>
