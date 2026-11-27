@@ -25,8 +25,8 @@ let RP = null, QP = null;   // ライドの みち、キューの みち
 // ---------- みち ----------
 function ensure(){
     if(RP) return;
-    const zb = HALL.zb, pts = [stationPt()], start = [];
-    SCN.forEach((sc, k) => { start.push(k === 0 ? 0 : pts.length - 1); if(k === 0) pts.push([sc.cx + 50, zb, 0]); for(const p of sc.pts) pts.push([sc.cx + p[0], zb + p[1], p[2]]); pts.push([sc.cx - 50, zb, 0]); });
+    const zb = HALL.zb, pts = [[stationPt()[0] + EXT, zb, 0], stationPt()], start = [];   // ステーションの うしろ（会場の なか）まで レールを のばす：のりこんだ ときに バックで さがれる
+    SCN.forEach((sc, k) => { start.push(k === 0 ? 1 : pts.length - 1); if(k === 0) pts.push([sc.cx + 50, zb, 0]); for(const p of sc.pts) pts.push([sc.cx + p[0], zb + p[1], p[2]]); pts.push([sc.cx - 50, zb, 0]); });
     const P = makePath(pts.map((q) => [q[0] + SX, q[1] + SZ, q[2]]), false, 12), sb = start.map((i) => P.len[i * 12]); sb.push(P.total);
     // しかけの ために ゆっくり なる ところ（ホールド）を ならした ときの すすみぐあい
     const tab = SCN.map((sc, k) => { const N = 120, cum = [0], w = (tau) => { let v = 1; for(const [a, b] of sc.holds) v -= ease((tau - (a - .04)) / .04) * (1 - ease((tau - b) / .04)); if(k === 0) v *= ease(tau / .08); return Math.max(0, v); };
@@ -40,6 +40,7 @@ const hdg = (P, s, d) => { const a = P.at(Math.max(0, s - d)), b = P.at(Math.min
 function pp(s, lat, y){ const P = RP.P, c = P.at(s), yaw = hdg(P, s, .7); return {x: c[0] - Math.cos(yaw) * lat, y: c[1] + (y || 0), z: c[2] + Math.sin(yaw) * lat, yaw}; }
 const qp = (s, lat) => { const P = QP, c = P.at(clamp(s, 0, P.total - .01)), yaw = hdg(P, clamp(s, 0, P.total - .01), .7); return {x: c[0] - Math.cos(yaw) * (lat || 0), z: c[2] + Math.sin(yaw) * (lat || 0), yaw}; };
 const Q0 = 14;
+const EXT = 13, BUMP = 4.6, BK = 6.4, WR = 2.45, G0 = 4.6, WSS = 1.6;   // のばした きょり／バックで ぶつかる じこく／さがる きょり／チーズの はんけい・おおきさ
 function qs(t){ ensure(); const N = 26, per = QT / N, k = Math.min(N, Math.floor(t / per)), u = (t - k * per) / per, f = (k + (k >= N ? 0 : ease(clamp((u - .25) / .6, 0, 1)))) / N; return Q0 + (QP.total - Q0) * f; }
 
 // ---------- 音声・字幕 ----------
@@ -51,7 +52,7 @@ function say(g, R, id){
 function events(){
     const E = [[3, "q01"], [34, "q02"], [62, "q03"], [68, "q04"], [76, "q05"], [83, "q06"], [120, "q07"], [160, "q08"], [200, "q09"], [206, "q10"], [238, "q11"], [246, "q12"], [300, "q13"], [336, "q14"], [QT + .8, "b01"], [QT + 3.8, "b02"]];
     const at = (k, u, id) => E.push([QT + BT + RP.tS[k] + u, id]);
-    at(0, 3, "s1a"); at(0, 8, "s1b"); at(0, 14, "s1c"); at(0, 19, "s1d"); at(1, 3, "s2a"); at(1, 11, "s2b"); at(2, 4, "s3a"); at(2, 12, "s3b"); at(3, 3, "s4a"); at(3, 20.5, "s4b"); at(3, 26, "ouch");
+    at(0, .1, "n1"); at(0, 2.9, "n2"); at(0, 5.3, "n3"); at(0, 7.6, "s1b"); at(0, 9.6, "s1a"); at(0, 14, "s1c"); at(0, 19, "s1d"); at(1, 3, "s2a"); at(1, 11, "s2b"); at(2, 4, "s3a"); at(2, 12, "s3b"); at(3, 3, "s4a"); at(3, 20.5, "s4b"); at(3, 26, "ouch");
     at(4, 3, "s5a"); at(4, 17, "s5b"); at(5, 4, "s6a"); at(5, 16, "s6b"); at(6, 3, "s7a"); at(6, 17, "s7b"); at(7, 3, "s8a"); at(7, 14, "s8b"); at(7, 30, "s8c"); at(7, 37, "s8d"); at(7, 41, "s8e"); E.push([TOT - 5, "end"]);
     return E.sort((a, b) => a[0] - b[0]);
 }
@@ -89,6 +90,8 @@ export const cheese = {
         R.h.skip.addEventListener("click", () => { R.skipReq = true; }); R.h.skip.addEventListener("touchstart", (e) => { R.skipReq = true; e.preventDefault(); }, {passive: false});
         for(const k of ["top", "cap", "cross", "hint", "skip"]) r.appendChild(R.h[k]);
         R.h.cross.style.display = "none";
+        { const f = document.createElement("div"); f.style.cssText = "position:absolute;left:0;top:0;right:0;bottom:0;background:#fff8d8;opacity:0;pointer-events:none;z-index:3"; r.appendChild(f); R.h.flash = f;
+          const b = document.createElement("div"); b.style.cssText = "position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.5);opacity:0;pointer-events:none;z-index:4;font-weight:900;font-size:clamp(34px,10vw,92px);color:#fff;white-space:nowrap;text-shadow:0 0 18px #ff8a1a,0 5px 0 #d63a2a,0 0 40px #ffd23a;letter-spacing:.04em"; r.appendChild(b); R.h.boom = b; }
         if(noQ){ R.t = QT; g.ui.toast("🟢 チーズいせき  いま まち時間 0ふん！ すぐ のれるよ", 3200); }
         else g.ui.toast("🧀 チーズいせき  いまの まち時間 約" + R.w0 + "ふん（ここでは 6ふんに ぎゅっと ちぢめているよ）", 4200);
         if(R.auto && !noQ){ R.t = QT - .5; R.fast = true; }
@@ -105,7 +108,7 @@ export const cheese = {
             if(inp.act && t - R.cheerT > 1.2){ R.cheerT = t; g.sfx("fan"); g.ui.toast("🎉 みんなで かんせい！", 1400); if(R.cap === null || T > R.cap.until) say(g, R, ["h1", "h2", "h3", "h4"][(R.hits++) % 4]); }
         } else {
             if(!R.boarded){ R.boarded = true; record(g.sv, "cheese", R.w0, R.fast); g.save(); g.ui.fade(); g.ui.toast("🚙 ジープに のりこんだ！  E：チーズを なげて しかけを ねらえ！", 3800); g.sfx("start"); g.lookYaw = 0; g.lookPitch = 0; }
-            R.A.music = "cheeseride"; R.A.env = "cheese"; R.V = rideState(R, t);
+            R.A.music = "cheeseride"; R.A.env = "cheese"; R.V = rideState(R, t); if(R.V.k === 0) scene0fx(g, R, R.V);
             // ---- チーズを なげる ----
             R.autoT -= dt;
             let go = !!inp.act, need = false; if(R.auto && R.autoT <= 0){ go = true; need = true; }   // オートは「ねらえる まとが ある ときだけ」なげる（むだな チーズを とばさない）
@@ -125,7 +128,9 @@ export const cheese = {
         const t = R.t;
         if(t < QT){ ensure(); const s = R.sq !== undefined ? R.sq : qs(t), c = QP.at(clamp(s, 0, QP.total - .01)), yaw = hdg(QP, clamp(s, 0, QP.total - .01), 1.4), mv = qs(t + .15) - s > .002; return {eye: [c[0], 1.62 + (mv ? Math.sin(g.t * 9) * .03 : 0), c[2]], yaw: yaw + g.lookYaw, pitch: g.lookPitch * .8, fov: 72}; }
         const V = R.V || rideState(R, t), yj = V.yaw + V.psi, ex = V.x - Math.sin(yj) * .45, ez = V.z - Math.cos(yj) * .45;
-        return {eye: [ex, V.y + 2.15 + Math.sin(g.t * 11) * .02 * V.v, ez], yaw: yj + g.lookYaw, pitch: V.pitch * .6 - .07 + g.lookPitch + (V.shake ? Math.sin(g.t * 40) * .012 : 0), fov: V.fov, roll: V.roll};
+        const kk = V.kick || 0, jx = kk * (Math.random() - .5) * .9, jy = kk * (Math.random() - .5) * .6;
+        const lf = Math.min(1, Math.abs(V.lk || 0) / 2.4);   // うしろを むく ときは、ジープの うしろが じゃまに ならないよう すこし たかく して、したを のぞきこむ
+        return {eye: [ex + jx, V.y + 2.15 + lf * .9 + Math.sin(g.t * 11) * .02 * V.v + jy, ez + jx * .5], yaw: yj + (V.lk || 0) + g.lookYaw, pitch: V.pitch * .6 - .07 - lf * .13 + g.lookPitch + (V.shake ? Math.sin(g.t * 40) * .012 : 0) + kk * Math.sin(g.t * 46) * .1, fov: V.fov + kk * 8, roll: (V.roll || 0) + kk * .14 * Math.sin(g.t * 31)};
     },
     dyn(g, R, D){
         const T = g.t, t = R.t; ensure();
@@ -158,7 +163,7 @@ export const cheese = {
                 D.push(SPR({m: "ch_mouse", x, y: gal, z, yaw: face, sx: 1.1, sy: 1.1, sz: 1.1}, "ch_mouse", 0)); const cu = clamp(u - .09 * rev, 0, 1), cx = SX + (rev > 0 ? 25 - 50 * cu : -25 + 50 * cu); D.push(SPR({m: "ch_cat", x: cx, y: gal, z, yaw: face, sx: .5, sy: .5, sz: .5}, "ch_cat", 0));
                 for(let q = 0; q < 3; q++) D.push({s: "glow", x: cx - face * .4 * (q + 1) * -1, y: .5, z, w: 1.4, h: .7, c: [1, 1, 1], a: .3 - q * .08}); }
             // ステーションの ジープ
-            const st = pp(0, 0, 0), yj = st.yaw; jeepAt({x: st.x, y: st.y, z: st.z, v: 0}, yj);
+            const st = pp(RP.sb[0], 0, 0), yj = st.yaw; jeepAt({x: st.x, y: st.y, z: st.z, v: 0}, yj);
             for(const f of R.fx || []){} // （きほん：なし）
             if(cheer > 0) for(let q = 0; q < 14; q++){ const a = q / 14 * TAU + T, rr = 1.5 + (1 - cheer) * 4; D.push({s: "star", x: cam[0] + Math.sin(a) * rr + Math.sin(yawOf(QP, s)) * 3, y: 1.6 + (1 - cheer) * 3 + Math.sin(a * 3) * .5, z: cam[2] + Math.cos(a) * rr + Math.cos(yawOf(QP, s)) * 3, w: .5, h: .5, c: [1, .85, .4], a: cheer}); }
             return;
@@ -188,7 +193,7 @@ export const cheese = {
         const wq = started() ? waitMinutes("cheese") : 25, step = 1.55 + (1 - Math.min(1, wq / 70)) * 2.6, per = 16, sh = (Math.floor(T / per) + ease(clamp((T % per - 11) / 3, 0, 1))) * step % step;
         for(let i = 0, s = -sh; s < L && wq > 0; i++, s += step){ if(s < 0) continue;      // まち時間 0ふん：ならんでいる人は いない
             const p = at(s); if(!p) continue; const m = "guest" + (i % 6), wave = (i % 9 === 4), lat = ((i * 5) % 3 - 1) * .35, nx = Math.cos(p.yaw) * lat, nz = -Math.sin(p.yaw) * lat;
-            D.push({m, p: m, x: p.x + nx, y: Math.abs(Math.sin(T * 2.2 + i)) * (wave ? .12 : .02), z: p.z + nz, yaw: p.yaw + (i % 5 === 0 ? .8 : 0)}); }
+            D.push({m, p: m, x: p.x + nx, y: Math.abs(Math.sin(T * 2.2 + i)) * (wave ? .12 : .02), z: p.z + nz, yaw: p.yaw + Math.PI + (i % 5 === 0 ? .8 : 0)}); }   // 列は 入口（OUTQ の はじめ）へ むかって すすむので、入口の ほうを むく
         // いせきの ゲートの うえの ねこと、あなから のぞく ねずみ
         if(!propReady("prop/cheese_gate")) D.push(SPR({m: "ch_cat", x: -95, y: 11.6, z: 62.8, yaw: Math.PI / 2 + Math.sin(T * 1.2) * .5, sx: .75, sy: .75 + Math.sin(T * 3) * .02, sz: .75}, "ch_cat", 0));
         if(propReady("prop/cheese_sign")){   // かんばんの パネルに 「いまの まち時間」を すうじで かさねる
@@ -204,10 +209,16 @@ const yawOf = (P, s) => hdg(P, clamp(s, 0, P.total - .01), 1.2);
 
 // ---------- ライドの じょうたい ----------
 function rideState(R, t){
-    const rt = t - QT - BT; let k = -1, u = 0, tau = 0, s = 0;
+    const rt = t - QT - BT; let k = -1, u = 0, tau = 0, s = RP.sb[0];
     if(rt >= 0){ k = SCN.length - 1; for(let i = 0; i < SCN.length; i++) if(rt < RP.tS[i] + SCN[i].d){ k = i; break; } u = Math.min(rt - RP.tS[k], SCN[k].d); tau = clamp(u / SCN[k].d, 0, 1); s = RP.sb[k] + (RP.sb[k + 1] - RP.sb[k]) * prog(k, tau); }
+    let bk = 0, lk = 0, kick = 0;
+    if(k === 0){   // いきなり バックに はいって、うしろの おおきな チーズに ぶつかる → あわてて ぜんしんで にげる
+        const D0 = BUMP - 1.0, tE = clamp((u - D0) / (SCN[0].d - D0), 0, 1); s = RP.sb[0] + (RP.sb[1] - RP.sb[0]) * prog(0, tE);
+        bk = u < .9 ? 0 : u < BUMP ? Math.pow((u - .9) / (BUMP - .9), 2) : 1 - ease(clamp((u - BUMP) / 2.8, 0, 1)); s -= BK * bk;
+        lk = Math.PI * ease(clamp((u - 3.0) / .9, 0, 1)) * (1 - ease(clamp((u - 7.8) / 1.0, 0, 1))) - .55 * Math.PI * ease(clamp((u - 11.5) / .9, 0, 1)) * (1 - ease(clamp((u - 14.6) / .9, 0, 1)));
+        kick = u > BUMP ? Math.exp(-(u - BUMP) * 2.4) : 0; }
     const P = RP.P, c = P.at(s), yaw = hdg(P, s, 1.0), yaw2 = hdg(P, s + 2.5, 1.0), pitch = Math.atan2(P.at(Math.min(P.total - .01, s + 1.5))[1] - P.at(Math.max(0, s - 1.5))[1], 3);
-    const v = rt < 0 ? 0 : clamp((P.at(Math.min(P.total - .01, s + .4))[0] !== c[0] || P.at(Math.min(P.total - .01, s + .4))[2] !== c[2]) ? 1 : 0, 0, 1);
+    const v = rt < 0 ? 0 : bk > 0 ? 1 : clamp((P.at(Math.min(P.total - .01, s + .4))[0] !== c[0] || P.at(Math.min(P.total - .01, s + .4))[2] !== c[2]) ? 1 : 0, 0, 1);
     let psi = 0, roll = 0, fov = 70, yOff = 0, shake = false;
     const sn = Math.sin, E = ease;
     switch(k){
@@ -220,7 +231,29 @@ function rideState(R, t){
         case 6: psi = .4 * sn(tau * Math.PI * 4) + 2 * Math.PI * E((tau - .45) / .3); roll = .08 * sn(u); break;
         case 7: psi = .3 * sn(tau * Math.PI * 3) + 2 * Math.PI * E((tau - .6) / .2); break;
     }
-    return {k, u, tau, s, x: c[0], y: c[1] + yOff, z: c[2], yaw, yaw2, pitch, psi, roll, fov, yOff, v, shake, rt};
+    if(k === 0 && lk > .3) fov = Math.max(fov, 76);
+    return {k, u, tau, s, x: c[0], y: c[1] + yOff, z: c[2], yaw, yaw2, pitch, psi, roll, fov, yOff, v, shake: shake || kick > .05, rt, lk, kick, bk};
+}
+
+// ---------- 場面0：バックで ぶつかって、おおきな チーズに おいかけられる ----------
+// チーズの いち（みちの s）。ぶつかるまでは うしろに とまっていて、ぶつかったら ころがって ジープを おいかける。さいごは ジープの よこを ぬけて、まえの ゲートに ぶつかる
+function wheel0(V){
+    const u = V.u, sb0 = RP.sb[0], sw0 = sb0 - BK - 1.6 - WR, crashS = RP.sb[1] - 7, sv = V.s;
+    const gm = u < 9 ? G0 : lerp(G0, -16, ease((u - 9) / 13)), chase = sw0 + .5 * 3.6 * Math.pow(Math.max(0, u - BUMP - .6), 2);
+    const sw = u <= BUMP + .6 ? sw0 : Math.max(sw0, Math.min(chase, sv - gm)), gap = sv - sw, lat = 4.4 * Math.exp(-Math.pow(gap / 8, 2)) * ease(clamp((u - 9) / 3, 0, 1));
+    return {sw, gap, lat, crashS, sw0, rolling: u > BUMP + .6};
+}
+function flash(R, a){ const f = R.h && R.h.flash; if(!f) return; f.style.transition = "none"; f.style.opacity = String(a); setTimeout(() => { f.style.transition = "opacity .8s ease-out"; f.style.opacity = "0"; }, 60); }
+function boom(R, text){ const b = R.h && R.h.boom; if(!b) return; b.textContent = text; b.style.transition = "none"; b.style.opacity = "1"; b.style.transform = "translate(-50%,-50%) scale(.4) rotate(-8deg)";
+    setTimeout(() => { b.style.transition = "transform .28s cubic-bezier(.2,1.6,.4,1)"; b.style.transform = "translate(-50%,-50%) scale(1.15) rotate(3deg)"; }, 40); setTimeout(() => { b.style.transition = "opacity .5s"; b.style.opacity = "0"; }, 1300); }
+function scene0fx(g, R, V){
+    const u = V.u, X = R.sx || (R.sx = {}), once = (k, at, fn) => { if(!X[k] && u >= at){ X[k] = 1; fn(); } };
+    for(const a of [1.0, 1.9, 2.8, 3.7]) once("al" + a, a, () => g.sfx("alarm"));      // バックの ピーピー
+    once("crash", BUMP, () => { g.sfx("crash"); flash(R, .95); boom(R, "ガッシャーン！"); try{ if(navigator.vibrate) navigator.vibrate([70, 40, 140]); }catch(_e){} });
+    once("boing", BUMP + .45, () => g.sfx("boing"));
+    for(let q = 0; q < 18; q++){ const at = BUMP + .6 + q * 1.15; if(at < 23.5) once("rb" + q, at, () => g.sfx("rumble")); }
+    const W = wheel0(V);
+    if(W.sw >= W.crashS) once("gate", u, () => { g.sfx("smash"); flash(R, .8); boom(R, "バッコーン！"); try{ if(navigator.vibrate) navigator.vibrate([90, 40, 180]); }catch(_e){} });
 }
 
 // ---------- チーズを なげる ----------
@@ -245,13 +278,21 @@ const Mouse = (D, x, y, z, yaw, sc) => D.push(SPR({m: "ch_mouse", x, y, z, yaw, 
 const stars = (D, x, y, z, T, n, r, sz) => { for(let i = 0; i < n; i++){ const a = T * 3 + i / n * TAU; D.push({s: "star", x: x + Math.cos(a) * r, y: y + Math.sin(a * 2) * .15, z: z + Math.sin(a) * r, w: sz || .5, h: sz || .5, c: [1, .9, .4], a: 1}); } };
 function gags(g, R, D, V, T){
     const k = V.k, u = V.u, sb = RP.sb[k], sl = RP.sb[k + 1] - RP.sb[k], sv = V.s, tau = V.tau; if(k < 0) return;
-    if(k === 0){   // ころがる おおきな チーズに おいかけられる！
-        // うしろから ころがってきて、ジープの よこを ぬけて、まえの ゲートに ぶつかって ばらばら！
-        const crashS = sb + sl - 7, gap = lerp(46, -16, ease(u / 22)), sw = sv - gap, e = Math.max(0, (sw - crashS) / 3.3);
-        if(e <= 0){ const lat = 4.4 * Math.exp(-Math.pow(gap / 8, 2)), w = pp(Math.max(0, sw), lat, 2.3); D.push(SPR({m: "ch_wheel", x: w.x, y: w.y, z: w.z, yaw: w.yaw, rx: sw / 2.3}, "ch_wheel", "c"));
-            Cat(D, w.x, w.y + 4.7 + Math.abs(Math.sin(T * 14)) * .15, w.z, w.yaw, .55, false);   // わっかの うえで あしを ばたばた
+    if(k === 0){   // バックで おおきな チーズに ぶつかって、ころがる チーズに おいかけられる！
+        const W = wheel0(V), crashS = W.crashS, sw = W.sw, gap = W.gap, e = Math.max(0, (sw - crashS) / 3.3), ub = u - BUMP;
+        if(e <= 0){
+            const w = pp(sw, W.lat, WR), wob = ub > 0 && ub < 2.2 ? 1 + .13 * Math.sin(ub * 24) * Math.exp(-ub * 2.2) : 1, big = WSS * wob * (1 + (W.rolling ? .035 * Math.sin(T * 10) : 0));
+            D.push(SPR({m: "ch_wheel", x: w.x, y: w.y + (W.rolling ? Math.abs(Math.sin(T * 9)) * .12 : 0), z: w.z, yaw: w.yaw, rx: sw / WR, sx: big * 1.4, sy: big, sz: big * 1.4}, "ch_wheel", "c"));
+            D.push({s: "glow", x: w.x, y: w.y + 1.2, z: w.z, w: 7.5, h: 7.5, c: [1, .85, .3], a: .22});   // ぼうっと ひかって、とおくからでも よく みえる
+            Cat(D, w.x, w.y + WR * .98 * (WSS / 1.6) * 1 + Math.abs(Math.sin(T * 14)) * .15, w.z, w.yaw, .55, false);   // わっかの うえで あしを ばたばた
+            if(W.rolling){ for(let i = 0; i < 7; i++){ const back = pp(sw - 2.2 - i * 1.5, Math.sin(i * 2.3 + T * 5) * 1.4, .4 + ((T * 2.2 + i * .37) % 1) * 1.6), fd = 1 - i / 7; D.push({s: "glow", x: back.x, y: back.y, z: back.z, w: 1.6 + i * .35, h: 1.3 + i * .3, c: [.9, .78, .55], a: .42 * fd}); } }   // ほこりの けむり
+            if(ub > -.05 && ub < 1.6){ const bp = pp(W.sw0 + WR + .4, 0, 1.6);
+                D.push({s: "glow", x: bp.x, y: bp.y, z: bp.z, w: 3 + ub * 16, h: 3 + ub * 16, c: [1, .95, .6], a: Math.max(0, .95 - ub / 1.6)});
+                for(let i = 0; i < 14; i++){ const aa = i / 14 * TAU + .3, r = (ub + .05) * (4 + i % 3 * 2), ch = i % 2; D.push(ch ? {m: "ch_chunk", x: bp.x + Math.cos(aa) * r, y: bp.y + r * .6 - ub * ub * 3, z: bp.z + Math.sin(aa) * r, yaw: aa + T * 6, rx: T * 8, sx: 1.2, sy: 1.2, sz: 1.2} : {s: "star", x: bp.x + Math.cos(aa) * r * 1.2, y: bp.y + Math.sin(aa * 2) * r * .5 + .4, z: bp.z + Math.sin(aa) * r * 1.2, w: .9, h: .9, c: [[1, .5, .8], [.4, .8, 1], [1, .9, .3]][i % 3], a: Math.max(0, 1 - ub / 1.6)}); } }
             if(u > 14 && u < 26){ const q = pp(sv + 11, 3.6, 0); Mouse(D, q.x, Math.abs(Math.sin(T * 13)) * .25, q.z, q.yaw, 1.1); }
-        } else { const w = pp(crashS, 0, 1.8); if(e < 4){ D.push({s: "glow", x: w.x, y: w.y + 1, z: w.z, w: 4 + e * 10, h: 4 + e * 10, c: [1, .8, .3], a: Math.max(0, .9 - e / 1.6)}); for(let i = 0; i < 8; i++){ const a = i / 8 * TAU; D.push({m: "ch_chunk", x: w.x + Math.cos(a) * e * 4, y: w.y + 1 + e * 4 - e * e * 4, z: w.z + Math.sin(a) * e * 4, yaw: a + T * 4, rx: T * 6, sx: 1.4, sy: 1.4, sz: 1.4}); } }
+            if(u < BUMP){ const q = pp(Math.max(W.sw0 - 3, 0), 3.4, 0); Mouse(D, q.x, Math.abs(Math.sin(T * 7)) * .12, q.z, q.yaw + 2.2, 1.0); }   // うしろで ねずみが びっくり
+        } else { const w = pp(crashS, 0, 1.8); if(e < 4){ D.push({s: "glow", x: w.x, y: w.y + 1, z: w.z, w: 5 + e * 14, h: 5 + e * 14, c: [1, .8, .3], a: Math.max(0, .95 - e / 1.6)}); for(let i = 0; i < 14; i++){ const a = i / 14 * TAU; D.push({m: "ch_chunk", x: w.x + Math.cos(a) * e * 5, y: w.y + 1 + e * 5 - e * e * 4, z: w.z + Math.sin(a) * e * 5, yaw: a + T * 4, rx: T * 6, sx: 1.8, sy: 1.8, sz: 1.8}); }
+                for(let i = 0; i < 18; i++){ const a = i / 18 * TAU; D.push({s: "star", x: w.x + Math.cos(a) * e * 7, y: w.y + 1.5 + Math.sin(a * 3) * e * 2, z: w.z + Math.sin(a) * e * 7, w: .9, h: .9, c: [[1, .5, .8], [.4, .8, 1], [1, .9, .3]][i % 3], a: Math.max(0, 1 - e / 3)}); } }
             const c = pp(crashS - 2, 5.5, 0); Cat(D, c.x, 0, c.z, c.yaw + Math.PI * .6, .55, true); stars(D, c.x, 1.9, c.z, T, 4, .6); }
     } else if(k === 1){   // ねこの おおきな かおが あなから！
         for(let i = 0; i < 4; i++){ const side = i % 2 ? -1 : 1, f = .08 + i * .22, p = pp(sb + f * sl, side * lerp(6.6, 5.2, (Math.sin(T * 1.7 + i * 2) + 1) / 2), 1.2); Mouse(D, p.x, p.y, p.z, p.yaw + side * 1.4, 1.0); }
@@ -284,7 +325,7 @@ function gags(g, R, D, V, T){
         { const hs = RP.sb[6] + sl * prog(6, .5), p = pp(hs + 8, 3, .3), sp = u > 19 ? 1 : 0, e = clamp((u - 19) / 4, 0, 1); D.push({m: "ch_cheese", x: p.x, y: .2 + Math.sin(T * 2) * .1, z: p.z, yaw: T * (1 + sp * 8), sx: 3, sy: 1.6, sz: 3}); Cat(D, p.x, .9 - e * .5, p.z, T * (1 + sp * 8), .55 * (1 - e * .4), false); if(sp) stars(D, p.x, 2.5, p.z, T, 4, .7); }
         { const p = pp(sb + .3 * sl, 9, 1); Mouse(D, p.x, p.y, p.z, p.yaw - 1.4, 1.2); }
     } else {   // フィナーレ：みんなで チーズの おまつり
-        const base = [SX + SCN[7].cx - 44, SZ + HALL.zb];
+        const base = [SX + SCN[7].cx - 44, SZ + HALL.zb - 17];   // おたからの やまの そば（レールの よこ）
         Cat(D, base[0] + 5, Math.abs(Math.sin(T * 5)) * .4, base[1] + 3, -Math.PI * .7, .8, false); Mouse(D, base[0] + 5, .6 + Math.abs(Math.sin(T * 5 + 1)) * .4, base[1] - 3, -Math.PI * .3, 1.6); D.push(SPR({m: "ch_wheel", x: base[0] + 5, y: 1.6, z: base[1], yaw: 0, rx: T, sx: .45, sy: .45, sz: .45}, "ch_wheel", "c"));
         for(let i = 0; i < 40; i++){ const a = (i * 53) % 100 / 100 * TAU, r = 3 + (i * 7) % 11; D.push({s: "star", x: V.x + Math.cos(a) * r, y: 11 - ((T * 1.4 + i * .73) % 11), z: V.z + Math.sin(a) * r - 4, w: .45, h: .45, c: [[1, .5, .8], [.4, .8, 1], [1, .9, .3], [.6, 1, .6]][i % 4], a: .9}); }
         for(let i = 0; i < 4; i++){ const e = (T * .5 + i * .27) % 1, a = i * 1.7, p = pp(sb + (.25 + i * .18) * sl, (i % 2 ? -1 : 1) * 10, 9 + Math.sin(a) * 2); for(let q = 0; q < 10; q++){ const b = q / 10 * TAU; D.push({s: "star", x: p.x + Math.cos(b) * e * 5, y: p.y + Math.sin(b) * e * 5, z: p.z, w: .8 * (1 - e), h: .8 * (1 - e), c: [[1, .6, .3], [.5, .8, 1], [1, .5, .8]][i % 3], a: 1 - e}); } }
