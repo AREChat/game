@@ -5,9 +5,11 @@ import pyopenjtalk
 from kokoro_onnx import Kokoro
 from voice_lines import L   # このフォルダの voice_lines.py
 OUT = sys.argv[1] if len(sys.argv) > 1 else "/tmp/voice_new"
+FN = lambda i: i if i.startswith(("cosmo_", "ann_")) else "cheese_" + i   # cosmo_ / ann_ で はじまる ものは そのまま ファイル名に する
 os.makedirs(OUT, exist_ok=True)
 V = {"gf": ("jf_tebukuro", 1.0, 1.0), "gm": ("jm_kumo", 1.0, 1.0), "gaku": ("jm_kumo", 1.0, 1.14), "mimi": ("jf_alpha", 1.0, 1.10),
-     "cat": ("jm_kumo", 0.98, 0.82), "mouse": ("jf_nezumi", 1.05, 1.38)}
+     "cat": ("jm_kumo", 0.98, 0.82), "mouse": ("jf_nezumi", 1.05, 1.38),
+     "cmd": ("jm_kumo", 0.97, 0.80), "bot": ("jf_nezumi", 1.0, 1.22), "pilot": ("jm_kumo", 1.04, 1.02)}
 MAP = {"a": "a", "i": "i", "u": "ɯ", "e": "e", "o": "o", "A": "a", "I": "i", "U": "ɯ", "E": "e", "O": "o", "N": "ɴ", "cl": "ʔ",
        "k": "k", "g": "ɡ", "s": "s", "sh": "ɕ", "z": "z", "j": "ʥ", "t": "t", "ts": "ʦ", "ch": "ʨ", "d": "d", "n": "n", "ny": "ɲ", "h": "h", "hy": "ç", "f": "ɸ",
        "b": "b", "p": "p", "m": "m", "y": "j", "r": "ɾ", "w": "w", "ky": "kʲ", "gy": "ɡʲ", "py": "pʲ", "by": "bʲ", "my": "mʲ", "ry": "ɾʲ", "dy": "dʲ", "ty": "tʲ", "v": "b"}
@@ -39,7 +41,7 @@ if __name__ == "__main__":
         af = "silenceremove=start_periods=1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_threshold=-50dB,areverse"
         if abs(pit - 1) > .001: af = f"asetrate={int(sr*pit)},aresample={sr},atempo={1/pit:.4f}," + af
         af += ",loudnorm=I=-18:TP=-2,afade=t=in:d=0.02"
-        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", wav, "-af", af, "-ac", "1", "-b:a", "56k", "-ar", "24000", f"{OUT}/cheese_{i}.mp3"], check=True)
-        d = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", f"{OUT}/cheese_{i}.mp3"]))
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", wav, "-af", af, "-ac", "1", "-b:a", "56k", "-ar", "24000", f"{OUT}/{FN(i)}.mp3"], check=True)
+        d = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", f"{OUT}/{FN(i)}.mp3"]))
         man[i] = {"w": who, "t": text, "d": round(d, 2)}; print("  ->", round(d, 2))
-    json.dump(man, open(f"{OUT}/cheese_voice.json", "w"), ensure_ascii=False, indent=1)
+    json.dump(man, open(f"{OUT}/voice_manifest.json", "w"), ensure_ascii=False, indent=1)
