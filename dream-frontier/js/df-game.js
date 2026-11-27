@@ -5,6 +5,9 @@ import {waitMinutes, hasQueue, started as waitStarted} from "./df-wait.js";
 import {yawOf, pitchOf} from "./df-path.js";
 import {pathOf} from "./df-world.js";
 import {coasterInit, coasterUpdate, coasterCamera, stageName} from "./df-ride.js";
+import {annTick, annEnd} from "./df-announce.js";
+import {ghostDyn} from "./df-ghost.js";
+import {fxFlash} from "./df-voice.js";
 import {stageDyn} from "./df-stages.js";
 import {spriteReady} from "./df-sprites.js";
 import {bootDfWasm} from "./df-wasm.js";
@@ -233,7 +236,7 @@ export class Game{
         if(this.mode !== "ride"){ this._noBoard = false; try{ this.ui.el.frame.className = ""; this.ui.el.frame.style.opacity = ""; }catch(_e){} }
     }
     endRide(ok, quiet){
-        const R = this.ride; if(!R) return; const a = R.a; if(R.xm && R.xm.end) R.xm.end(this, R, ok); this.ride = null; this.mode = "walk"; this.ui.rideEnd(); this.hooks.rideEnd && this.hooks.rideEnd();
+        const R = this.ride; if(!R) return; const a = R.a; if(R.xm && R.xm.end) R.xm.end(this, R, ok); annEnd(this, R, a, ok); this.ride = null; this.mode = "walk"; this.ui.rideEnd(); this.hooks.rideEnd && this.hooks.rideEnd();
         const b = a.board; if(a.kind === "drop"){ this.x = a.board.x; this.z = a.board.z; } else { this.x = b.x; this.z = b.z; }
         this.yaw = Math.atan2(this.x - (a.c ? a.c[0] : this.x), this.z - (a.c ? a.c[1] : this.z)) || Math.PI; this.yaw = Math.PI; this.pitch = 0; this.lookYaw = this.lookPitch = 0;
         if(this.auto.on){ if(ok){ this.auto.wait = 2.4; this.auto.tgt = null; } else this.setAuto(false); }   // おりたら つぎへ（じぶんで おりたときは オートを とめる）
@@ -296,7 +299,7 @@ export class Game{
     }
 
     updateRide(dt, inp){
-        const R = this.ride, a = R.a; R.t += dt; this.ui.rideSet && this.ui.rideSet(R, a);
+        const R = this.ride, a = R.a; R.t += dt; this.ui.rideSet && this.ui.rideSet(R, a); annTick(this, R, a);
         this.lookYaw = clamp(this.lookYaw - inp.lx, -1.5, 1.5); this.lookPitch = clamp(this.lookPitch - inp.ly, -.9, .9);
         if(inp.esc || inp.act2){ return this.endRide(false); }
         if(R.xm){ R.xm.update(this, R, dt, inp); this.shake = 0; return; }
@@ -311,7 +314,7 @@ export class Game{
             R.v = v; R.s += v * dt; const lapTot = a.closed ? tot : tot; let frac = (R.s + R.lap * tot) / (tot * a.laps);
             if(R.s >= tot){ if(a.closed && R.lap + 1 < a.laps){ R.lap++; R.s -= tot; R.texts = {}; } else { R.s = tot; R.done = true; } }
             frac = clamp((R.s + R.lap * tot) / (tot * a.laps), 0, 1);
-            ev(a.events, frac); if(a.scares) for(const sc of a.scares){ if(!R.texts[sc.s] && frac >= sc.s - .02){ R.texts[sc.s] = 1; this.ui.toast(sc.text, 2600); this.sfx("boo"); } }
+            ev(a.events, frac); if(a.scares) for(const sc of a.scares){ if(!R.texts[sc.s] && frac >= sc.s - .02){ R.texts[sc.s] = 1; this.ui.toast(sc.text, 2600); this.sfx("boo"); fxFlash(.5, "#dfe9ff"); } }
             R.frac = frac; if(R.done || (a.closed && R.lap + 1 >= a.laps && R.s >= tot - .1)){ if(!R.fin){ R.fin = this.t; this.ui.toast("おつかれさま！ ぶじ とうちゃく！"); } if(this.t - R.fin > 1.2) this.endRide(true); }
         } else if(a.kind === "orbit"){
             // メリーゴーランド・バルーンは「1しゅう した」時点で たっせい（スタンプ）。オートプレイは 30びょう だけ まわって おりる
@@ -393,7 +396,7 @@ export class Game{
         // スカイ・ドロップ
         { const a = byId("drop"); const t0 = riding("drop") ? R.t : (T % 22); D.push({m: "platform", x: a.c[0], y: this.dropY(t0, a), z: a.c[1]}); }
         // ゴースト
-        if(riding("ghost")){ const a = R.a; const frac = R.frac || 0; for(const sc of a.scares) if(Math.abs(frac - sc.s) < .1){ const k = 1 - Math.abs(frac - sc.s) / .1; D.push({m: "ghost", x: sc.ghost[0] + Math.sin(T * 2) * .6, y: .3 + k * .4, z: sc.ghost[1], yaw: Math.atan2(this.camPos()[0] - sc.ghost[0], this.camPos()[2] - sc.ghost[1])}); } }
+        if(riding("ghost")){ const a = R.a; const frac = R.frac || 0; ghostDyn(this, R, D, T); for(const sc of a.scares) if(Math.abs(frac - sc.s) < .1){ const k = 1 - Math.abs(frac - sc.s) / .1; D.push({m: "gh_cute", x: sc.ghost[0] + Math.sin(T * 2) * .6, y: .3 + k * .6, z: sc.ghost[1], yaw: Math.atan2(this.camPos()[0] - sc.ghost[0], this.camPos()[2] - sc.ghost[1]), sx: .85, sy: .85, sz: .85}); } }
         else { const a = byId("ghost"); for(let i = 0; i < 2; i++) D.push({m: "ghost", x: 79 + Math.sin(T * .5 + i * 3) * 6, y: 1.6 + Math.sin(T + i) * .4, z: 28 + Math.cos(T * .4 + i * 2) * 6, yaw: T + i}); }
         // サファリ
         { const defs = [["giraffe", 70, 74, 1.2, .0], ["giraffe", 74, 76, 2.6, 0], ["elephant", 90, 84, 3.9, 0], ["fluffy", 60, 76, 1, 0], ["fluffy", 62, 82, 2, 0], ["lion", 52, 94, 0, 0], ["fluffy", 78, 98, 4, 0], ["elephant", 48, 78, 2.4, 0]]; for(const [m, x, z, yw] of defs) D.push({m, x, y: Math.max(0, Math.sin(T * 1.3 + x) * .06), z, yaw: yw + Math.sin(T * .3 + x) * .3}); }

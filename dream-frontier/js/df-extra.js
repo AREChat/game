@@ -5,10 +5,10 @@ import {rhythm} from "./df-x-rhythm.js";
 import {maze} from "./df-x-maze.js";
 import {jump} from "./df-x-jump.js";
 import {kart} from "./df-x-kart.js";
-import {cheese} from "./df-x-cheese.js"; import {queue} from "./df-x-queue.js"; import {loop} from "./df-x-loop.js"; import {cosmo} from "./df-x-cosmo.js";
+import {cheese} from "./df-x-cheese.js"; import {queue} from "./df-x-queue.js"; import {loop} from "./df-x-loop.js"; import {cosmo} from "./df-x-cosmo.js"; import {ghostBuild} from "./df-ghost.js";
 
 export const X = {rhythm, maze, jump, kart, loop, cheese, queue, cosmo};
-export function buildExtra(K){ for(const k of Object.keys(X)) if(X[k].build) X[k].build(K); buildEntrances(K); }
+export function buildExtra(K){ for(const k of Object.keys(X)) if(X[k].build) X[k].build(K); ghostBuild(K); buildEntrances(K); }
 
 // ---- のりばの まえの 入口（ゲート）：5つの アトラクションの めじるし。とおくからでも みつけやすい ----
 export function buildEntrances(K){
