@@ -9,6 +9,7 @@ import {stageDyn} from "./df-stages.js";
 import {spriteReady} from "./df-sprites.js";
 import {bootDfWasm} from "./df-wasm.js";
 import {X} from "./df-extra.js";
+import {BoardScene, boardInfo} from "./df-board.js";
 // どうぶつ・おばけ・ほしのこ：絵（img/chara/<名前>_f|r|l|b.webp）が そろって いれば 絵で、なければ 今までの 手作りの 3D モデルで 出す
 const SPRITE_MODELS = {giraffe: 0, elephant: 0, fluffy: 0, lion: 0, ghost: .3, starkid: 0};   // 値：絵の 足もとを ずらす 高さ（モデルの 原点が 足もとでは ないもの）
 
@@ -204,12 +205,32 @@ export class Game{
         if(!this._noQueue && X.queue && X.queue.begin(this, a)) return; this._noQueue = false;   // まち時間（キューライン）：2026-11-26 から
         const free = !!this.auto.on;   // オートプレイ中は コインなしで のれる（おまかせ見物）
         if(!free && this.sv.coins < (a.coin || 0) && a.coin) { return this.ui.toast("コインが たりない… (" + a.coin + "コイン ひつよう)"); }
+        // のりこみの 演出（動く床／1台ずつ停止）：2026-11-27 から。オートプレイ中・まち列から出たあとの 2回目は、ここで一度だけ 見せる
+        if(!free && !this._noBoard && this.mode === "walk"){ const bi = boardInfo(a); if(bi){ this._noQueue = false; return this.startBoarding(a, bi); } }
+        this._noBoard = false;
         const R = {a, t: 0, s: 0, lap: 0, text: null, texts: {}, alt: .3, spd: 1, hits: 0, targets: [], fire: 0, spawn: 0, done: false, fade: 1};
         if(a.coin && !free){ this.sv.coins -= a.coin; }
         this.sv.played++; this.ride = R; if(a.kind === "coaster") coasterInit(this, R); else if(X[a.kind]){ R.xm = X[a.kind]; R.A = {stage: a.id, env: a.id, music: a.id, xm: true}; R.auto = !!this.auto.on; } this.mode = "ride"; this.lookYaw = 0; this.lookPitch = 0; this.pitch = 0; this.sfx("start");
         this.ui.rideStart(a); if(R.xm) R.xm.init(this, R, a); this.emit("ride", {id: a.id});
         if(a.kind === "shoot"){ this.yaw = 0; this.pitch = 0; }
         if(a.kind === "wheel") this.yaw = -Math.PI / 4;
+    }
+    // ---- のりこみの 演出 ----
+    startBoarding(a, bi){
+        const bd = this.sv.bd || (this.sv.bd = {}), n = bd[a.id] || 0; bd[a.id] = n + 1;
+        this.mode = "board"; this.bdA = a; this.bd = new BoardScene(this, a, bi, n >= 2); this.lookYaw = 0; this.lookPitch = 0; this.save();
+    }
+    updateBoard(dt, inp){
+        const B = this.bd; if(!B){ this.mode = "walk"; return; }
+        if(inp.esc || inp.act2){ return this.cancelBoard(); }
+        if(inp.act) B.skipReq = true;
+        if(B.update(dt, true) || this.auto.on) this.finishBoard();
+    }
+    cancelBoard(){ if(this.bd){ this.bd.destroy(false); this.bd = null; } this.mode = "walk"; this.ui.toast("のりばから もどったよ（コインは へってないよ）"); }
+    finishBoard(){
+        const a = this.bdA; if(this.bd){ this.bd.destroy(true); this.bd = null; } this.mode = "walk"; this._noBoard = true; this._noQueue = true;
+        this.board(a);
+        if(this.mode !== "ride"){ this._noBoard = false; try{ this.ui.el.frame.className = ""; this.ui.el.frame.style.opacity = ""; }catch(_e){} }
     }
     endRide(ok, quiet){
         const R = this.ride; if(!R) return; const a = R.a; if(R.xm && R.xm.end) R.xm.end(this, R, ok); this.ride = null; this.mode = "walk"; this.ui.rideEnd(); this.hooks.rideEnd && this.hooks.rideEnd();
@@ -250,6 +271,7 @@ export class Game{
             if(ps.on && !this._pshow){ this._pshow = true; this.ui.toast("🎉 ドリーム・パレードが はじまったよ！ ひろばに あつまれ！"); this.sfx("fan"); } if(!ps.on) this._pshow = false;
             if(this.t - (this._sv || 0) > 10){ this._sv = this.t; this.save(); }
         } else if(this.mode === "ride") this.updateRide(dt, inp);
+        else if(this.mode === "board") this.updateBoard(dt, inp);
         // 別の 舞台（火星・木星・スイーツ・オーロラ）を 走っている 間は、パークの 地名（ファンタジー・グローブ など）を 出さない
         if(!(this.mode === "ride" && this.ride && this.ride.A && this.ride.A.stage)){
             const z = zoneAt(this.x, this.z); if(z !== this.zone){ this.zone = z; this.ui.area(AREA_NAMES[z]); this.hooks.zone && this.hooks.zone(z); }
@@ -325,6 +347,7 @@ export class Game{
     sfx(n){ this.hooks.sfx && this.hooks.sfx(n); }
     camera(){
         const R = this.ride; let cam = {eye: [this.x, this.eyeH + Math.sin(this.bob) * .035, this.z], yaw: this.yaw, pitch: this.pitch, fov: this.fov};
+        if(this.mode === "board" && this.bd) return this.bd.camera(cam);
         if(this.mode !== "ride" || !R) return cam; if(R.xm) return R.xm.camera(this, R); const a = R.a, t = R.t;
         const shake = this.shake ? (Math.random() - .5) * this.shake * .12 : 0;
         if(a.kind === "track"){ const p = this.paths[a.id], P = p.at(R.s), Q = p.at(R.s + 1.8), P2 = p.at(R.s + 5); const yw = yawOf(P, Q), pt = pitchOf(P, P2) * .8; cam = {eye: [P[0], P[1] + a.eye, P[2]], yaw: yw + this.lookYaw, pitch: pt + this.lookPitch + shake, fov: 72 + (R.v || 0) * .5}; if(a.id === "boat" || a.id === "safari" || a.id === "splash") cam.eye[1] += Math.sin(t * 1.7) * .03; }

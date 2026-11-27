@@ -137,7 +137,22 @@ export const Snd = {
             boo: () => { tone(180, .6, "sawtooth", .1); tone(150, .8, "triangle", .1, .1); },
             shot: () => tone(1400, .08, "square", .1),
             hit: () => { tone(880, .12, "triangle", .2); tone(1320, .2, "triangle", .2, .06); },
-            gold: () => [784, 988, 1319, 1568, 2093].forEach((f, i) => tone(f, .26, "triangle", .2, i * .06))
+            gold: () => [784, 988, 1319, 1568, 2093].forEach((f, i) => tone(f, .26, "triangle", .2, i * .06)),
+            // のりこみ・演出（2026-11-27）
+            bell: () => { tone(1568, .5, "sine", .16); tone(2093, .6, "sine", .1, .02); tone(1568, .5, "sine", .12, .32); },
+            door: () => { tone(220, .35, "sawtooth", .07); tone(165, .5, "sawtooth", .06, .12); },
+            clack: () => { tone(2300, .04, "square", .06); tone(110, .1, "square", .08, .02); },
+            belt: () => [0, 1, 2, 3, 4, 5].forEach((i) => tone(95, .07, "square", .05, i * .11)),
+            whoosh: () => { for(let i = 0; i < 10; i++) tone(300 + i * 90, .09, "sawtooth", .035, i * .035); },
+            sparkle: () => [1568, 2093, 2637, 3136].forEach((f, i) => tone(f, .18, "sine", .1, i * .06)),
+            rumble: () => { tone(55, .9, "sawtooth", .14); tone(70, .8, "square", .06, .05); burst(120, .9, .22, .8); },
+            warp: () => { for(let i = 0; i < 14; i++) tone(180 + i * i * 9, .1, "triangle", .07, i * .03); },
+            alarm: () => [0, 1, 2, 3].forEach((i) => tone(i % 2 ? 660 : 880, .16, "square", .09, i * .18)),
+            boing: () => { for(let i = 0; i < 6; i++) tone(260 + Math.sin(i * 1.3) * 140, .08, "sine", .14, i * .045); },
+            pop: () => { tone(880, .06, "triangle", .16); tone(1320, .08, "triangle", .12, .04); },
+            cheer: () => [523, 659, 784, 988, 1175].forEach((f, i) => tone(f, .22, "triangle", .14, i * .07)),
+            crash: () => { burst(160, .8, .6, .7); burst(900, .4, .4, 1.1); tone(68, .9, "sawtooth", .28); tone(46, 1.1, "square", .2, .03); tone(1500, .1, "square", .1); [0, 1, 2, 3].forEach((i) => tone(300 - i * 50, .2, "sawtooth", .12, .18 + i * .08)); },
+            smash: () => { burst(130, 1.0, .65, .6); burst(1200, .5, .45, 1.0); tone(60, 1.2, "sawtooth", .3); tone(40, 1.4, "square", .22, .04); [0, 1, 2, 3, 4, 5].forEach((i) => tone(900 + i * 220, .14, "triangle", .1, .25 + i * .05)); }
         };
         if(sounds[name]) sounds[name]();
     },
