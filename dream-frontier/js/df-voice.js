@@ -3,8 +3,8 @@
 //  コスモ・クルーズ・全アトラクションの アナウンスで つかう。声は すべて この ゲームの オリジナル（音声合成）。
 import {Snd} from "./audio.js";
 const BASE = new URL("../voice/", import.meta.url).href;
-export const WHO = {gaku: "ガク", mimi: "ミミ", gf: "ガイドの おねえさん", gm: "ガイドの おにいさん", cat: "モフゾー", mouse: "チュッピ", cmd: "キャプテン・ポッド", bot: "ロボクルー", pilot: "パイロット", nav: "ナビ"};
-export const WCOL = {gaku: "#6ab8ff", mimi: "#ff8ac0", gf: "#ffe27a", gm: "#9affc0", cat: "#ffb060", mouse: "#d8c0ff", cmd: "#ffd24a", bot: "#7affd8", pilot: "#9ad8ff", nav: "#ffffff"};
+export const WHO = {gaku: "ガク", mimi: "ミミ", gf: "ガイドの おねえさん", gm: "ガイドの おにいさん", cat: "モフゾー", mouse: "チュッピ", cmd: "キャプテン・ポッド", gov: "ゼルバ そうとく", pico: "ピコ", bot: "ロボクルー", pilot: "パイロット", nav: "ナビ"};
+export const WCOL = {gaku: "#6ab8ff", mimi: "#ff8ac0", gf: "#ffe27a", gm: "#9affc0", cat: "#ffb060", mouse: "#d8c0ff", cmd: "#ffd24a", gov: "#ff6a5a", pico: "#7affd8", bot: "#7affd8", pilot: "#9ad8ff", nav: "#ffffff"};
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 // 1つの せりふを 鳴らす。R.cap に 字幕を ためる（かくモジュールが 画面に 出す）。ファイルが なくても 字幕だけは 出る

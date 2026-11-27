@@ -5,7 +5,7 @@
 export const LAUNCH = new Date(2026, 10, 26, 0, 0, 0);
 export const OPEN_H = 0, CLOSE_H = 24;   // 24じかん えいぎょう
 const NOQ = {parade: 1, puzzle: 1};   // パレード・やかたの なぞは キューなし
-const POP = {worldjet: .95, aurora: .9, sweets: .85, loop: .95, cheese: .95, drop: .85, sky: .8, mine: .75, splash: .7, kart: .75, jump: .6, maze: .55, rhythm: .6, ghost: .8, safari: .65, shoot: .6, boat: .45, carousel: .5, wheel: .6, balloon: .5, swing: .55, fairy: .4, ship: .5, spinner: .5, cosmo: .7};
+const POP = {cosmo2: .98, worldjet: .95, aurora: .9, sweets: .85, loop: .95, cheese: .95, drop: .85, sky: .8, mine: .75, splash: .7, kart: .75, jump: .6, maze: .55, rhythm: .6, ghost: .8, safari: .65, shoot: .6, boat: .45, carousel: .5, wheel: .6, balloon: .5, swing: .55, fairy: .4, ship: .5, spinner: .5, cosmo: .7};
 const hash = (s) => { let h = 2166136261; for(let i = 0; i < s.length; i++){ h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0; } return h; };
 const r01 = (s) => hash(s) / 4294967296;
 const CURVE = [[0, .1], [8, .12], [9, .3], [10, .5], [11, .8], [12, 1], [13, 1], [14, .95], [15, .85], [16, .75], [17, .6], [18, .5], [19, .4], [20, .3], [21, .2], [24, .1]];

@@ -104,6 +104,24 @@ export const SCORES = {
         if(I > .3) mel.forEach(([m, st, len]) => add("horn", root + 24 + m + (b % 8 >= 4 ? 2 : 0), st, len, .26 + .1 * I));
         if(I > .5){ add("timp", root, 0, 2, .32); add("timp", root, 8, 2, .26); add("hat", 70, 4, 1, .1); add("hat", 70, 12, 1, .1); }
         if(I > .75 && b % 4 === 0) add("crash", 60, 0, 4, .3);
+    }},
+    // コスモクルーズ・ミッション：くろがねの かんたい（おもく ぶきみな、ゆっくりの ぎょうれつ）。オリジナル
+    cos2dark: {bpm: 78, beats: 4, sub: 4, gain: .9, bar(b, I, add){
+        const rt = [0, 0, 3, 1, 0, 0, 5, 3][b % 8], root = 33 + rt;
+        [0, 7, 12].forEach((q) => add("string", root + 12 + q, 0, 16, .12 + .06 * I)); add("bass", root, 0, 8, .6); add("bass", root, 8, 4, .5); add("bass", root + 1, 12, 4, .4);
+        add("timp", root, 0, 2, .42); add("timp", root, 6, 2, .3); add("timp", root + 5, 10, 2, .34); add("timp", root, 14, 2, .3);
+        if(b % 2 === 0){ [[0, 0, 3], [0, 3, 1], [3, 4, 2], [1, 6, 2], [0, 8, 6]].forEach(([m, st, len]) => add("horn", root + 24 + m, st, len, .3)); }
+        else add("bell", root + 36, 2, 2, .09), add("bell", root + 31, 10, 2, .08);
+        if(b % 4 === 3) add("crash", 55, 0, 4, .25);
+    }},
+    // コスモクルーズ・ミッション：だっしゅつ（はやい ビートの ひっぱる きょく）。オリジナル
+    cos2run: {bpm: 146, beats: 4, sub: 4, gain: .9, bar(b, I, add){
+        const rt = [0, 0, 5, 3, 0, 0, 7, 5][b % 8], root = 38 + rt;
+        [0, 7, 12].forEach((q) => add("string", root + 12 + q, 0, 16, .12 + .06 * I)); for(let i = 0; i < 8; i++) add("bass", root + (i % 4 === 3 ? 7 : 0), i * 2, 2, .42);
+        for(const st of [0, 4, 8, 12]) add("timp", root, st, 1, .4); for(let i = 0; i < 16; i += 2) add("hat", 70, i, 1, .12);
+        const arp = [0, 3, 7, 12, 7, 3, 7, 12]; for(let i = 0; i < 8; i++) add("bell", root + 24 + arp[i], i * 2, 2, .09 + .04 * I);
+        [[0, 0, 4], [3, 4, 2], [7, 6, 2], [12, 8, 6], [7, 14, 2]].forEach(([m, st, len]) => add("horn", root + 24 + m, st, len, .3));
+        if(b % 4 === 0) add("crash", 60, 0, 4, .3);
     }}
 };
 

@@ -7,7 +7,7 @@ import {ANN_LINES, ANN_END} from "./df-announce-lines.js";
 import {rideTotal} from "./df-ride.js";
 import {Snd} from "./audio.js";
 
-const OWN = {cosmo: 1, cheese: 1, queue: 1};
+const OWN = {cosmo2: 1, cosmo: 1, cheese: 1, queue: 1};
 const BASE = new URL("../voice/", import.meta.url).href;
 const SFX = new Set(["bell", "door", "clack", "belt", "whoosh", "sparkle", "rumble", "warp", "alarm", "boing", "pop", "cheer", "crash", "smash", "boo", "drop", "splash", "gold", "coin", "start", "fan", "hit", "shot"]);
 

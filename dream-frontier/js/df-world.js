@@ -70,7 +70,7 @@ export function buildWorld(){
     const tree = (x, z, s, col) => { const ti = treeI++, nm = col ? (col === "#5a58c8" ? GN[hv(ti) < .85 ? 0 : 2] : GN[hv(ti) < .85 ? 1 : 3]) : TN[(hv(ti) * TN.length) | 0];
         if(has(nm)){ prop(nm, x, z, (nm === "tree_slim" ? 6.2 : 5.4) * s); shadow(x, z, 1.5 * s); sol(x, z, .6 * s); return; }
         box(S, x, 0, z, .5 * s, 1.8 * s, .5 * s, "#7a5232"); cyl(S, x, 1.4 * s, z, 0, 1.9 * s, 3 * s, col || "#3f9a4a", 7); cyl(S, x, 3 * s, z, 0, 1.4 * s, 2.4 * s, "#4fb25a", 7); sol(x, z, .6 * s); };
-    const NOTREE = [[-55, -14, 16], [44, -16, 7], [-52, -62, 12], [62, -58, 14], [-55, -2, 6], [-84, 60, 22]];
+    const NOTREE = [[-55, -14, 16], [44, -16, 7], [-52, -62, 12], [62, -58, 14], [98, -62, 20], [-55, -2, 6], [-84, 60, 22]];
     const free = (x, z) => !(NOTREE.some((q) => Math.hypot(x - q[0], z - q[1]) < q[2]) || Math.hypot(x, z) < 34 || (Math.abs(x) < 5 && z > 0 && z < 60) || (z > 55 && z < 100 && Math.abs(x) < 46) || (x > 56 && x < 100 && z > 8 && z < 42));
     for(let i = 0; i < 220; i++){ const x = (rnd() - .5) * 300, z = (rnd() - .5) * 280; if(!free(x, z)) continue; if(x < -36 && x > -94 && z > 6 && z < 40) continue; if(Math.abs(x) < 10 && z < -32) continue; tree(x, z, .8 + rnd() * .9, x < -36 ? (rnd() < .5 ? "#5a58c8" : "#4a8a9a") : undefined); }
     for(let i = 0; i < 40; i++){ const a = rnd() * 6.283, r = 18 + rnd() * 12; const x = Math.cos(a) * r, z = Math.sin(a) * r; if(Math.hypot(x - 0, z - 0) < 16) continue; const fn = ["flowerbed_pink", "flowerbed_yellow", "flowerbed_white", "flowerbed_violet"][i % 4]; if(has(fn)){ prop(fn, x, z, 1.1); continue; } sph(S, x, .3, z, .35, ["#ff8ab0", "#ffd24a", "#ffffff", "#c88aff"][i % 4]); }
@@ -224,6 +224,26 @@ export function buildWorld(){
         const cp = model("cup"); cyl(cp.prims, 0, .1, 0, 1.5, 1.1, 1.0, "#ffd24a", 12); cyl(cp.prims, 0, 1.1, 0, 1.7, 1.5, .25, "#ff6aa8", 12); box(cp.prims, 0, .05, 0, 2.0, .15, 2.0, "#5ac8ff"); }
     // (4) コスモ・クルーズ（ドームの たてもの）
     { const cx = 62, cz = -60; cyl(S, cx, 0, cz, 9.6, 10, 3, "#c8d0e8", 20); sph(S, cx, 3, cz, 9.4, "#dfe6ff", .8, 18); sph(GLOW, cx, 7.2, cz, 7, "#8ab0ff"); box(S, cx, 0, cz + 9.2, 5, 4.4, 2, "#5a6aa8"); box(S, cx, 4.4, cz + 9.2, 5.6, .5, 2.4, "#ffd24a"); for(const [dx, dz] of [[-12, 0], [12, 0], [0, -13]]){ cyl(S, cx + dx, 0, cz + dz, .7, 1.2, 6, "#aab4d8", 8); sph(S, cx + dx, 6.6, cz + dz, 1.0, "#ffe34a"); sph(GLOW, cx + dx, 6.6, cz + dz, 2.2, "#ffe9a0"); } sol(cx, cz, 10.4);
+    // (4b) コスモクルーズ・ミッション（「ほしのたまご」）の ベース：くろい かべに 青い ひかり、おおきな アーチ、レーダー とう
+    { const bx = 100, bz = -64, B = (x, y, z, w, h, d, c) => box(S, bx + x, y, bz + z, w, h, d, c), BG = (x, y, z, w, h, d, c) => box(GLOW, bx + x, y, bz + z, w, h, d, c);
+        B(0, 0, 0, 20, 11, 26, "#9aa8d8"); B(-9.6, 0, 0, .8, 11.4, 26.4, "#c8d4f8"); B(0, 11, 0, 21, .8, 27, "#1a2036");
+        B(-10.1, 0, -8.5, .5, 8, 9, "#2a3450"); B(-10.1, 0, 8.5, .5, 8, 9, "#2a3450"); B(-10.1, 8, 0, .5, 3, 26, "#2a3450");       // アーチの まわり
+        BG(-10.3, 0, 0, .2, 8.2, 8, "#1a6aff"); for(let q = 0; q < 6; q++) BG(-10.4, .6 + q * 1.3, 0, .15, .18, 7.4, q % 2 ? "#46e6ff" : "#bfe8ff");
+        for(const sz of [-1, 1]){ B(-10.2, 0, sz * 4.4, .6, 8.4, .6, "#5a6a98"); BG(-10.6, 0, sz * 4.4, .15, 8.2, .15, "#ffb04a"); }
+        BG(-10.4, 8.6, 0, .2, .5, 20, "#46e6ff"); for(let i = 0; i < 9; i++) BG(-10.5, 9.6, -8 + i * 2, .15, .8, 1.2, i % 2 ? "#ffd24a" : "#46e6ff");
+        cyl(S, bx + 5, 11.8, bz - 8, 1.6, 2, 9, "#3a4668", 10); cyl(S, bx + 5, 20.8, bz - 8, 5, 1.2, .8, "#aab4d8", 14); sph(GLOW, bx + 5, 22.2, bz - 8, 1.1, "#ff6a6a");      // レーダー とう
+        cyl(S, bx + 6, 11.8, bz + 8, 3.4, 3.8, 3, "#2a3450", 10); sph(S, bx + 6, 14.8, bz + 8, 3.2, "#dfe6ff", .7, 12); sph(GLOW, bx + 6, 16, bz + 8, 3.6, "#8ab0ff");
+        for(const sz of [-1, 1]){ cyl(S, bx - 11.5, 0, bz + sz * 11, .5, .8, 7, "#aab4d8", 8); sph(S, bx - 11.5, 7.4, bz + sz * 11, .9, "#46e6ff"); sph(GLOW, bx - 11.5, 7.4, bz + sz * 11, 2, "#bfe8ff"); }
+        // かべを あかるい 青みの ぎんいろに ぬりなおす ようかん（ひさしと おびの ひかり）
+        B(0, 0, 0, 20.4, 11.2, 26.4, "#b4c4f0"); B(0, 5.2, 0, 20.8, .5, 26.8, "#9ab0e8"); B(0, 11, 0, 21.4, .5, 27.4, "#dfe8ff");
+        BG(0, 5.4, 13.3, 20, .18, .12, "#46e6ff"); BG(0, 5.4, -13.3, 20, .18, .12, "#46e6ff"); BG(10.3, 5.4, 0, .12, .18, 26, "#ffb04a");
+        // もんの うえの おおきな ひかる リング（ほしを まもる しるし）
+        for(let q = 0; q < 28; q++){ const a = q / 28 * Math.PI * 2; box(GLOW, bx - 11, 15.5 + Math.sin(a) * 4.6, bz + Math.cos(a) * 4.6, .3, 1.1, 1.5, q % 2 ? "#46e6ff" : "#ffd24a", 0, 0, -a); }
+        sph(GLOW, bx - 11, 15.5, bz, 1.6, "#ffb870"); sph(S, bx - 11, 15.5, bz, 1.1, "#ffdca0", 1, 10);
+        for(let q = 0; q < 3; q++) BG(-10.5, 11.6, -6 + q * 6, .15, 1.4, .4, "#ffd24a");
+        // ならんでいる シャトル（ざいくの ように）
+        box(S, bx - 15, .6, bz - 15.5, 3, 1.2, 6, "#dfe8f8"); box(S, bx - 15, 1.0, bz - 12.4, 2.2, .6, .2, "#46c8ff"); for(const sz of [-1, 1]) box(S, bx - 15 + sz * 2.6, .5, bz - 16, 2.2, .18, 2.8, "#8aa0d8");
+        sol(bx - 4, bz - 9, 5); sol(bx - 4, bz, 6); sol(bx - 4, bz + 9, 5); sol(bx + 4, bz, 8); sol(bx - 15, bz - 15.5, 2.6); }
         // 宇宙の もの（モデル）
         const pl = (id, c1, c2) => { const m = model(id); sph(m.prims, 0, 0, 0, 1, c1, 1, 14); cyl(m.prims, 0, -.12, 0, 1.55, 1.55, .12, c2, 20); m.prims[m.prims.length - 1].rx = .35; }; pl("planetA", "#4a8ae8", "#9ad0ff"); pl("planetB", "#e8884a", "#ffd9a0");
         const rk = model("rock"); sph(rk.prims, 0, 0, 0, 1, "#8a8088", .8, 6); sph(rk.prims, .5, .2, .3, .55, "#9a9098", 1, 5);

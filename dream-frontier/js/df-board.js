@@ -26,6 +26,7 @@ export const BOARD = {
     aurora:   {s: "stop", ic: "🌌", veh: "ウイング", tail: "オーロラの そらを とぶよ"},
     shoot:    {s: "stop", ic: "⭐", veh: "シューティング・カー", tail: "まとを ねらって、よーい…！"},
     cosmo:    {s: "stop", ic: "🪐", veh: "カプセル", tail: "うちゅうへ カウントダウン！"},
+    cosmo2:   {s: "move", ic: "🛰️", veh: "トランスポーター", tail: "ミッション、スタート！"},
     loop:     {s: "stop", ic: "🌀", veh: "ループの せき", tail: "ぐるりと まわる じゅんび、いいかな？"}
 };
 export const boardInfo = (a) => (a && BOARD[a.id]) || null;

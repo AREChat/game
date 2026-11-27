@@ -5,11 +5,11 @@ import pyopenjtalk
 from kokoro_onnx import Kokoro
 from voice_lines import L   # このフォルダの voice_lines.py
 OUT = sys.argv[1] if len(sys.argv) > 1 else "/tmp/voice_new"
-FN = lambda i: i if i.startswith(("cosmo_", "ann_")) else "cheese_" + i   # cosmo_ / ann_ で はじまる ものは そのまま ファイル名に する
+FN = lambda i: i if i.startswith(("cosmo_", "cosmo2_", "ann_")) else "cheese_" + i   # cosmo_ / ann_ で はじまる ものは そのまま ファイル名に する
 os.makedirs(OUT, exist_ok=True)
 V = {"gf": ("jf_tebukuro", 1.0, 1.0), "gm": ("jm_kumo", 1.0, 1.0), "gaku": ("jm_kumo", 1.0, 1.14), "mimi": ("jf_alpha", 1.0, 1.10),
      "cat": ("jm_kumo", 0.98, 0.82), "mouse": ("jf_nezumi", 1.05, 1.38),
-     "cmd": ("jm_kumo", 0.97, 0.80), "bot": ("jf_nezumi", 1.0, 1.22), "pilot": ("jm_kumo", 1.04, 1.02)}
+     "cmd": ("jm_kumo", 0.97, 0.80), "gov": ("jm_kumo", 0.80, 0.64), "pico": ("jf_nezumi", 1.02, 1.38), "bot": ("jf_nezumi", 1.0, 1.22), "pilot": ("jm_kumo", 1.04, 1.02)}
 MAP = {"a": "a", "i": "i", "u": "ɯ", "e": "e", "o": "o", "A": "a", "I": "i", "U": "ɯ", "E": "e", "O": "o", "N": "ɴ", "cl": "ʔ",
        "k": "k", "g": "ɡ", "s": "s", "sh": "ɕ", "z": "z", "j": "ʥ", "t": "t", "ts": "ʦ", "ch": "ʨ", "d": "d", "n": "n", "ny": "ɲ", "h": "h", "hy": "ç", "f": "ɸ",
        "b": "b", "p": "p", "m": "m", "y": "j", "r": "ɾ", "w": "w", "ky": "kʲ", "gy": "ɡʲ", "py": "pʲ", "by": "bʲ", "my": "mʲ", "ry": "ɾʲ", "dy": "dʲ", "ty": "tʲ", "v": "b"}
