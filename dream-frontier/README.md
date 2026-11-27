@@ -116,7 +116,7 @@ dream-frontier/
 │   ├── df-game.js         ゲームロジック（移動・のりもの・スタンプ・謎解き・セーブ）
 │   ├── ui.js / controls.js / audio.js
 ├── bgm/                   火星・木星の クラシック音源 と、チーズいせきの BGM（cheeseq＝ならぶ間／cheeseride＝ライド）
-├── voice/                 チーズいせきの 声（cheese_*.mp3、44本。男性・女性・ガイド・ねこ・ねずみ）
+├── voice/                 声（cheese_*＝チーズいせき44本／cosmo_*＝コスモ・クルーズ37本／ann_*＝ぜんアトラクションの アナウンス。すべて オリジナルの 合成音声）
 ├── vendor/three/          ← 公式 Three.js を おく場所（README 参照）
 ├── tools/fetch-three.mjs  公式 Three.js を 取得して ハッシュ照合する スクリプト
 ├── .github/workflows/pages.yml   GitHub Pages 自動公開（単独リポジトリの時）
