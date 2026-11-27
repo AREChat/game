@@ -93,6 +93,17 @@ export const SCORES = {
         for(let i = 0; i < 8; i++) add("bell", root + 36 + tn[i] - 12, i * 2, 2, .1 + .04 * I);
         if(I > .4){ add("timp", root, 0, 2, .4); add("timp", root, 10, 2, .3); } if(I > .55) LEAD_AU[b % 4].forEach(([m, st, len]) => add("horn", m, st, len, .4 + .1 * I));
         if(I > .8){ LEAD_AU[b % 4].forEach(([m, st, len]) => add("string", m + 12, st, len, .14)); if(b % 4 === 0) add("crash", 60, 0, 4, .35); }
+    }},
+    // コスモ・クルーズ（2026-11-27）：ひろい うちゅうを ゆったり すすむ、あかるい ぼうけんの きょく（オリジナル）
+    cosmo: {bpm: 108, beats: 4, sub: 4, gain: .85, bar(b, I, add){
+        const rt = [0, 7, 9, 5, 0, 5, 7, 7][b % 8], root = 38 + rt, third = (b % 8 === 2) ? 3 : 4;
+        [0, 7, third + 12].forEach((q) => add("string", root + 12 + q, 0, 16, .1 + .1 * I)); add("bass", root, 0, 6, .46); add("bass", root + 7, 8, 4, .36); add("bass", root, 12, 4, .34);
+        const arp = [0, 7, 12, 16, 19, 16, 12, 7];
+        for(let i = 0; i < 8; i++) add("bell", root + 24 + (arp[i] === 16 ? third + 12 : arp[i]), i * 2, 2, .08 + .04 * I);
+        const mel = [[0, 0, 4], [7, 4, 2], [12, 6, 2], [third + 12, 8, 6], [7, 14, 2]];
+        if(I > .3) mel.forEach(([m, st, len]) => add("horn", root + 24 + m + (b % 8 >= 4 ? 2 : 0), st, len, .26 + .1 * I));
+        if(I > .5){ add("timp", root, 0, 2, .32); add("timp", root, 8, 2, .26); add("hat", 70, 4, 1, .1); add("hat", 70, 12, 1, .1); }
+        if(I > .75 && b % 4 === 0) add("crash", 60, 0, 4, .3);
     }}
 };
 

@@ -187,7 +187,9 @@ export function coasterCam(path, tr, S, R, opt){
     let extra = 0; for(const r of tr.rolls || []){ if(s >= r.s0){ extra += r.turns * TAU * sstep((s - r.s0) / (r.s1 - r.s0)); } }
     const sh = clamp(Math.abs(u) / 20, 0, 1.4), T = O.t || 0;
     const eyeH = O.eye === undefined ? 1.1 : O.eye;
-    const eye = [P[0] + upv[0] * eyeH, P[1] + upv[1] * eyeH + sn(T * 41) * .014 * sh, P[2] + upv[2] * eyeH];
+    // 視点は 「レールの まうえ」に おく：かたむく（バンクする）ときも、よこに ずれて レールから はみだして 見えないように、よこ方向の ずれを けす
+    const lat = dot(upv, right), upE = [upv[0] - right[0] * lat, upv[1] - right[1] * lat, upv[2] - right[2] * lat], ul = Math.hypot(upE[0], upE[1], upE[2]), uu = ul > .3 ? upE.map((q) => q / ul) : up0;
+    const eye = [P[0] + uu[0] * eyeH, P[1] + uu[1] * eyeH + sn(T * 41) * .014 * sh, P[2] + uu[2] * eyeH];
     const pitch = Math.asin(clamp(F[1], -1, 1)) + sn(T * 37 + 2) * .0016 * sh, yaw = Math.atan2(F[0], F[2]);
     const G = fl / GRAV, Gt = Math.hypot(felt[0], felt[1], felt[2]) / GRAV;
     return {eye, yaw, pitch, roll: R.roll + extra + sn(T * 29 + 5) * .004 * sh, fov: 68 + 16 * clamp(Math.abs(u) / 32, 0, 1) + (G > 2 ? (G - 2) * 1.2 : 0), G: Gt, Gv: G, speed: Math.abs(u), P, F};

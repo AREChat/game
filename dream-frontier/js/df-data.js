@@ -9,6 +9,8 @@ export const ZONES = {
     dark: {fog: [.07, .04, .16], near: 5, far: 34, amb: [.5, .44, .62], light: [.2, .7, .2]},
     night: {fog: [.04, .06, .2], near: 60, far: 200, amb: [.26, .3, .5], light: [.2, .8, .3]},
     space: {fog: [.01, .01, .05], near: 160, far: 420, amb: [.5, .5, .65], light: [.5, .6, .4]},
+    cosspace: {fog: [.01, .01, .06], near: 600, far: 1500, amb: [.62, .62, .78], light: [.55, .6, .4]},
+    cosbay: {fog: [.05, .07, .14], near: 90, far: 270, amb: [.82, .84, .96], light: [.4, .8, .4]},
     ghost: {fog: [.05, .04, .1], near: 3, far: 18, amb: [.3, .26, .4], light: [.2, .6, .2]},
     mars: {fog: [.62, .3, .2], near: 90, far: 360, amb: [.7, .46, .38], light: [.6, .5, .3]},
     jupiter: {fog: [.96, .78, .58], near: 110, far: 420, amb: [.82, .72, .64], light: [.4, .9, .4]},
@@ -62,7 +64,7 @@ export const ATTRACTIONS = [
     {id: "ship", n: "ムーンシップ・フライト", area: "center", kind: "track", pts: SHIP_PTS, closed: false, laps: 1, speed: {type: "const", v: 7.2}, eye: 1.2, style: "none", vehicle: "ship", env: "night", board: {x: 44, z: -14, r: 3.4}, coin: 15, desc: "ゆめの 空とぶ ふねで、ほしぞらの パークを 一周。（よるの そらの たび）", ref: "空飛ぶ海賊船系",
         events: [{s: .08, text: "ふねが ふわり…  パークが どんどん ちいさくなる！"}, {s: .28, text: "あれは ムーンホイール！ あかりが きれいだよ。"}, {s: .5, text: "まんなかの ふんすいが ほしみたいに ひかっている。"}, {s: .7, text: "みずうみの ランタンが ゆらゆら ゆれているね。"}, {s: .9, text: "そろそろ ちゃくりくの じかんだよ。"}]},
     {id: "spinner", n: "ポップタウン・スピナー", area: "sky", kind: "orbit", mode: "cup", c: [-52, -62], r: 5.6, w: .5, h0: .9, dur: 40, board: {x: -52, z: -53.2, r: 3.2}, coin: 10, desc: "カップが ぐるぐる まわる マンガの まち。A / D で じぶんの カップを もっと まわそう！", ref: "コーヒーカップ系の 回転ライド"},
-    {id: "cosmo", n: "コスモ・クルーズ", area: "sky", kind: "sim", env: "space", dur: 56, board: {x: 62, z: -50, r: 3.2}, coin: 15, desc: "うちゅうせんの コックピットで ワープしながら わくせいの たびへ。", ref: "宇宙旅行シミュレーター系",
+    {id: "cosmo", n: "コスモ・クルーズ", area: "sky", kind: "cosmo", vehicle: "sim", env: "space", dur: 78, board: {x: 62, z: -50, r: 3.2}, coin: 15, desc: "うちゅうせんの コックピットで ワープしながら わくせいの たびへ。", ref: "宇宙旅行シミュレーター系",
         events: [{s: .02, text: "コスモ・クルーズ、はっしん！ シートベルトを しめてね。"}, {s: .15, text: "ひだりに あおい わくせい「ルナリア」が みえる！"}, {s: .34, text: "ちゅうい！ がれきの おびだ！ おおきく ゆれるよ！"}, {s: .55, text: "ゲートを くぐるよ…！"}, {s: .7, text: "ワープ・かいし！"}, {s: .88, text: "とうちゃく。ステーションが みえてきた！"}]}
 ];
 
